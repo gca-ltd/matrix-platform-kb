@@ -34,16 +34,23 @@ AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.
 
 | Style | Reply body | Prompt UI | Notes |
 |---|---|---|---|
-| `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; best mobile consistency |
-| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput` |
+| `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; identical in 1:1, group and channel |
+| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; **personal chats only** |
 | `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental) |
-| `off` | Per `reply_format` | None | No follow-up chips |
+| `off` | Plain markdown `message` | None | No follow-up prompts |
 
 **Platform constraint (Microsoft Teams):** `suggestedActions` are **not supported on messages with attachments**. An Adaptive Card is an attachment, so card-style replies and below-bubble chips are **mutually exclusive**. The Channels UI sets `reply_format` and `suggestion_style` together.
 
-Back-compat: when `suggestion_style` is absent, `reply_format === 'text'` maps to `chips`; otherwise `card`.
+**Scope difference:** Teams renders `suggestedActions` in **personal (1:1) chats only** — group chats and channels drop them, so `chips` / `compose` turns arrive as plain text there. `card` is the only surface whose prompts survive in every conversation type.
 
-Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsReply()`.
+**Card polish (both applied by default):**
+
+- Each suggestion `Action.Submit` carries action-level `msTeams: { feedback: { hide: true } }`, which suppresses Teams' *"Your response was sent to the app"* system line under the card on every tap. The lowercase `data.msteams.messageBack` payload is what echoes the prompt as a user message and stays untouched.
+- `channels.config.card_header` (default `true`) controls the in-card avatar + name `ColumnSet`. Set `false` to drop it — Teams already renders the bot avatar and name above the bubble, so the header is a duplicate. Card style only; ignored by `chips` / `compose`.
+
+Back-compat: when `suggestion_style` is absent, `reply_format === 'text'` maps to `chips`; otherwise `card`. When `card_header` is absent it defaults on, preserving pre-toggle rendering.
+
+Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsReply()` (style + `resolveCardHeader()`), `_shared/adaptive-card.ts` → `buildReplyActivity()` (`showHeader`).
 
 ---
 
@@ -59,7 +66,7 @@ On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:
 
 **Do not** welcome on: team rename, human member add, roster over threshold, or `add-upgrade` / `remove-upgrade`.
 
-Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`.
+Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`.
 
 ---
 
@@ -101,4 +108,4 @@ Two separate systems:
 - [ADR-032](../architecture/decisions/ADR-032.md)
 - [api-contracts.md](api-contracts.md) — Teams JWT on MCP chat paths
 - [app-catalog.md](app-catalog.md) — Digital Employees entry
-- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events)
+- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`)
