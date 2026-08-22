@@ -35,18 +35,25 @@ AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.
 | Style | Reply body | Prompt UI | Notes |
 |---|---|---|---|
 | `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; identical in 1:1, group and channel |
-| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; **personal chats only** |
+| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat` |
 | `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental) |
 | `off` | Plain markdown `message` | None | No follow-up prompts |
 
 **Platform constraint (Microsoft Teams):** `suggestedActions` are **not supported on messages with attachments**. An Adaptive Card is an attachment, so card-style replies and below-bubble chips are **mutually exclusive**. The Channels UI sets `reply_format` and `suggestion_style` together.
 
-**Scope difference:** Teams renders `suggestedActions` in **personal (1:1) chats only** — group chats and channels drop them, so `chips` / `compose` turns arrive as plain text there. `card` is the only surface whose prompts survive in every conversation type.
+**Scope behaviour:** `suggestedActions` are supported in **all scopes**, but not identically — in `personal` they render as smart replies, so only the actions on the **latest** message remain visible, while in `team` and `groupChat` they are saved with the message and stay on it. `card` prompts persist everywhere. Teams shows at most **three** actions regardless of style, which is why `buildTeamsReply()` slices to three.
+
+> Earlier revisions of this doc claimed `suggestedActions` were personal-scope only. That was true of the 2022 guidance and is no longer correct — see the Microsoft Learn `suggested-actions` page (doc date 2026-08-19), which documents all three scopes with screenshots.
 
 **Card polish (both applied by default):**
 
 - Each suggestion `Action.Submit` carries action-level `msTeams: { feedback: { hide: true } }`, which suppresses Teams' *"Your response was sent to the app"* system line under the card on every tap. The lowercase `data.msteams.messageBack` payload is what echoes the prompt as a user message and stays untouched.
 - `channels.config.card_header` (default `true`) controls the in-card avatar + name `ColumnSet`. Set `false` to drop it — Teams already renders the bot avatar and name above the bubble, so the header is a duplicate. Card style only; ignored by `chips` / `compose`.
+
+**Why `Action.Submit` and not `Action.Execute`:** Microsoft's card-actions doc marks `Action.Submit` legacy and recommends `Action.Execute` for new work. Do **not** migrate this card:
+
+- `Action.Execute` sends an `adaptiveCard/action` invoke with **no user-visible message**, so a tapped prompt would never appear as the person's turn in the transcript. The whole point of `msteams.messageBack` is that echo.
+- `msTeams.feedback.hide` is supported on `Action.Submit` **only** — with `Action.Execute` the "Your response was sent to the app" line comes back and cannot be suppressed.
 
 Back-compat: when `suggestion_style` is absent, `reply_format === 'text'` maps to `chips`; otherwise `card`. When `card_header` is absent it defaults on, preserving pre-toggle rendering.
 
