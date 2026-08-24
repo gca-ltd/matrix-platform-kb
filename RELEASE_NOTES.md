@@ -10,6 +10,10 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-08-24
+
+- **MSA staging portal access**: Agency Portal now shows **Matrix Sales Automation** → `/msa-staging-main/` for Sharp SIR Broker, Senior Broker, Area Manager, Team Leader, Sales Manager, Sales Director, Call Centre, and CORE Team (`20260824110000_msa_staging_main_portal_and_sales_access.sql`). Documented in `app-catalog.md` + `security-model.md`.
+
 ## Unreleased — 2026-08-22
 
 - **Vanilla chat baseline (DE)**: removed `system_directives` / System tab; Playground prompt is operator fields only. ADR-041 trimmed to single-path MCP routing; Qobrix stays `oauth_user`.
