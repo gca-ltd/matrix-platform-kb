@@ -147,6 +147,18 @@ The 50ms test budget is laxer than the 20ms production budget because the test r
 - **Key scenarios**: Single-property hot path, filtered search hot path, fuzzy text, geo radius, deep cursor pagination, semantic search (Phase 2).
 - **CI gating**: `test_atlas_listings_search_perf.sh` runs on PR; production p99 monitored via Supabase logs / Grafana.
 
+## MSA / Qobrix read path (legacy CRM bridge)
+
+Matrix Sales Automation reads open CRM history from the **Qobrix REST API** via Supabase Edge Functions (`qobrix-pipeline`, `qobrix-contacts`, …). This path is **not** the CDL `listings-search` contract above.
+
+| Rule | Rationale |
+|---|---|
+| **Upstream fan-out is the dominant cost** — sequential paginated `GET` loops and per-row enrichment (N+1) dominate latency, not App DB round trips. | Parallelise paginated upstream reads (bounded concurrency, preserve page order). |
+| **Tenant-global lookups may be cached in Postgres** | Qobrix user display names, reference vocab, developer mirror — identical for every viewer. Precedent: `developer_cache`, `qobrix_reference_cache`, `qobrix_user_cache`. |
+| **Per-agent-scoped payloads must NOT be shared across viewers** | Qobrix scopes record visibility per logged-in agent; board rows are further filtered by SSO scope. Never cache opportunity/contact lists tenant-wide without session isolation. |
+| **POST-invoked EFs cannot use HTTP `Cache-Control`** | The SPA calls EFs via `supabase.functions.invoke` (POST). CDN/ETag caching does not apply; optimise upstream parallelism and Postgres mirrors instead. |
+| **Instrument before/after** | Emit one structured JSON timing line per request (`ef`, `tab`, `ms_total`, `phases`) — same pattern as `listings-search` monitoring. |
+
 ## Cross-Reference
 
 | For | See |
