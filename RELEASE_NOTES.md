@@ -12,6 +12,7 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-24
 
+- **Cache discipline (tenant scope + tiered refresh)**: `performance.md` adds two rules — every call site must pass the tenant scope or the Postgres mirror is silently bypassed, and a stale hot tier refreshes from the next tier down (never straight from upstream). Caught by the MSA Calendar agenda path skipping `qobrix_user_cache`.
 - **MSA Qobrix read-path performance**: `performance.md` documents upstream fan-out as the dominant EF cost, parallel pagination, tenant-global Postgres mirrors (`qobrix_user_cache`), per-agent isolation rules, and structured timing instrumentation.
 - **Cache discipline for tenant-global Postgres mirrors**: `performance.md` adds the five rules every mirror must satisfy — read the `synced_at` you write (a write-only `synced_at` is a frozen cache), stale-while-revalidate off the *oldest* row rather than blocking a user, re-enter the upstream session via `runInSession` for background refreshes, negatively cache ids the upstream has no record of, and cooldown + single-flight the expensive sweep. Reference implementation: `_shared/qobrix-users.ts`.
 - **Read-only overlays must never gate primary render**: `performance.md` documents that optional overlays (Outlook/Graph, …) stream in after primary data — do not fold overlay `isLoading` into the page skeleton (MSA Calendar fix).

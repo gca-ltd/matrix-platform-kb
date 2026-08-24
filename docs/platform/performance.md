@@ -163,7 +163,7 @@ Matrix Sales Automation reads open CRM history from the **Qobrix REST API** via 
 
 A Postgres mirror that is never re-synced is a **frozen cache**: it serves confidently
 wrong data forever. `_shared/qobrix-users.ts` is the reference implementation — any new
-mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all five rules.
+mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all seven rules.
 
 | Rule | Why |
 |---|---|
@@ -172,6 +172,8 @@ mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all five 
 | **Re-enter the Qobrix session explicitly for background work** via `runInSession(currentQobrixSession(), …)`, captured synchronously during the request. | A task that outlives its request loses the AsyncLocalStorage session and every `qFetch` inside it fails 401. |
 | **Negatively cache ids the upstream has no record of.** | Deactivated users still own open records. Without a negative cache a single unresolvable id re-sweeps the entire upstream directory on *every* request — the cache silently stops working while still looking correct. |
 | **Cooldown + single-flight on the expensive refresh.** One sweep per isolate per window (failures start the cooldown too), and concurrent callers share the in-flight promise. | Bounds worst-case upstream load and stops a stampede on cold start or upstream outage. |
+| **Every call site must pass the tenant scope.** Omitting `tenantId` skips the Postgres tier and buckets the memory map under a shared `__global__` key. | The Calendar agenda tab shipped this way — it paid for a full `/users` directory sweep on every cold isolate while the board sat on a warm Postgres mirror. Latent cross-tenant name mixing too. |
+| **A stale hot tier refreshes from the next tier down, never straight from upstream.** Memory TTL (5 min) ≪ Postgres TTL (6 h). Stale memory → background `readPgCache` + re-stamp; escalate to a directory sweep only when Postgres itself is past TTL. | Otherwise a busy isolate sweeps upstream every cooldown window forever and the middle tier is decorative. |
 
 Emit per-tier hit counters (`owner_cache:{mem,pg,upstream,negative,unresolved,swept}`) in the
 timing line. A cache whose hit rate cannot be read from logs cannot be trusted to work.
