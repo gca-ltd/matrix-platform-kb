@@ -575,44 +575,44 @@ stamped `owner_team_id = get_primary_team_id()` (= `team_ids[1]`). Team-scoped R
 group membership stamps `owner_team_id = NULL`, and Team Leaders / Area Managers /
 Sales Managers never see those rows — with no error.
 
-**One group per broker; many for managers.** `resolveTeams` returns memberships
-unordered, so a Broker in two groups gets a nondeterministic primary team across
-sessions. Brokers / Senior Brokers must belong to **exactly one** SSO group.
-Managers (team scope) may belong to many — that is how an Area Manager covers
-several offices.
+**One group per broker; managers may cover one or many offices.** `resolveTeams`
+returns memberships unordered, so a Broker in two groups gets a nondeterministic
+primary team across sessions. Brokers / Senior Brokers must belong to **exactly
+one** SSO group. Managers (team scope) may belong to many when they truly oversee
+multiple offices (`= ANY(team_ids)`).
 
-Live Sharp SIR holders (`user_role_assignments` ∩ `auth.users`, measured
-2026-08-24; ignore rows whose `user_id` is missing from `auth.users`):
+**Cyprus Sotheby's offices (ground-truth roster, 32 people).** Three offices, each
+with one regional Area Manager lead. SSO groups (migration
+`20260824130000_cy_roster_office_group_align.sql`):
 
-| Role | Scope | Live holders | Notes |
-|------|-------|-------------:|-------|
-| Broker | self | 57 | Prefer exactly one office group |
-| Senior Broker | self | 1 | |
-| Area Manager | team | 7 | Multi-office memberships OK |
-| Team Leader | team | 3 | |
-| Sales Manager | team | 1 | |
-| Sales Director | global | 1 | Global read; team still stamps creates |
-| Call Centre | team | 5 | |
-| CORE Team | global | 8 | Global read; team optional |
+| Office | Headcount | Lead (Area Manager) | SSO group |
+|--------|----------:|---------------------|-----------|
+| Paphos (Pafos) | 14 | Iness Karayianni | `CSIR Sales Paphos` (`cb453422-…`) |
+| Limassol | 11 | Olga Khokhlova (AD: Olga McKibben) | `CSIR Sales Limassol` (`5b3996a5-…`) |
+| Larnaca | 7 | Liza Kazares (AD: Liza Kazarez; CRM: Liza Kucere) | `CSIR Sales Larnaca` (`f85fb092-…`) |
 
-**Cyprus + per-office coexistence.** Country coverage remains the coarse SSO group
-**CSIR Sales** (`4d2bdfe9-…`, migration
-`20260817143000_populate_csir_sales_cyprus_brokers.sql`). Per-office sales groups
-(`CSIR Sales Limassol` / `Paphos` / `Larnaca`, `HSIR Sales Budapest`, `RUSIR Sales`)
-coexist; new unassigned brokers are mapped from `ad_users.officeLocation` + `city`
-(migration `20260824123000_msa_staging_team_membership_backfill.sql`). Cyprus Area
-Managers / Sales Manager who already sit in CSIR Sales also receive the three
-per-office CSIR groups so newly stamped office rows stay visible. Unresolvable
-users (no office/city) are **not** auto-assigned — ops must place them manually
-(see migration comment + `~/tmp/msa_staging_unmapped_team_users_20260824.md`).
+Each roster member is in **exactly one** of those three groups (not the coarse
+`CSIR Sales` bucket). Each lead's `team_ids` is only their own office, so
+team-scoped RLS keeps Paphos / Limassol / Larnaca pipelines separate. Olga was
+granted Area Manager (primary) + Broker to match Iness / Liza.
+
+Two Paphos roster members are still AD-only (no `auth.users` yet) and must be
+assigned to `CSIR Sales Paphos` after first SSO login: Alexand Siomin
+(`siomin@` / `asiomin2@`) and Lilia Chrysostomou (`lchrysostomou@`) — see
+`~/tmp/cy_roster_missing_auth_20260824.md`.
+
+The coarse **CSIR Sales** group (`4d2bdfe9-…`) remains for non-roster Cyprus
+accounts (shared mailboxes, back-office, etc.). Cross-market managers (e.g. Sales
+Manager covering all CY offices) may still hold multiple per-office memberships.
+HSIR / RUSIR office groups are unchanged
+(`20260824123000_msa_staging_team_membership_backfill.sql`).
 
 Area Manager stays at scope `team` (not `global`), so Hungary/Kazakhstan leads stay
 out of a CY manager's view unless that manager is also in the matching HSIR/Kaz
 group. Dual-role users (Broker + Area Manager) switch via the avatar RoleSwitcher;
 `oauth-token` honours `user_metadata.active_role_id` on both code exchange and
-refresh so the chosen role survives re-login. Dual-role managers may carry
-multi-membership for coverage; when acting as Broker the stamp picks
-`team_ids[1]` among those groups.
+refresh so the chosen role survives re-login. With a single office group, the
+`owner_team_id` stamp is stable when they act as Broker.
 
 ## Role-to-Page Mapping Example (ITSM)
 
