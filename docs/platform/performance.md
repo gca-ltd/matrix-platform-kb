@@ -176,6 +176,15 @@ mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all five 
 Emit per-tier hit counters (`owner_cache:{mem,pg,upstream,negative,unresolved,swept}`) in the
 timing line. A cache whose hit rate cannot be read from logs cannot be trusted to work.
 
+### Read-only overlays must never gate primary render
+
+Optional overlays (Outlook calendar via Microsoft Graph, ICS subscription status, …)
+may stream in after the primary Qobrix / App-DB data. **Do not** fold overlay
+`isLoading` into the page-level skeleton gate — Graph status latency then blocks
+every user, including those who never connected the overlay. Pattern: render as
+soon as primary queries resolve; merge overlay events reactively; use
+`placeholderData: keepPreviousData` so range navigation does not blank the grid.
+
 ## Cross-Reference
 
 | For | See |
