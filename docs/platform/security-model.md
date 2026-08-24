@@ -602,9 +602,11 @@ assigned to `CSIR Sales Paphos` after first SSO login: Alexand Siomin
 `~/tmp/cy_roster_missing_auth_20260824.md`.
 
 The coarse **CSIR Sales** group (`4d2bdfe9-…`) remains for non-roster Cyprus
-accounts (shared mailboxes, back-office, etc.). Cross-market managers (e.g. Sales
-Manager covering all CY offices) may still hold multiple per-office memberships.
-HSIR / RUSIR office groups are unchanged
+accounts (shared mailboxes, back-office, etc.). Do **not** infer CY office
+coverage from the Sharp SIR `Sales Manager` role alone — e.g. Elena Nedvetskaya
+(`enedvetskaya@…`) is AD **Chief People Officer** / HR and belongs only in
+`CORE HR` (fix: `20260824131000_remove_cpo_csir_sales_groups.sql`). HSIR /
+RUSIR office groups are unchanged
 (`20260824123000_msa_staging_team_membership_backfill.sql`).
 
 Area Manager stays at scope `team` (not `global`), so Hungary/Kazakhstan leads stay
