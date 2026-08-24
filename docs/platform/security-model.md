@@ -567,16 +567,52 @@ wildcard originally from `20260803120000_sir_area_manager_qobrix_v10_wildcard.sq
 Team-scope roles without a config row get `NO_ACCESS` in `useRoleConfig` — the
 wildcard grant is required for those roles to pass `ProtectedRoute`.
 
-**Cyprus Area Manager team membership.** Area Manager stays at scope `team`
-(not `global`), so Hungary/Kazakhstan leads stay out of a CY manager's view.
-Country coverage is the SSO group **CSIR Sales** (`4d2bdfe9-…`): Cyprus Broker
-and Area Manager holders (`@cyprus-sothebysrealty.com`,
-`@sothebysrealty-cyprus.com`) are members (migration
-`20260817143000_populate_csir_sales_cyprus_brokers.sql`). Team-scoped RLS and
-board filters match `owner_team_id` against JWT `team_ids`. Dual-role users
-(Broker + Area Manager) switch via the avatar RoleSwitcher; `oauth-token`
-honours `user_metadata.active_role_id` on both code exchange and refresh so
-the chosen role survives re-login.
+**Team membership is required for management visibility (MSA / Qobrix).** Granting
+a role + `apps_allowed` is not enough. JWT `team_ids` is built from
+`sso_user_group_memberships` by `oauth-token` / `oauth-userinfo`. New MSA rows are
+stamped `owner_team_id = get_primary_team_id()` (= `team_ids[1]`). Team-scoped RLS
+(`can_read_scoped_row`) matches `owner_team_id = ANY(team_ids)`. A user with **no**
+group membership stamps `owner_team_id = NULL`, and Team Leaders / Area Managers /
+Sales Managers never see those rows — with no error.
+
+**One group per broker; many for managers.** `resolveTeams` returns memberships
+unordered, so a Broker in two groups gets a nondeterministic primary team across
+sessions. Brokers / Senior Brokers must belong to **exactly one** SSO group.
+Managers (team scope) may belong to many — that is how an Area Manager covers
+several offices.
+
+Live Sharp SIR holders (`user_role_assignments` ∩ `auth.users`, measured
+2026-08-24; ignore rows whose `user_id` is missing from `auth.users`):
+
+| Role | Scope | Live holders | Notes |
+|------|-------|-------------:|-------|
+| Broker | self | 57 | Prefer exactly one office group |
+| Senior Broker | self | 1 | |
+| Area Manager | team | 7 | Multi-office memberships OK |
+| Team Leader | team | 3 | |
+| Sales Manager | team | 1 | |
+| Sales Director | global | 1 | Global read; team still stamps creates |
+| Call Centre | team | 5 | |
+| CORE Team | global | 8 | Global read; team optional |
+
+**Cyprus + per-office coexistence.** Country coverage remains the coarse SSO group
+**CSIR Sales** (`4d2bdfe9-…`, migration
+`20260817143000_populate_csir_sales_cyprus_brokers.sql`). Per-office sales groups
+(`CSIR Sales Limassol` / `Paphos` / `Larnaca`, `HSIR Sales Budapest`, `RUSIR Sales`)
+coexist; new unassigned brokers are mapped from `ad_users.officeLocation` + `city`
+(migration `20260824123000_msa_staging_team_membership_backfill.sql`). Cyprus Area
+Managers / Sales Manager who already sit in CSIR Sales also receive the three
+per-office CSIR groups so newly stamped office rows stay visible. Unresolvable
+users (no office/city) are **not** auto-assigned — ops must place them manually
+(see migration comment + `~/tmp/msa_staging_unmapped_team_users_20260824.md`).
+
+Area Manager stays at scope `team` (not `global`), so Hungary/Kazakhstan leads stay
+out of a CY manager's view unless that manager is also in the matching HSIR/Kaz
+group. Dual-role users (Broker + Area Manager) switch via the avatar RoleSwitcher;
+`oauth-token` honours `user_metadata.active_role_id` on both code exchange and
+refresh so the chosen role survives re-login. Dual-role managers may carry
+multi-membership for coverage; when acting as Broker the stamp picks
+`team_ids[1]` among those groups.
 
 ## Role-to-Page Mapping Example (ITSM)
 

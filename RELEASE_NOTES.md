@@ -13,6 +13,7 @@ date: 2026-08-17
 ## Unreleased — 2026-08-24
 
 - **MSA staging portal access**: Agency Portal now shows **Matrix Sales Automation** → `/msa-staging-main/` for Sharp SIR Broker, Senior Broker, Area Manager, Team Leader, Sales Manager, Sales Director, Call Centre, and CORE Team (`20260824110000_msa_staging_main_portal_and_sales_access.sql`). Documented in `app-catalog.md` + `security-model.md`.
+- **MSA team-membership prerequisite**: document that JWT `team_ids` / `owner_team_id` stamping require `sso_user_group_memberships` (one group per broker; multi-office OK for managers); correct live holder counts to `user_role_assignments` ∩ `auth.users`; note per-office backfill + `display_order` 33 (`20260824123000_msa_staging_team_membership_backfill.sql`).
 
 ## Unreleased — 2026-08-22
 
