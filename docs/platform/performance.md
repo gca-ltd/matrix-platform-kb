@@ -159,6 +159,23 @@ Matrix Sales Automation reads open CRM history from the **Qobrix REST API** via 
 | **POST-invoked EFs cannot use HTTP `Cache-Control`** | The SPA calls EFs via `supabase.functions.invoke` (POST). CDN/ETag caching does not apply; optimise upstream parallelism and Postgres mirrors instead. |
 | **Instrument before/after** | Emit one structured JSON timing line per request (`ef`, `tab`, `ms_total`, `phases`) — same pattern as `listings-search` monitoring. |
 
+### Cache discipline for tenant-global Postgres mirrors
+
+A Postgres mirror that is never re-synced is a **frozen cache**: it serves confidently
+wrong data forever. `_shared/qobrix-users.ts` is the reference implementation — any new
+mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all five rules.
+
+| Rule | Why |
+|---|---|
+| **Write `synced_at` and read it.** Rows older than a TTL (6h for user names) trigger a refresh. | Without this a renamed or newly hired user renders a raw UUID indefinitely. A `synced_at` column that is only ever written is a latent bug. |
+| **Stale-while-revalidate — never block a user on a refresh.** Serve the cached row, then refresh behind the response with `EdgeRuntime.waitUntil`. | Refreshing inline turns one unlucky request into the slowest of the hour. Use the **oldest** `synced_at` of the rows read as the staleness signal, not the newest. |
+| **Re-enter the Qobrix session explicitly for background work** via `runInSession(currentQobrixSession(), …)`, captured synchronously during the request. | A task that outlives its request loses the AsyncLocalStorage session and every `qFetch` inside it fails 401. |
+| **Negatively cache ids the upstream has no record of.** | Deactivated users still own open records. Without a negative cache a single unresolvable id re-sweeps the entire upstream directory on *every* request — the cache silently stops working while still looking correct. |
+| **Cooldown + single-flight on the expensive refresh.** One sweep per isolate per window (failures start the cooldown too), and concurrent callers share the in-flight promise. | Bounds worst-case upstream load and stops a stampede on cold start or upstream outage. |
+
+Emit per-tier hit counters (`owner_cache:{mem,pg,upstream,negative,unresolved,swept}`) in the
+timing line. A cache whose hit rate cannot be read from logs cannot be trusted to work.
+
 ## Cross-Reference
 
 | For | See |
