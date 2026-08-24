@@ -66,7 +66,9 @@ The MLS 2.0 RESO Web API runs as a managed process via PM2.
 - Commands: `start`, `stop`, `restart`, `status`, `logs`, `health`, `setup`
 - Auto-start on reboot via `pm2 save`
 
-**Health Check**: `GET /health` — checks Databricks connectivity, returns status + catalog/schema info.
+**Health Check**:
+- `GET /health` — **shallow liveness only**. Returns `status` + catalog/schema. Does **not** query Databricks. Safe for frequent external probes / load-balancer checks.
+- `GET /health/databricks` — **on-demand deep check**. Runs `SELECT 1` against the serverless SQL warehouse. Call manually only — never wire into automated probes (a 30s probe here previously kept the warehouse awake 24/7 and spiked cost ~40×; fixed 2026-07-15, committed under SR000510).
 
 ### MLS 2.0 ETL Pipeline (Cron)
 
