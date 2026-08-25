@@ -196,13 +196,19 @@ export const cdlClient = buildCdlClient();
 
 | Surface | Route | Owns |
 |---|---|---|
-| **Preferences** | `/preferences` | Per-user prefs (theme, language, write-mode where applicable, MCP, mailbox connect) |
-| **Administration** | `/administration` | Per-app admin (permissions, data layer, AI providers, labels, integrations, MSA Qobrix ops) |
+| **Preferences** | `/preferences` | Per-user prefs (theme, language, MCP, mailbox connect) |
+| **Administration** | `/administration` | Per-app admin (permissions, data layer, AI providers, labels, integrations, write mode, MSA Qobrix ops) |
 | **Organization** | Console `/iam/orgs/:id` only | Tenant identity, branding, currency, timezone, locations |
 
 Do **not** scaffold `/settings`, `/setup`, an Organization tab, `OrgAdminPanel`, or
 `update-tenant-settings` (removed). Apps are **read-only** for org branding/regional
 settings via the hooks above. Hard cutover: no redirect aliases for retired paths.
+
+Preferences is reachable by every signed-in user (`pageKey: profile`), so it must
+carry **only** per-user preferences. Anything that changes behaviour for other users
+— write mode above all, since it gates live CRM writes — belongs on Administration
+(`pageKey: settings`) behind an admin check. Putting write mode on Preferences is a
+privilege expansion, not a convenience.
 
 **How RLS claims reach CDL PostgREST**: the CDL RLS helpers
 (`public.get_active_scope`, `public.get_crud`,

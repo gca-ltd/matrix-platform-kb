@@ -12,9 +12,8 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-25
 
-- **Weekly security audit runbook:** `docs/platform/security-audit-runbook.md` — cadence, free Advisors vs Matrix SQL gaps, P0–P3 inventory, report template under `docs/platform/security-audits/`. Linked from `AGENTS.md`, `docs/index.md`, `docs/platform/index.md`.
-- **First baseline audit 2026-08-25:** `docs/platform/security-audits/2026-08-25.md` — Advisors + Matrix SQL across P0–P3; new backlog **S6–S9** (TRUNCATE drift, Comms RLS-off, CY admin RPCs, CDL anon DML) in `security-model.md`. No prod remediations in this pass.
 - **Org settings + Preferences/Administration IA:** `app-template.md` — org identity/branding/regional are Console `/iam/orgs/:id` only (apps read-only via branding/currency/timezone hooks); canonical app routes are `/preferences` (per-user) and `/administration` (per-app admin). Do not scaffold `/settings`, `/setup`, `OrgAdminPanel`, or `update-tenant-settings`. Hard cutover — no redirect aliases for retired paths.
+- **Write mode belongs on Administration:** `app-template.md` — Preferences is reachable by every signed-in user (`pageKey: profile`), so anything that changes behaviour for others (write mode gates live CRM writes) must sit on Administration (`pageKey: settings`) behind an admin check. Documented as a privilege-expansion rule after the IA refactor briefly exposed the toggle to all users.
 
 ## Unreleased — 2026-08-24
 
