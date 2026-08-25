@@ -10,6 +10,10 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-08-25
+
+- **Org settings + Preferences/Administration IA:** `app-template.md` — org identity/branding/regional are Console `/iam/orgs/:id` only (apps read-only via branding/currency/timezone hooks); canonical app routes are `/preferences` (per-user) and `/administration` (per-app admin). Do not scaffold `/settings`, `/setup`, `OrgAdminPanel`, or `update-tenant-settings`. Hard cutover — no redirect aliases for retired paths.
+
 ## Unreleased — 2026-08-24
 
 - **Cache discipline (tenant scope + tiered refresh)**: `performance.md` adds two rules — every call site must pass the tenant scope or the Postgres mirror is silently bypassed, and a stale hot tier refreshes from the next tier down (never straight from upstream). Caught by the MSA Calendar agenda path skipping `qobrix_user_cache`.
