@@ -254,9 +254,13 @@ EF to `matrix-platform-foundation/supabase/cdl/functions/`.
    - `matrix_sso_access_token.<client_id>` — SSO JWT (custom claims: scope, crud, team_ids, uoi, **client_id**)
    - `matrix_sso_refresh_token.<client_id>` — for token renewal
    - `matrix_sso_user.<client_id>` — cached userinfo
+   - `matrix_last_role.<client_id>` / `matrix_role_switch_ts.<client_id>` — role switch state
+   - `matrix_supabase_access_token.<client_id>` — cached SSO-Supabase token for revoke
    - Legacy un-namespaced keys are adopted once when the token's `client_id`
      claim matches this app; foreign tokens are ignored
    - Always read/write via `MatrixSSOStorage` — never raw `localStorage` for SSO keys
+   - `clearAll()` must clear **only** this app's namespaced keys (never the
+     legacy shared PKCE verifier/state — another app may be mid-login)
 5. `oauth-token` also persists `active_scope`, `active_crud`, `active_team_ids` to user's `app_metadata` (enables RLS for native token)
 6. SSO JWT injected into App DB / CDL clients via the `accessToken` hook (`postgrestAccessToken`)
 7. Proactive token refresh at 80% of expiry time; `BroadcastChannel` is also namespaced per `client_id`
