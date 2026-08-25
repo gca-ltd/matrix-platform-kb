@@ -11,6 +11,8 @@ date: 2026-08-17
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
 ## Unreleased — 2026-08-25
+- ADR-042: per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs (SR000512 follow-up); app-template.md SSO storage section updated.
+- Auth: SSO localStorage keys and BroadcastChannel are namespaced per OAuth `client_id` so co-hosted Matrix SPAs on `intranet.sharpsir.group` no longer overwrite each other's session (SR000512 follow-up). Tokens whose `client_id` claim is not this app's are ignored; a matching legacy shared-key session is adopted once.
 
 - **Org settings + Preferences/Administration IA:** `app-template.md` — org identity/branding/regional are Console `/iam/orgs/:id` only (apps read-only via branding/currency/timezone hooks); canonical app routes are `/preferences` (per-user) and `/administration` (per-app admin). Do not scaffold `/settings`, `/setup`, `OrgAdminPanel`, or `update-tenant-settings`. Hard cutover — no redirect aliases for retired paths.
 - **Write mode belongs on Administration:** `app-template.md` — Preferences is reachable by every signed-in user (`pageKey: profile`), so anything that changes behaviour for others (write mode gates live CRM writes) must sit on Administration (`pageKey: settings`) behind an admin check. Documented as a privilege-expansion rule after the IA refactor briefly exposed the toggle to all users.

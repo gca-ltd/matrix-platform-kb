@@ -248,13 +248,18 @@ EF to `matrix-platform-foundation/supabase/cdl/functions/`.
 1. App redirects to `https://intranet.sharpsir.group/sso-login/` with PKCE code challenge
 2. User authenticates via Azure AD
 3. Callback at `/auth/callback` exchanges authorization code for JWT via `oauth-token` Edge Function
-4. Tokens stored in `localStorage`:
-   - `matrix_sso_access_token` — SSO JWT (custom claims: scope, crud, team_ids, uoi)
-   - `matrix_sso_refresh_token` — for token renewal
-   - `matrix_supabase_access_token` — Supabase native token (for CDL PostgREST calls)
+4. Tokens stored in `localStorage`, **namespaced per OAuth `client_id`**
+   (see [ADR-042](../architecture/decisions/ADR-042.md)) so co-hosted SPAs on
+   `intranet.sharpsir.group` do not overwrite each other's session:
+   - `matrix_sso_access_token.<client_id>` — SSO JWT (custom claims: scope, crud, team_ids, uoi, **client_id**)
+   - `matrix_sso_refresh_token.<client_id>` — for token renewal
+   - `matrix_sso_user.<client_id>` — cached userinfo
+   - Legacy un-namespaced keys are adopted once when the token's `client_id`
+     claim matches this app; foreign tokens are ignored
+   - Always read/write via `MatrixSSOStorage` — never raw `localStorage` for SSO keys
 5. `oauth-token` also persists `active_scope`, `active_crud`, `active_team_ids` to user's `app_metadata` (enables RLS for native token)
-6. SSO JWT injected into App DB client via `accessToken` hook; native token used for CDL client
-7. Proactive token refresh at 80% of expiry time (also refreshes `app_metadata`)
+6. SSO JWT injected into App DB / CDL clients via the `accessToken` hook (`postgrestAccessToken`)
+7. Proactive token refresh at 80% of expiry time; `BroadcastChannel` is also namespaced per `client_id`
 
 ### JWT Claims Structure
 
