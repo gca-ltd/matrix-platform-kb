@@ -764,7 +764,7 @@ which keeps this change "same security level, faster + simpler."
 | # | Finding | Severity | Detail | Remediation |
 |---|---------|----------|--------|-------------|
 | S1 | **CDL multi-tenancy on `public.properties` / `properties_published` / `property_media`** | HIGH | The canonical listing tables are not tenant-scoped today (single CDL-wide dataset keyed by `source_id`). Multi-tenant scoping for distinct tenants pulling distinct MLS feeds is an open item. | Decide between (a) adding `tenant_id` to `properties`/`property_media` and tenant-scoped RLS, or (b) keeping `source_id` as the tenancy key and enforcing per-tenant `source_id` allow-lists at the EF layer. Resolve before more than one tenant ingests via `mls-sync`. (The MLS Sync control plane — `mls_settings`, `mls_sync_jobs`, `mls_sync_state`, `mls_orchestrator_runs` — is already per-tenant.) |
-| S2 | **4 SECURITY DEFINER views on SSO tables** | HIGH | `user_role_assignments`, `tenants`, `role_configurations`, `app_permissions` bypass the caller's RLS context. | Convert to `SECURITY INVOKER` (Postgres 15+) or add explicit `WHERE` clauses that re-check caller permissions. |
+| ~~S2~~ | ~~**4 SECURITY DEFINER views on SSO tables**~~ | RESOLVED (2026-08-25) | Compatibility views (`tenants`, `user_role_assignments`, `role_configurations`, `app_permissions`) ran as owner and skipped caller RLS. | `20260825153000_s2_views_security_invoker.sql`: `ALTER VIEW … SET (security_invoker = true)`. Advisors ERROR `security_definer_view` cleared (SSO 0 ERROR). Login/OAuth EFs remain `service_role`. |
 | S3 | **`app_settings` allows anonymous INSERT/UPDATE** | RESOLVED (2026-08-19) | Wave 2C (`20260819163000_sso_wave2c_anon_revoke_business.sql`): `REVOKE ALL … FROM anon` on all SSO public tables; `app_settings` policies now `TO authenticated` only. Browser apps already executed as `authz_role=authenticated`. |
 | S4 | **Leaked password protection disabled** | MEDIUM | Supabase Auth's HaveIBeenPwned integration is off. Confirmed still WARN on SSO (and CY website Auth) in weekly audit 2026-08-25. | Enable in Dashboard → Auth → Security → "Leaked password protection". |
 | ~~S5~~ | ~~**`sso_scope_levels` RLS disabled**~~ | RESOLVED (2026-08-19) | Migration `20260819151000_sso_enable_rls_category_b.sql`: RLS enabled + `sso_scope_levels_authed_read` (authenticated SELECT). EFs continue via `service_role`. |
@@ -797,6 +797,7 @@ which keeps this change "same security level, faster + simpler."
 | ~~C9~~ | Comms RLS-off ops tables (S7) | 2026-08-25 | `20260825140000_s7_rls_ops_tables.sql` on `ujowkipnqgtazmtdsnlm` |
 | ~~C10~~ | Pipeline 2.0 TRUNCATE (S6 slice) | 2026-08-25 | `20260825141000_wave2f_revoke_truncate.sql` on `kzvhqgpedapzqmwgikrw` |
 | ~~C11~~ | CDL anon DML (S9) | 2026-08-25 | `20260825142000_s9_anon_revoke_dml.sql` on `ofzcokolkeejgqfjaszq` |
+| ~~C12~~ | SSO SECURITY DEFINER compatibility views (S2) | 2026-08-25 | `20260825153000_s2_views_security_invoker.sql` on `xgubaguglsnokjyudgvc` |
 
 ### Anon GRANT vs RLS (defect class)
 
