@@ -120,6 +120,7 @@ scripts/
 | Dash fields, field mapping, x_* extensions | `docs/data-models/dash-data-model.md`, `docs/data-models/property-field-mapping.md`, `docs/data-models/platform-extensions.md` |
 | CDL schema / ETL pipeline / RESO Web API | `docs/data-models/cdl-schema.md`, `docs/data-models/etl-pipeline.md`, `docs/data-models/reso-web-api.md` |
 | Auth, roles, permissions, RLS | `docs/platform/security-model.md` |
+| Weekly infosec audit (Advisors + Matrix SQL) | `docs/platform/security-audit-runbook.md` |
 | ES256 JWT (ADR-011), SSO/CDL Third-Party Auth (ADR-012) | `docs/architecture/decisions/` |
 | SSO Edge Function API contracts | `docs/platform/sso-edge-functions.md`, `docs/platform/api-contracts.md` |
 | Deploy / operate / perf / mobile / test | `docs/platform/operations.md`, `docs/platform/performance.md`, `docs/platform/mobile-strategy.md`, `docs/platform/testing-strategy.md` |

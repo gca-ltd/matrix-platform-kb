@@ -64,6 +64,7 @@ See [app-template.md](app-template.md) for full technical details.
 |----------|-----------------|
 | [app-template.md](app-template.md) | **Start here** — How to build Matrix Apps: stack, auth, permissions, RLS, UI |
 | [security-model.md](security-model.md) | Security model: 5-level scope, 23 roles, JWT claims, RLS patterns A-E |
+| [security-audit-runbook.md](security-audit-runbook.md) | Weekly infosec audit: Advisors + Matrix SQL + inventory P0–P3 |
 | [operations.md](operations.md) | Operations: CI/CD, deployment, monitoring, logging, audit, DR/backup |
 | [compliance.md](compliance.md) | Compliance: GDPR, data protection, retention, DSAR procedures |
 | [mls-datamart.md](mls-datamart.md) | MLS 2.0 data pipeline: sources, Databricks ETL, Supabase CDL sync |

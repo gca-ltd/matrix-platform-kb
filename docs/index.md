@@ -25,6 +25,7 @@ What Sharp Matrix is, the three-platform architecture (Supabase + Databricks + L
 | [platform/app-catalog.md](platform/app-catalog.md) | All platform apps and components (11 live, 7 in progress, 6 planned) with delivery status |
 | [platform/matrix-mcp-server.md](platform/matrix-mcp-server.md) | Matrix MCP server (MLS/property): AI-agent access layer over CDL — endpoint, 5 tools, JWT auth, integration guide |
 | [platform/security-model.md](platform/security-model.md) | Security model: 5-level scope, 23 roles, JWT claims, RLS patterns A-E |
+| [platform/security-audit-runbook.md](platform/security-audit-runbook.md) | Weekly infosec audit: Advisors + Matrix SQL + project inventory |
 | [platform/operations.md](platform/operations.md) | Operations: CI/CD, deployment, monitoring, logging, audit trail, DR/backup |
 | [platform/compliance.md](platform/compliance.md) | Compliance: GDPR, data protection, retention policy, DSAR procedures |
 | [platform/kb-methodology.md](platform/kb-methodology.md) | KB design principles, versioning, contribution guidelines |

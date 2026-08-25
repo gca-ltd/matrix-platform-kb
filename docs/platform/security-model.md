@@ -766,8 +766,12 @@ which keeps this change "same security level, faster + simpler."
 | S1 | **CDL multi-tenancy on `public.properties` / `properties_published` / `property_media`** | HIGH | The canonical listing tables are not tenant-scoped today (single CDL-wide dataset keyed by `source_id`). Multi-tenant scoping for distinct tenants pulling distinct MLS feeds is an open item. | Decide between (a) adding `tenant_id` to `properties`/`property_media` and tenant-scoped RLS, or (b) keeping `source_id` as the tenancy key and enforcing per-tenant `source_id` allow-lists at the EF layer. Resolve before more than one tenant ingests via `mls-sync`. (The MLS Sync control plane — `mls_settings`, `mls_sync_jobs`, `mls_sync_state`, `mls_orchestrator_runs` — is already per-tenant.) |
 | S2 | **4 SECURITY DEFINER views on SSO tables** | HIGH | `user_role_assignments`, `tenants`, `role_configurations`, `app_permissions` bypass the caller's RLS context. | Convert to `SECURITY INVOKER` (Postgres 15+) or add explicit `WHERE` clauses that re-check caller permissions. |
 | S3 | **`app_settings` allows anonymous INSERT/UPDATE** | RESOLVED (2026-08-19) | Wave 2C (`20260819163000_sso_wave2c_anon_revoke_business.sql`): `REVOKE ALL … FROM anon` on all SSO public tables; `app_settings` policies now `TO authenticated` only. Browser apps already executed as `authz_role=authenticated`. |
-| S4 | **Leaked password protection disabled** | MEDIUM | Supabase Auth's HaveIBeenPwned integration is off. | Enable in Dashboard → Auth → Security → "Leaked password protection". |
+| S4 | **Leaked password protection disabled** | MEDIUM | Supabase Auth's HaveIBeenPwned integration is off. Confirmed still WARN on SSO (and CY website Auth) in weekly audit 2026-08-25. | Enable in Dashboard → Auth → Security → "Leaked password protection". |
 | ~~S5~~ | ~~**`sso_scope_levels` RLS disabled**~~ | RESOLVED (2026-08-19) | Migration `20260819151000_sso_enable_rls_category_b.sql`: RLS enabled + `sso_scope_levels_authed_read` (authenticated SELECT). EFs continue via `service_role`. |
+| S6 | **TRUNCATE re-granted / never revoked on HRMS, MSA Hungary, Pipeline 2.0** | HIGH | Weekly audit 2026-08-25 Matrix SQL: `TRUNCATE` still held by `anon`+`authenticated` on HRMS (42 tables), MSA Hungary (63), Pipeline 2.0 (9). Wave 2F covered six projects; these either drifted or were out of that wave. RLS does not apply to `TRUNCATE`. | Re-apply Wave 2F revoke + `ALTER DEFAULT PRIVILEGES … REVOKE TRUNCATE` per project; verify with runbook SQL. See [security-audits/2026-08-25.md](security-audits/2026-08-25.md). |
+| S7 | **Comms: RLS disabled on operational tables** | HIGH | Advisors ERROR on `gdpr_requests`, `audit_log`, `campaign_jobs`, `api_rate_counters` (`ujowkipnqgtazmtdsnlm`). | Enable RLS; service-role or scoped policies; revoke anon grants. |
+| S8 | **CY Web Site: anon EXECUTE on admin SECURITY DEFINER RPCs** | HIGH | Anon can call `update_user_role`, `remove_user_role`, `update_user_permission`, `handle_new_user_admin`, etc. via `/rest/v1/rpc/…`. | `REVOKE EXECUTE … FROM PUBLIC, anon` (and tighten `authenticated` where needed); leave only intentional public RPCs. |
+| S9 | **CDL anon DML grants remain on ~30 tables** | HIGH | Wave 2 revoked anon SELECT on key listing tables; INSERT/UPDATE/DELETE still granted on `contacts`, `transaction_management`, `properties_published`, showings chain, etc. RLS enabled without anon policies → PostgREST likely denies, but grants violate defense-in-depth. | Project-wide `REVOKE` anon DML; extend Wave 2 pattern. |
 
 ### Medium-Term (Hardening)
 
@@ -816,6 +820,7 @@ WHERE table_schema='public' AND privilege_type='TRUNCATE'
 | For | See |
 |-----|-----|
 | How apps consume auth/permissions | [app-template.md](app-template.md) |
+| Weekly infosec audit runbook + dated reports | [security-audit-runbook.md](security-audit-runbook.md), [security-audits/](security-audits/) |
 | ES256 migration decision and progress | [ADR-011](../architecture/decisions/ADR-011.md) |
 | App catalog with per-app RESO resource access | [app-catalog.md](app-catalog.md) |
 | Full ecosystem architecture | [ecosystem-architecture.md](ecosystem-architecture.md) |
