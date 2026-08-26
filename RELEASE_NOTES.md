@@ -12,6 +12,7 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-25
 
+- ADR-043: person-keyed MCP OAuth grants for channel callers + consent binding (`identityProbe`); extends ADR-041. Documented in `mcp-client.md`.
 - **Urgent HIGH remediations (S7 / S6-Pipeline / S9 / S2):** Comms RLS on ops tables; Pipeline 2.0 Wave 2F TRUNCATE revoke; CDL `REVOKE` anon INSERT/UPDATE/DELETE (SELECT kept); SSO compatibility views `security_invoker=true`. Documented in `security-model.md` (C9–C12) + `security-audits/2026-08-25.md`. Still open: CY Website S8, HRMS/MSA-HU S6, SSO S4 (leaked-password WARN).
 - ADR-042: per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs (SR000512 follow-up); app-template.md SSO storage section updated.
 - Auth: SSO localStorage keys and BroadcastChannel are namespaced per OAuth `client_id` so co-hosted Matrix SPAs on `intranet.sharpsir.group` no longer overwrite each other's session (SR000512 follow-up). Tokens whose `client_id` claim is not this app's are ignored; a matching legacy shared-key session is adopted once.

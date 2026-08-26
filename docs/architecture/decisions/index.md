@@ -47,3 +47,5 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-039](ADR-039.md) | MCP reference architecture: the Qobrix stack (modes A–D, RS/AS split, introspection + vault) | Accepted |
 | [ADR-040](ADR-040.md) | Digital Employees MCP client contract (five auth modes, principal model, encrypted tokens) | Accepted |
 | [ADR-041](ADR-041.md) | Single-path Qobrix MCP (auto routing on `/mcp`); vanilla chat baseline | Accepted |
+| [ADR-042](ADR-042.md) | Per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs | Accepted |
+| [ADR-043](ADR-043.md) | Person-keyed MCP grants and OAuth consent binding (Digital Employees) | Accepted |

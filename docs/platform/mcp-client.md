@@ -29,8 +29,38 @@ handling wrap those tools — we do **not** inject synthetic tools.
 ### `oauth_user` (Qobrix and remote Mode D connectors)
 
 The client is an OAuth 2.1 + PKCE user agent; callback
-`{SUPABASE_URL}/functions/v1/mcp-oauth/callback`. HTTP 401 from the remote
-server surfaces as a tool error — not a custom platform protocol.
+`{SUPABASE_URL}/functions/v1/mcp-oauth/callback`.
+
+Token storage is keyed by `(server_id, principal_kind, principal_id)`:
+
+| Caller | `principal_kind` | `principal_id` |
+|--------|------------------|----------------|
+| Signed-in Playground | `sso_user` | Matrix SSO user uuid |
+| Teams / WhatsApp with linked `sso_user_id` | `sso_user` | that uuid |
+| Channel caller with a channel-asserted email | `person` | `principals.id` (email-verified human) |
+| Unlinked channel identity | `channel_identity` | `channel_identities.id` |
+
+`person` unifies grants across every Teams thread for the same human so one
+sign-in covers all group chats. See [ADR-043](../architecture/decisions/ADR-043.md).
+
+Auth failures surface as `AuthRequiredError` when:
+
+- the remote MCP server returns HTTP 401/403, **or**
+- an `oauth_user` / `oauth_service` tool result is `isError` with an auth-shaped
+  body (`Unauthorized`, `401`, `invalid_token`, …). In that case the client
+  force-refreshes once; on a second failure it clears the stored grant and
+  raises `auth_required`.
+
+Group threads never receive a sign-in link (that is how a grant was previously
+bound to the wrong human). Private threads get a one-time authorize URL.
+
+#### Consent binding (`auth_config.identityProbe`)
+
+Optional on `oauth_user` servers. After the OAuth callback stores a grant, the
+client calls `identityProbe.tool` and reads `identityProbe.emailPath` from the
+JSON result. If it does not match `mcp_oauth_states.expected_email`, the grant
+is deleted and the user sees "Wrong account". Qobrix uses
+`qobrix_whoami` → `profile.user.username`.
 
 ### `server_managed` (Mode C servers)
 
@@ -51,7 +81,7 @@ memory blocks when enabled). No platform-injected directive strings.
 supabase/functions/_shared/mcp/
   types.ts, errors.ts, crypto.ts, transport.ts, client.ts, registry.ts, principal.ts
   auth/apikey.ts
-  auth/oauth/{discovery,client,flow,tokens}.ts
+  auth/oauth/{discovery,client,flow,tokens,consent-bind}.ts
 ```
 
 ## Schema
