@@ -165,6 +165,60 @@ Nightly cron `recommendations-cron`:
 
 ---
 
+## 3a. Agent memory retrieval (Digital Employees)
+
+App-local to `matrix-digital-employees` (`agent_memories` on Lovable Cloud
+`mihslqjjclbrqelnjjpb`). Complements CDL RAG (`knowledge_chunks`): memory answers
+"what do I know about this person / thread?", RAG answers "what does the company
+know?".
+
+### Composite recall (`match_agent_memories`)
+
+Hybrid retrieval mirrors `match_knowledge_chunks`:
+
+1. **Vector lane** — cosine ANN over `embedding` (HNSW).
+2. **Keyword lane** — `websearch_to_tsquery` over `to_tsvector('english', content)`.
+3. **RRF fusion** (k=60), then min-max normalise to `rel`.
+4. **Recency** — `exp(-ln(2) * age_hours / half_life_hours)` where age uses
+   `greatest(created_at, last_recalled_at)`. Default half-life **14 days**
+   (`memory_config.halfLifeDays`).
+5. **Score** — `0.55 * rel + 0.25 * importance + 0.20 * recency`.
+6. **Gate** — keep rows with `similarity >= minSimilarity` (default 0.15) **or**
+   an FTS match, so unrelated vectors drop while keyword hits survive.
+7. Optional `p_since` temporal filter on `created_at`.
+
+Scope filters (`thread` / `person` / `shared` / `channel` / `group`) and
+`expires_at` remain enforced inside the `SECURITY DEFINER` RPC.
+
+### Write path
+
+- Post-turn `consolidateMemory` asks the summariser for per-fact **importance**
+  (0.9 identity/preference/commitment, 0.5 useful context, 0.2 ephemeral) and
+  drops anything below **0.25**.
+- `upsert_agent_memory` merges near-duplicates (≥ **0.92** cosine within the same
+  tenant/employee/scope/subject) instead of inserting another row.
+- Recalled ids are reinforced via `touch_agent_memories` (`last_recalled_at`,
+  `recall_count++`) off the critical path.
+
+### Retention prune
+
+Daily cron `agent-memory-prune` (03:17 UTC) runs `prune_agent_memories()`:
+deletes rows past `expires_at`, plus `short_term` rows older than 30 days.
+
+### Data-subject export / forget
+
+`governance-api` actions (SSO + CRUD gated):
+
+| Action | Effect |
+|---|---|
+| `listPrincipals` | Email-prefix search within the tenant |
+| `exportPrincipal` | JSON bundle: principal, channel identities, person-scoped memories, authored messages, MCP tool calls. Audit `principal.export`. |
+| `forgetPrincipal` | `memories` — delete person-scoped memories; `all` — also clear identity links and MCP tokens. Audit `principal.forget`. Messages stay for audit. |
+
+UI: Administration → Privacy (`DataSubjectPanel`).
+
+---
+
 ## 4. MCP server (`cdl-mls`)
 
 A Model Context Protocol server exposing the CDL as tools for AI agents (Cursor, Claude Desktop, internal copilots, `matrix-pipeline` CRM Copilot).
