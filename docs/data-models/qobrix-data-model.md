@@ -89,17 +89,28 @@ Buyers, sellers, leads, and other persons.
 
 ### Opportunities (Deals)
 
-Tracks buyer-side deals through the pipeline.
+Tracks buyer-side deals through the pipeline. In Qobrix UI this resource is often
+labelled **Lead**; `Contract.opportunity_id` carries the same title. There is **no
+enum** on `Opportunity.status` (`maxLength: 35`) — values are tenant **Workflow
+Stages** (`GET /workflow-stages`).
+
+**MSA surface partition** ([ADR-044](../architecture/decisions/ADR-044.md)): the
+same Qobrix Opportunity is split across MSA **Leads** (pre-qualification:
+`new`, `in_process`, `enquiry`, `asleep`, `not_interested`) and **Pipeline**
+(sales: `potential`, `appointment`, `appt_follow_up`, `closed_won`,
+`closed_lost`). Contracts do not change the surface; they override the pipeline
+column (`reserved` → contracting, `agreed` → payment / Pending per ADR-029).
 
 | Key Fields | Description |
 |-----------|-------------|
 | id | UUID |
 | contact_id | Related contact |
 | amount | Deal value |
-| status | Pipeline stage |
+| status | Tenant workflow stage (not a fixed enum) |
 | probability | Close probability % |
 | expected_close_date | Expected closing date |
 | assigned_to | Responsible broker |
+| custom_enquiry_stage_type | Disqualification reason when stage is Not Interested (`Agent \| Double \| Invalid Request \| Not Reached \| Referral \| Trash`) — **not** a stage itself |
 
 ### Property Viewings (Showings)
 

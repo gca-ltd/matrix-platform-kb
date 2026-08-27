@@ -232,6 +232,23 @@ Append-only.
 | `Active` -> `Inactive` | Time since last engagement, opt-out events | `ContactStatus = Inactive`, freeze prospecting |
 | Reverse prospecting visibility | `Contacts.ReverseProspectingEnabledYN` and listing's RP setting | Whether listing agents can see this contact's interest |
 
+## Sharp SIR / MSA flavour (Qobrix bridge)
+
+Canonical `Lead` → `Prospect` maps onto MSA's **Leads inbox** → **Pipeline**, not
+onto a single Qobrix stage. See [ADR-044](../../../architecture/decisions/ADR-044.md).
+
+| MSA Leads status | Typical Qobrix stage | Notes |
+|------------------|----------------------|-------|
+| `new` | `new` | Fresh enquiry |
+| `contacting` | `in_process` | Call-centre contact attempts |
+| `enquiry` | `enquiry` | Still pre-qualification |
+| `nurturing` | `asleep` | Return-to-nurture / quiet lead; `nurture_next_touch_at` |
+| `qualified` | *(left Leads)* | After `qualify_lead_v2`; record is on Pipeline |
+| `disqualified` | `not_interested` | Reason from `custom_enquiry_stage_type` |
+
+Do **not** conflate lead qualification with the Pipeline board column named
+`qualification` (requirements gate before Matching).
+
 ## Cross-resource interactions
 
 - A `Contacts` row's `OwnerMember` is a `Member` row; see
