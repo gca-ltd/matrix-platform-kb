@@ -30,18 +30,21 @@ JWT verification follows ADR-032: `verify_jwt: false` on the EF; custom `jwtVeri
 
 ## Follow-up prompt surfaces (`suggestion_style`)
 
-AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.ts`) can render four ways per channel (`channels.config.suggestion_style`):
+AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.ts`) can render five ways per channel (`channels.config.suggestion_style`):
 
 | Style | Reply body | Prompt UI | Notes |
 |---|---|---|---|
-| `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; identical in 1:1, group and channel. **Cannot** carry a bot @mention — cold group/channel taps still need a manual `@`. |
-| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat`. **Cannot** carry a bot @mention. |
-| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental). With `suggestions_mention_bot: true`, the Graph `chatMessage` includes a real bot mention so a tapped suggestion addresses the bot even on a cold thread. |
+| `card` (default) | Adaptive Card attachment | Card-root `Action.Submit` + `msteams.messageBack` | Buttons inside the bubble; identical in 1:1, group and channel. Cold group/channel taps still need a manual `@` (or use `submit` style below). |
+| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat`. Tap posts a user-visible message. |
+| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental). Does **not** @mention the bot — see below. |
+| `submit` | Plain markdown `message` | `suggestedActions` + `Action.Submit` | Tap sends a `suggestedAction/submit` **invoke** straight to the bot — no user-visible message and no @mention needed, so it works in a cold group chat or channel. The reply restates "You asked: …" so other participants can follow. |
 | `off` | Plain markdown `message` | None | No follow-up prompts |
 
 **Platform constraint (Microsoft Teams):** `suggestedActions` are **not supported on messages with attachments**. An Adaptive Card is an attachment, so card-style replies and below-bubble chips are **mutually exclusive**. The Channels UI sets `reply_format` and `suggestion_style` together.
 
-**Addressing the bot from a suggestion (`suggestions_mention_bot`):** only `Action.Compose` is documented to carry @mentions (its `value` is a Graph [`chatMessage`](https://learn.microsoft.com/en-us/graph/api/resources/chatmessage) with a `mentions` collection). When the switch is on and `bot_app_id` is set, each compose action in a **group chat or channel** prefills `@Name <prompt>` with `mentions[].mentioned.application` (`applicationIdentityType: "bot"`). Personal 1:1 chats already address the bot — the mention is skipped there, because injecting it made Teams drop the entire `suggestedActions` set. The display name matches the Teams manifest `name.short` (`mf_name` or the employee name, ≤30 chars). Card `messageBack` and `imBack` have no mention channel — leave them alone, or switch the reply surface to compose. Sources: [suggested actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [channel and group conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations), [Graph messaging overview — mentions](https://learn.microsoft.com/en-us/graph/teams-messaging-overview).
+**Payload parity:** every `suggestedActions` payload includes `to: [activity.from.id]` (matching Microsoft SDK samples) and suggestion titles are capped at 25 characters — longer titles make Teams drop chips silently ([OfficeDev/Microsoft-Teams-Samples#1465](https://github.com/OfficeDev/Microsoft-Teams-Samples/issues/1465)).
+
+**Addressing the bot from a suggestion (`suggestions_mention_bot`):** **disabled, has no effect.** A Graph bot mention in an `Action.Compose` `chatMessage` made Teams discard the entire `suggestedActions` set (observed 2026-08-28, group chat, `text_format: markdown`). The Channels UI switch is rendered off and inactive. Revival point: flip `MENTION_SUGGESTIONS_SUPPORTED` to `true` in `_shared/teams-activity.ts` and retest. Until then, use `suggestion_style: "submit"` so taps reach the employee without a mention. Sources: [suggested actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions) (`Action.Submit` / `suggestedAction/submit`), [channel and group conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations).
 
 **Scope behaviour:** `suggestedActions` are supported in **all scopes**, but not identically — in `personal` they render as smart replies, so only the actions on the **latest** message remain visible, while in `team` and `groupChat` they are saved with the message and stay on it. `card` prompts persist everywhere. Teams shows at most **three** actions regardless of style, which is why `buildTeamsReply()` slices to three.
 
@@ -49,18 +52,19 @@ AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.
 
 **Card polish (both applied by default):**
 
-- Each suggestion `Action.Submit` carries action-level `msTeams: { feedback: { hide: true } }`, which suppresses Teams' *"Your response was sent to the app"* system line under the card on every tap. The lowercase `data.msteams.messageBack` payload is what echoes the prompt as a user message and stays untouched.
-- `channels.config.card_header` (default `true`) controls the in-card avatar + name `ColumnSet`. Set `false` to drop it — Teams already renders the bot avatar and name above the bubble, so the header is a duplicate. Card style only; ignored by `chips` / `compose`.
+- Each card suggestion `Action.Submit` carries action-level `msTeams: { feedback: { hide: true } }`, which suppresses Teams' *"Your response was sent to the app"* system line under the card on every tap. The lowercase `data.msteams.messageBack` payload is what echoes the prompt as a user message and stays untouched. (Suggested-action `Action.Submit` for the `submit` style is a different contract — it fires `suggestedAction/submit` with no user bubble.)
+- `channels.config.card_header` (default `true`) controls the in-card avatar + name `ColumnSet`. Set `false` to drop it — Teams already renders the bot avatar and name above the bubble, so the header is a duplicate. Card style only; ignored by `chips` / `compose` / `submit`.
 
-**Why `Action.Submit` and not `Action.Execute`:** Microsoft's card-actions doc marks `Action.Submit` legacy and recommends `Action.Execute` for new work. Do **not** migrate this card:
+**Why card `Action.Submit` and not `Action.Execute`:** Microsoft's card-actions doc marks `Action.Submit` legacy and recommends `Action.Execute` for new work. Do **not** migrate the **card** surface:
 
 - `Action.Execute` sends an `adaptiveCard/action` invoke with **no user-visible message**, so a tapped prompt would never appear as the person's turn in the transcript. The whole point of `msteams.messageBack` is that echo.
-- `msTeams.feedback.hide` is supported on `Action.Submit` **only** — with `Action.Execute` the "Your response was sent to the app" line comes back and cannot be suppressed.
+- `msTeams.feedback.hide` is supported on card `Action.Submit` **only** — with `Action.Execute` the "Your response was sent to the app" line comes back and cannot be suppressed.
+
+The separate `suggestion_style: "submit"` surface deliberately uses the no-visible-message invoke path for cold group addressing.
 
 Back-compat: when `suggestion_style` is absent, `reply_format === 'text'` maps to `chips`; otherwise `card`. When `card_header` is absent it defaults on, preserving pre-toggle rendering.
 
-Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsReply()` (style + `resolveCardHeader()`), `_shared/adaptive-card.ts` → `buildReplyActivity()` (`showHeader`).
-
+Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsReply()` (style + `resolveCardHeader()`), `_shared/adaptive-card.ts` → `buildReplyActivity()` (`showHeader`), `teams-webhook` handles `suggestedAction/submit` invokes.
 ---
 
 ## Output format contract (system prompt)
