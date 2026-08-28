@@ -167,14 +167,18 @@ WhatsApp message templates can be created in any language supported by WhatsApp.
 Matrix Comms uses an AI assistant for:
 
 - **Autonomous first responses** — the AI can automatically reply to incoming messages when the bot is turned on for a conversation and the AI service has been set up by your Admin.
-- **NBPS (Next Best Prompt Suggestions)** — the AI suggests reply options that the broker can choose from or edit.
+- **Customer quick-reply buttons (visitor NBPS)** — after a bot reply, the AI may attach up to three tap-to-send options on the customer's WhatsApp (e.g. property type). The broker thread shows those buttons on the bot message and labels the customer's tap as a choice.
+- **Broker coach suggestions** — separate chips above the composer suggest what **you** could reply; they are **not** the same as the customer's WhatsApp buttons and are never sent to the customer automatically.
+- **Voice notes and translation** — incoming WhatsApp voice notes are turned into text, and you can tap to translate a message into your preferred language.
 - **Bot toggle** — each conversation has a bot on/off switch. When "on", the AI handles replies. When "off", only human agents reply.
+
+> **Platform note (ops):** the AI backend is moving from the external HumaticAI service onto the in-platform Digital Employees Conversations API (SR000518). Brokers do not need to change how they use suggestions or translation.
 
 ### How to Use AI Suggestions
 
 1. Open a conversation.
-2. If AI suggestions are available, they appear above the message input.
-3. Click a suggestion to use it as your reply (you can edit before sending).
+2. **Broker coach** chips (above the input) are draft replies for you — click to edit and send.
+3. **Customer buttons** appear on green bot messages when the bot offered WhatsApp quick-replies; inbound taps show as "Customer chose …".
 4. To disable AI for a conversation, toggle the bot switch off.
 
 ---

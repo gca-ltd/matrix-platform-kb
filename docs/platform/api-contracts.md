@@ -215,6 +215,22 @@ never returns it to the agent. See ADR-032 and `sso-edge-functions.md`.
 
 **Common subset**: Every app calls `oauth-authorize`, `oauth-token`, `switch-role`, `check-permissions`. `switch-tenant` is available to all apps but only usable by `system_admin` users. Admin apps add `admin-*` functions. Apps with AD sync add `sync-ad-users`. Matrix Pipeline owns O365 integration via `ms-graph-proxy` (broker / manager role-filtered). Each app deploys its own Edge Functions to its app-specific Supabase instance (see app-catalog.md for project IDs). The previously-listed separate **Broker App** / **Manager App** rows are consolidated into the single **Matrix Pipeline** row above.
 
+## Digital Employees — Conversations public API (`converse`)
+
+App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (channel-bound API key; SHA-256 hashed in `api_keys`). Live OpenAPI: `GET /functions/v1/converse/openapi.json` (version **1.1.0**).
+
+| Path | Method | Purpose |
+|------|--------|---------|
+| `/converse` | POST | Stateful turn (default) or `stateless: true` one-shot (no memory / knowledge / persistence) |
+| `/converse` | GET | Thread history for `externalId` + optional `threadId` |
+| `/converse/transcribe` | POST | Audio → transcript + language detection; optional `reply: true` runs a stateful turn |
+| `/converse/suggest` | POST | Up to 3 broker-voice draft replies over a caller-owned transcript |
+| `/converse/translate` | POST | Deterministic translation (`translated`, `detectedLanguage`) |
+| `/converse/openapi.json` | GET | Public OpenAPI 3.1 spec (no key) |
+| `/converse/widget.js` | GET | Embeddable chat widget |
+
+**SR000518 (2026-08-28).** Extends `converse` so Matrix Comms can replace the external HumaticAI RAGChat PaaS for voice-note STT, tap-to-translate, and broker reply coaching. Integration map: `matrix-digital-employees/docs/public-api-comms-integration.md`. Comms client rewiring is a follow-up in `matrix-comms`.
+
 ## Cross-Reference
 
 | For | See |
@@ -223,3 +239,4 @@ never returns it to the agent. See ADR-032 and `sso-edge-functions.md`.
 | Deployment and CI/CD | [operations.md](operations.md) |
 | App integration patterns | [app-template.md](app-template.md) |
 | O365 email & calendar integration | [o365-exchange-integration.md](o365-exchange-integration.md) |
+| Digital Employees Conversations API (Comms cutover) | `gca-ltd/matrix-digital-employees` → `docs/public-api-comms-integration.md` |
