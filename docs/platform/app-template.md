@@ -359,9 +359,11 @@ if (!canCreate) return <AccessDenied />;
 // Page gate — ProtectedRoute already waits for permissionsLoading and
 // surfaces load-failed separately from a real denial. Prefer that over
 // ad-hoc canAccessPage checks that ignore loading/error.
+// permissionsError is only set when nothing is cached; a provable grant
+// (admin fallback or cached pages) still wins over the error screen.
 const { canAccessPage, permissionsLoading, permissionsError } = useRoleConfig();
 if (permissionsLoading) return <BrandedLoading message="Checking permissions..." />;
-if (permissionsError) return <PermissionsLoadFailed />;
+if (permissionsError && !canAccessPage('hr-dashboard')) return <PermissionsLoadFailed />;
 if (!canAccessPage('hr-dashboard')) return <NotFound />;
 
 // Scope-aware data filtering (automatic via RLS, but useful for UI)

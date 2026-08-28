@@ -518,12 +518,14 @@ Permission rows are **not** in the JWT. A failed or still-pending
 `sso_role_configurations` read must never be treated as a real denial (or, for
 legacy `app_permissions` apps, as a silent grant):
 
-1. **Loading** → spinner until the query settles.
-2. **Load failed** → "Couldn't verify your permissions" with Retry / Sign in again; report to SSO `log-permission-failure`.
+1. **Loading** → spinner only while the query is pending **and** there is no cached config.
+2. **Load failed** → "Couldn't verify your permissions" with Retry / Sign in again when the query errored **with no cache** and the page is not already granted (admin fallback or cached `pages`); report to SSO `log-permission-failure`. A background refetch failure that leaves cached data in hand must not raise this screen.
 3. **Denied** → only after a successful load with the page key absent from `pages`.
 
-Query functions throw on missing access token or PostgREST error (never
-`return null` / `return true`). Telemetry table: `sso_permission_load_failures`.
+A signed-in session with no `tenantId` (apps that gate the query on tenant) is
+load-failed, not loading. Query functions throw on missing access token or
+PostgREST error (never `return null` / `return true`). Telemetry table:
+`sso_permission_load_failures`.
 
 ## Role-to-Page Mapping Example (HRMS)
 
