@@ -34,12 +34,14 @@ AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.
 
 | Style | Reply body | Prompt UI | Notes |
 |---|---|---|---|
-| `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; identical in 1:1, group and channel |
-| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat` |
-| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental) |
+| `card` (default) | Adaptive Card attachment | `Action.Submit` + `msteams.messageBack` on card root | Buttons inside the bubble; identical in 1:1, group and channel. **Cannot** carry a bot @mention — cold group/channel taps still need a manual `@`. |
+| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat`. **Cannot** carry a bot @mention. |
+| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental). With `suggestions_mention_bot: true`, the Graph `chatMessage` includes a real bot mention so a tapped suggestion addresses the bot even on a cold thread. |
 | `off` | Plain markdown `message` | None | No follow-up prompts |
 
 **Platform constraint (Microsoft Teams):** `suggestedActions` are **not supported on messages with attachments**. An Adaptive Card is an attachment, so card-style replies and below-bubble chips are **mutually exclusive**. The Channels UI sets `reply_format` and `suggestion_style` together.
+
+**Addressing the bot from a suggestion (`suggestions_mention_bot`):** only `Action.Compose` is documented to carry @mentions (its `value` is a Graph [`chatMessage`](https://learn.microsoft.com/en-us/graph/api/resources/chatmessage) with a `mentions` collection). When the switch is on and `bot_app_id` is set, each compose action prefills `@Name <prompt>` with `mentions[].mentioned.application` (`applicationIdentityType: "bot"`). The display name matches the Teams manifest `name.short` (`mf_name` or the employee name, ≤30 chars). Card `messageBack` and `imBack` have no mention channel — leave them alone, or switch the reply surface to compose. Sources: [suggested actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [channel and group conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations), [Graph messaging overview — mentions](https://learn.microsoft.com/en-us/graph/teams-messaging-overview).
 
 **Scope behaviour:** `suggestedActions` are supported in **all scopes**, but not identically — in `personal` they render as smart replies, so only the actions on the **latest** message remain visible, while in `team` and `groupChat` they are saved with the message and stay on it. `card` prompts persist everywhere. Teams shows at most **three** actions regardless of style, which is why `buildTeamsReply()` slices to three.
 
@@ -95,7 +97,7 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 - [WhatsApp Help Center — How to format your messages](https://faq.whatsapp.com/539178204879377)
 - [A2A specification](https://a2a-protocol.org/latest/specification/) — `Part` / agent-card input/output modes
 
-Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`.
+Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`, `suggestions_mention_bot`.
 
 ---
 
@@ -111,7 +113,7 @@ On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:
 
 **Do not** welcome on: team rename, human member add, roster over threshold, or `add-upgrade` / `remove-upgrade`.
 
-Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`.
+Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`, `suggestions_mention_bot`.
 
 ---
 
@@ -153,4 +155,4 @@ Two separate systems:
 - [ADR-032](../architecture/decisions/ADR-032.md)
 - [api-contracts.md](api-contracts.md) — Teams JWT on MCP chat paths
 - [app-catalog.md](app-catalog.md) — Digital Employees entry
-- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`), [format-your-bot-messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages) (markdown / extendedmarkdown / tables), [cards-format](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format) (Adaptive Card TextBlock subset)
+- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions) (`Action.Compose` + @mentions), [channel-and-group-conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations) (bots only receive @mentions unless RSC), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`), [format-your-bot-messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages) (markdown / extendedmarkdown / tables), [cards-format](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format) (Adaptive Card TextBlock subset), [Graph teams-messaging-overview](https://learn.microsoft.com/en-us/graph/teams-messaging-overview) (bot mention on `chatMessage`)
