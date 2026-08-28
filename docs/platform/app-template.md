@@ -474,7 +474,7 @@ Every route uses `ProtectedRoute` with a `requiredPage` key:
 />
 ```
 
-The `requiredPage` key is checked against the role's `pages` list from `sso_role_configurations` (scoped by the app's `ROLE_CONFIG_APP_ID`) for the user's role.
+The `requiredPage` key is checked against the role's `pages` list from `sso_role_configurations` (scoped by the app's `ROLE_CONFIG_APP_ID`) for the user's role. `ProtectedRoute` must wait for the role-config query and treat load failure as distinct from denial — see [ADR-045](../architecture/decisions/ADR-045.md).
 
 ### Sidebar Structure
 
