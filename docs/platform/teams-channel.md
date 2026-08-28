@@ -61,6 +61,29 @@ Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsRe
 
 ---
 
+## Output format contract (system prompt)
+
+Channel turns inject a **`channel_format`** system-env block so the model only emits Markdown the outbound surface can render. Playground turns skip it. Implementation: `_shared/channel-format.ts` → `resolveChannelFormatSurface()` + `renderChannelFormatBlock()`; appended in `_shared/agent-run.ts` after the job/runtime prompt. Operators can retune the wrapper on the employee **System** tab (`employees.system_env.channel_format`); the `{{rules}}` lines themselves are code defaults keyed by surface.
+
+| Surface | When | What the model is told |
+|---|---|---|
+| `teams-text` | `suggestion_style` is `chips` / `compose` / `off`, or legacy `reply_format: "text"` | Bold, italic, inline/preformatted code, blockquotes, links, lists, and GFM tables. **Always leave one blank line before and after a table** — without it Teams treats the pipe rows as a continuation of the previous paragraph and the table never opens. `#` headings and image links do not render (use a bold line instead). Keep tables ~4 columns for mobile. |
+| `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock` subset only — **no tables, headings, images, preformatted blocks or blockquotes** (they flatten to plain text). Prefer bold labels + bullet lines. |
+| `whatsapp` | WhatsApp channel | Plain text; no tables/headings/code fences. |
+| `api` / `a2a` | Conversations API / A2A | Full Markdown; integrator / peer renders it. Prefer well-formed GFM. |
+
+**Why the blank-line rule matters:** a reply that stored `**Топ:**\n| Брокер | …` rendered as a run-on line in Teams, while an otherwise identical reply with `**Топ:**\n\n| Contract ref | …` rendered as a bordered table. Content was fine; the GFM block boundary was not.
+
+**Microsoft reference** ([format your bot messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages), [format cards](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format)):
+
+- Text-only `textFormat: "markdown"`: bold, italic, preformatted, blockquote, hyperlink; lists vary by client; headings and image links unsupported.
+- Adaptive Card `TextBlock`: tables, headings, images, preformatted text and blockquotes unsupported.
+- `textFormat: "extendedmarkdown"` (public developer preview) formally adds tables, task lists, code fences, math, images and citations. **Not adopted yet** — when GA and client coverage is good, switch `teams-text` replies to `extendedmarkdown` and widen the `teams-text` rules accordingly. Do not rely on it for production until then.
+
+Delivery today for text styles still sets `textFormat: "markdown"` in `buildTeamsReply()`.
+
+---
+
 ## Install welcome
 
 On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:
@@ -115,4 +138,4 @@ Two separate systems:
 - [ADR-032](../architecture/decisions/ADR-032.md)
 - [api-contracts.md](api-contracts.md) — Teams JWT on MCP chat paths
 - [app-catalog.md](app-catalog.md) — Digital Employees entry
-- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`)
+- Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`), [format-your-bot-messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages) (markdown / extendedmarkdown / tables), [cards-format](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format) (Adaptive Card TextBlock subset)
