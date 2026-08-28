@@ -84,7 +84,7 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 | `api` | Conversations API | Full GFM; integrator renders. |
 | `a2a` | A2A peer | **Plain text** — our agent card advertises `text/plain` and parts have no `mediaType`. No Markdown. |
 
-**Typing indicator / redelivery:** `teams-webhook` acknowledges the message activity immediately (`EdgeRuntime.waitUntil`) and starts typing only from `onTurnAccepted` after `claimThreadRun` wins the conversation lock. Duplicates, queued turns, and unaddressed group messages produce no typing. At most one "Neo is typing" per conversation.
+**Typing indicator / redelivery:** `teams-webhook` acknowledges the message activity immediately (`EdgeRuntime.waitUntil`) and starts typing only from `onTurnAccepted` after `claimThreadRun` wins the conversation lock. Duplicates, queued turns, and unaddressed group messages produce no typing. At most one "Neo is typing" per conversation. A background turn that throws is logged as `failed` and is **not** retried (the early 200 prevents Bot Framework redelivery); check the function logs rather than waiting for a second attempt. `thread_busy` turns are still parked as `queued` for `inbound-drain`.
 
 **Why the blank-line + extendedmarkdown matter:** a reply that stored `**Топ:**\n| Брокер | …` rendered as a run-on line in Teams under `textFormat: markdown`. Tables are formally documented under `extendedmarkdown`; enable that channel setting for reliable table rendering.
 
