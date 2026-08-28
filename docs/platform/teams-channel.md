@@ -32,19 +32,19 @@ JWT verification follows ADR-032: `verify_jwt: false` on the EF; custom `jwtVeri
 
 AI follow-up suggestions (`runs.suggestions`, generated in `_shared/suggestions.ts`) can render five ways per channel (`channels.config.suggestion_style`):
 
-| Style | Reply body | Prompt UI | Notes |
-|---|---|---|---|
-| `card` (default) | Adaptive Card attachment | Card-root `Action.Submit` + `msteams.messageBack` | Buttons inside the bubble; identical in 1:1, group and channel. Cold group/channel taps still need a manual `@` (or use `submit` style below). |
-| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat`. Tap posts a user-visible message. |
-| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | Prefills compose box (experimental). Does **not** @mention the bot — see below. |
-| `submit` | Plain markdown `message` | `suggestedActions` + `Action.Submit` | Tap sends a `suggestedAction/submit` **invoke** straight to the bot — no user-visible message and no @mention needed, so it works in a cold group chat or channel. The reply restates "You asked: …" so other participants can follow. |
-| `off` | Plain markdown `message` | None | No follow-up prompts |
+| Style | Reply body | Prompt UI | Addresses without @mention | Notes |
+|---|---|---|---|---|
+| `card` (default) | Adaptive Card attachment | Card-root `Action.Submit` + `msteams.messageBack` | No | Buttons inside the bubble; identical in 1:1, group and channel. Cold group/channel still needs a manual `@` (or use `submit`). |
+| `chips` | Plain markdown `message` | `suggestedActions` + `imBack` below bubble | No | `inputHint: expectingInput`; smart replies in `personal`, persisted in `team` / `groupChat`. Tap posts a user-visible message. |
+| `compose` | Plain markdown `message` | `suggestedActions` + `Action.Compose` | No | Prefills compose box (experimental). |
+| `submit` | Plain markdown `message` | `suggestedActions` + `Action.Submit` | **Yes** | Tap sends a `suggestedAction/submit` **invoke** straight to the bot — no user-visible message. The reply restates "You asked: …" so other participants can follow. |
+| `off` | Plain markdown `message` | None | — | No follow-up prompts |
 
 **Platform constraint (Microsoft Teams):** `suggestedActions` are **not supported on messages with attachments**. An Adaptive Card is an attachment, so card-style replies and below-bubble chips are **mutually exclusive**. The Channels UI sets `reply_format` and `suggestion_style` together.
 
 **Payload parity:** every `suggestedActions` payload includes `to: [activity.from.id]` (matching Microsoft SDK samples) and suggestion titles are capped at 25 characters — longer titles make Teams drop chips silently ([OfficeDev/Microsoft-Teams-Samples#1465](https://github.com/OfficeDev/Microsoft-Teams-Samples/issues/1465)).
 
-**Addressing the bot from a suggestion (`suggestions_mention_bot`):** **disabled, has no effect.** A Graph bot mention in an `Action.Compose` `chatMessage` made Teams discard the entire `suggestedActions` set (observed 2026-08-28, group chat, `text_format: markdown`). The Channels UI switch is rendered off and inactive. Revival point: flip `MENTION_SUGGESTIONS_SUPPORTED` to `true` in `_shared/teams-activity.ts` and retest. Until then, use `suggestion_style: "submit"` so taps reach the employee without a mention. Sources: [suggested actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions) (`Action.Submit` / `suggestedAction/submit`), [channel and group conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations).
+**Addressing (`suggestions_mention_bot`):** **retired — not exposed in the UI, ignored by the runtime.** A Graph bot mention in an `Action.Compose` `chatMessage` made Teams discard the entire `suggestedActions` set (observed 2026-08-28, group chat, `text_format: markdown`). The Channels UI no longer shows a mention switch; autosave still writes `false` to scrub stale config. Revival point: flip `MENTION_SUGGESTIONS_SUPPORTED` to `true` in `_shared/teams-activity.ts` and retest. Until then, use `suggestion_style: "submit"` so taps reach the employee without a mention. Sources: [suggested actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions) (`Action.Submit` / `suggestedAction/submit`), [channel and group conversations](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/channel-and-group-conversations).
 
 **Scope behaviour:** `suggestedActions` are supported in **all scopes**, but not identically — in `personal` they render as smart replies, so only the actions on the **latest** message remain visible, while in `team` and `groupChat` they are saved with the message and stay on it. `card` prompts persist everywhere. Teams shows at most **three** actions regardless of style, which is why `buildTeamsReply()` slices to three.
 
@@ -101,7 +101,7 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 - [WhatsApp Help Center — How to format your messages](https://faq.whatsapp.com/539178204879377)
 - [A2A specification](https://a2a-protocol.org/latest/specification/) — `Part` / agent-card input/output modes
 
-Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`, `suggestions_mention_bot`.
+Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`; deprecated/ignored: `suggestions_mention_bot`.
 
 ---
 
@@ -117,7 +117,7 @@ On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:
 
 **Do not** welcome on: team rename, human member add, roster over threshold, or `add-upgrade` / `remove-upgrade`.
 
-Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`, `suggestions_mention_bot`.
+Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`; deprecated/ignored: `suggestions_mention_bot`.
 
 ---
 
