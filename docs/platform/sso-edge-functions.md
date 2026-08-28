@@ -333,6 +333,21 @@ All admin functions require `org_admin` or `system_admin` scope.
 | `sso-token-exchange` | `POST` | Exchanges external tokens for SSO tokens |
 | `sso-member-roster-lint` | `POST` | Daily lint: diffs SSO `auth.users` ↔ CDL `public.members` (by email) and persists a drift report. `verify_jwt: false`. |
 
+### `admin-ad-users` identity contract
+
+List responses keep **`id = azureObjectId`** so HRMS / Graph consumers stay unchanged. Each row also carries:
+
+| Field | Meaning |
+|-------|---------|
+| `id` | Azure OID (Microsoft Graph id) — HRMS primary key |
+| `azureObjectId` | Same Azure OID |
+| `_supabase_id` | `ad_users` table PK |
+| `supabaseUserId` | `auth.users.id` (= JWT `sub`) when the AD row is provisioned in SSO; otherwise `null` |
+
+**Apps that store assignee / owner as JWT `sub` (e.g. MSA `x_assigned_user_id`) must write and match `supabaseUserId`, never list `id`.** Rows with `supabaseUserId: null` are AD-only and must not be offered as App-DB assignees.
+
+`GET /admin-ad-users/:id` accepts **any** of: `ad_users.id`, `azureObjectId`, or `auth.users.id` (bridged via `raw_user_meta_data.azure_object_id` or email → `ad_users.mail`). The response is wrapped as `{ "user": { … } }` (same transform as list rows).
+
 ### `sync-ad-users` (directory cache)
 
 SSO owns the Entra/Azure AD directory snapshot in `public.ad_users` on project `xgubaguglsnokjyudgvc`. Apps such as **ITSM** and **HRMS** **consume** that cache (PostgREST / `admin-ad-users`) — they do **not** run their own Graph directory sync.
