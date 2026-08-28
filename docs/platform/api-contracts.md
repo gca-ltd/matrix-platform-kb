@@ -229,7 +229,7 @@ App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (c
 | `/converse/openapi.json` | GET | Public OpenAPI 3.1 spec (no key) |
 | `/converse/widget.js` | GET | Embeddable chat widget |
 
-**SR000518 (2026-08-28).** Extends `converse` so Matrix Comms can replace the external HumaticAI RAGChat PaaS for voice-note STT, tap-to-translate, and broker reply coaching. Integration map: `matrix-digital-employees/docs/public-api-comms-integration.md`. Comms client rewiring is a follow-up in `matrix-comms`.
+**SR000518 (2026-08-28).** Extends `converse` so Matrix Comms can replace the external HumaticAI RAGChat PaaS for voice-note STT, tap-to-translate, and broker reply coaching. Integration map: `matrix-digital-employees/docs/public-api-comms-integration.md`. Comms client rewiring is a follow-up in `matrix-comms`. Transcription usage writes an estimated `cost_usd` (from audio duration) so tenant **cost** ceilings apply; token ceilings still only count chat tokens.
 
 ## Cross-Reference
 
