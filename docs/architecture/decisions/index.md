@@ -50,3 +50,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-042](ADR-042.md) | Per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs | Accepted |
 | [ADR-043](ADR-043.md) | Person-keyed MCP grants and OAuth consent binding (Digital Employees) | Accepted |
 | [ADR-044](ADR-044.md) | Qobrix Opportunity surface partition (Leads vs Pipeline) + copy-on-write | Accepted |
+| [ADR-045](ADR-045.md) | Permission reads fail loud, not fail closed/open (ProtectedRoute three-state + telemetry) | Accepted |

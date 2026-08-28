@@ -510,7 +510,20 @@ Apps use `role_configurations.pages` to control which pages each role can access
 |------|---------|-------|
 | `useAuth()` | user, roles, tenant, scope, crud, teams, isLoading | Global auth state |
 | `useActiveRole()` | canCreate, canRead, canUpdate, canDelete, scope | Per-action permission checks |
-| `useRoleConfig()` | canAccessPage(pageKey), canPerformAction(actionKey) | Page/route/action guards |
+| `useRoleConfig()` | canAccessPage(pageKey), canPerformAction(actionKey), permissionsLoading, permissionsError, retryPermissions | Page/route/action guards — **three-state** (loading / load-failed / denied); see [ADR-045](../architecture/decisions/ADR-045.md) |
+
+### Permission-load contract (ADR-045)
+
+Permission rows are **not** in the JWT. A failed or still-pending
+`sso_role_configurations` read must never be treated as a real denial (or, for
+legacy `app_permissions` apps, as a silent grant):
+
+1. **Loading** → spinner until the query settles.
+2. **Load failed** → "Couldn't verify your permissions" with Retry / Sign in again; report to SSO `log-permission-failure`.
+3. **Denied** → only after a successful load with the page key absent from `pages`.
+
+Query functions throw on missing access token or PostgREST error (never
+`return null` / `return true`). Telemetry table: `sso_permission_load_failures`.
 
 ## Role-to-Page Mapping Example (HRMS)
 

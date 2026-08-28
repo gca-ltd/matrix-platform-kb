@@ -347,7 +347,7 @@ Format: any combination of `c`, `r`, `u`, `d`.
 |------|---------|-------|
 | `useAuth()` | `user`, `roles`, `tenant`, `scope`, `crud`, `teams`, `isLoading` | Global auth state |
 | `useActiveRole()` | `canCreate`, `canRead`, `canUpdate`, `canDelete`, `scope` | Per-action permission checks |
-| `useRoleConfig()` | `canAccessPage(pageKey)`, `canPerformAction(actionKey)` | Page/route/action guards |
+| `useRoleConfig()` | `canAccessPage(pageKey)`, `canPerformAction(actionKey)`, `permissionsLoading`, `permissionsError`, `retryPermissions` | Page/route/action guards — three-state (loading / load-failed / denied); see [ADR-045](../architecture/decisions/ADR-045.md) |
 
 ### Usage Patterns
 
@@ -356,8 +356,12 @@ Format: any combination of `c`, `r`, `u`, `d`.
 const { canCreate, scope } = useActiveRole();
 if (!canCreate) return <AccessDenied />;
 
-// Check if user can access a page
-const { canAccessPage } = useRoleConfig();
+// Page gate — ProtectedRoute already waits for permissionsLoading and
+// surfaces load-failed separately from a real denial. Prefer that over
+// ad-hoc canAccessPage checks that ignore loading/error.
+const { canAccessPage, permissionsLoading, permissionsError } = useRoleConfig();
+if (permissionsLoading) return <BrandedLoading message="Checking permissions..." />;
+if (permissionsError) return <PermissionsLoadFailed />;
 if (!canAccessPage('hr-dashboard')) return <NotFound />;
 
 // Scope-aware data filtering (automatic via RLS, but useful for UI)
