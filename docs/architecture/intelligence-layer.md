@@ -196,9 +196,30 @@ Scope filters (`thread` / `person` / `shared` / `channel` / `group`) and
   (0.9 identity/preference/commitment, 0.5 useful context, 0.2 ephemeral) and
   drops anything below **0.25**.
 - `upsert_agent_memory` merges near-duplicates (≥ **0.92** cosine within the same
-  tenant/employee/scope/subject) instead of inserting another row.
+  tenant/employee/scope/subject) instead of inserting another row. Accepts
+  `p_metadata` (merged into `metadata`) and excludes ids listed in
+  `metadata.derived_from` from the merge candidates so reflection cannot
+  overwrite its own sources.
 - Recalled ids are reinforced via `touch_agent_memories` (`last_recalled_at`,
   `recall_count++`) off the critical path.
+- Eval / training turns pass `suppressMemoryWrite` so test data never enters
+  the store.
+
+### Reflection (sleep-time consolidation)
+
+`memory-reflect` (pg_cron every 15 min, `x-scheduler-secret`) synthesises
+higher-level semantic facts when `unreflected_count` crosses
+`memory_config.reflectionThreshold` (default 8) or after 24h off-peak with ≥2
+facts. Gated promotion requires ≥2 source ids and importance ≥ 0.25; writes
+`metadata.origin = 'reflection'` and `derived_from`. Contradictions stamp
+`superseded_by` + `expires_at` for the daily prune.
+
+### Virtual context tools
+
+Built-in (non-MCP) tools `memory_search`, `memory_write`, `history_search`
+(`search_conversation_messages` FTS RPC) let the model page memory and older
+turns into context on demand. Scoped through `resolveMemoryPlan`; checkpointed
+as `memory_tool` run steps.
 
 ### Retention prune
 
