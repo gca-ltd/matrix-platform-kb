@@ -63,24 +63,39 @@ Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsRe
 
 ## Output format contract (system prompt)
 
-Channel turns inject a **`channel_format`** system-env block so the model only emits Markdown the outbound surface can render. Playground turns skip it. Implementation: `_shared/channel-format.ts` → `resolveChannelFormatSurface()` + `renderChannelFormatBlock()`; appended in `_shared/agent-run.ts` after the job/runtime prompt. Operators can retune the wrapper on the employee **System** tab (`employees.system_env.channel_format`); the `{{rules}}` lines themselves are code defaults keyed by surface.
+Channel turns inject a **`channel_format`** system-env block so the model only emits formatting the outbound surface can render. Playground turns skip it.
 
-| Surface | When | What the model is told |
+**Implementation:** `_shared/channel-format.ts` → `resolveChannelFormat(kind, config)` returns `{ surface, rules }` → `renderChannelFormatBlock()` in `_shared/agent-run.ts`.
+
+**Where to edit:**
+
+| Piece | Where | Key |
 |---|---|---|
-| `teams-text` | `suggestion_style` is `chips` / `compose` / `off`, or legacy `reply_format: "text"` | Bold, italic, inline/preformatted code, blockquotes, links, lists, and GFM tables. **Always leave one blank line before and after a table** — without it Teams treats the pipe rows as a continuation of the previous paragraph and the table never opens. `#` headings and image links do not render (use a bold line instead). Keep tables ~4 columns for mobile. |
-| `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock` subset only — **no tables, headings, images, preformatted blocks or blockquotes** (they flatten to plain text). Prefer bold labels + bullet lines. |
-| `whatsapp` | WhatsApp channel | Plain text; no tables/headings/code fences. |
-| `api` / `a2a` | Conversations API / A2A | Full Markdown; integrator / peer renders it. Prefer well-formed GFM. |
+| Prompt wrapper (`## Output format for this channel` + `{{channel}}` / `{{rules}}`) | Employee **System** tab | `employees.system_env.channel_format` |
+| Per-channel rules text | Employee **Channels** tab → each channel card | `channels.config.format_rules` (empty = platform default for the resolved surface) |
+| Teams wire format | Channels tab → Extended markdown switch | `channels.config.text_format` = `markdown` (default) or `extendedmarkdown` |
 
-**Why the blank-line rule matters:** a reply that stored `**Топ:**\n| Брокер | …` rendered as a run-on line in Teams, while an otherwise identical reply with `**Топ:**\n\n| Contract ref | …` rendered as a bordered table. Content was fine; the GFM block boundary was not.
+| Surface | When | What the model is told (defaults from vendor docs) |
+|---|---|---|
+| `teams-text` | Plain message + `text_format` unset/`markdown` | Safe cross-client: bold, italic, inline/preformatted code, blockquote, links. Lists desktop-only. No headings / HR / images. Tables not in the documented standard subset — if unavoidable, blank line + GFM separator, ~4 cols. |
+| `teams-text-extended` | Plain message + `text_format: extendedmarkdown` | CommonMark + tables, task lists, fenced code, math, images. Headings from `###`. Only `<at>Name</at>` HTML. Microsoft **public developer preview**. |
+| `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock`: bold, italic, lists, links only. No tables, headings, images, preformatted, blockquotes. Prefer bold labels. |
+| `whatsapp` | WhatsApp channel | WhatsApp syntax, not Markdown: `*bold*` (one asterisk), `_italic_`, `~strike~`, backticks, `- `/`1. ` lists, `> ` quotes. No headings / MD links / tables. |
+| `api` | Conversations API | Full GFM; integrator renders. |
+| `a2a` | A2A peer | **Plain text** — our agent card advertises `text/plain` and parts have no `mediaType`. No Markdown. |
 
-**Microsoft reference** ([format your bot messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages), [format cards](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format)):
+**Typing indicator / redelivery:** `teams-webhook` acknowledges the message activity immediately (`EdgeRuntime.waitUntil`) and starts typing only from `onTurnAccepted` after `claimThreadRun` wins the conversation lock. Duplicates, queued turns, and unaddressed group messages produce no typing. At most one "Neo is typing" per conversation.
 
-- Text-only `textFormat: "markdown"`: bold, italic, preformatted, blockquote, hyperlink; lists vary by client; headings and image links unsupported.
-- Adaptive Card `TextBlock`: tables, headings, images, preformatted text and blockquotes unsupported.
-- `textFormat: "extendedmarkdown"` (public developer preview) formally adds tables, task lists, code fences, math, images and citations. **Not adopted yet** — when GA and client coverage is good, switch `teams-text` replies to `extendedmarkdown` and widen the `teams-text` rules accordingly. Do not rely on it for production until then.
+**Why the blank-line + extendedmarkdown matter:** a reply that stored `**Топ:**\n| Брокер | …` rendered as a run-on line in Teams under `textFormat: markdown`. Tables are formally documented under `extendedmarkdown`; enable that channel setting for reliable table rendering.
 
-Delivery today for text styles still sets `textFormat: "markdown"` in `buildTeamsReply()`.
+**Microsoft / WhatsApp / A2A references:**
+
+- [Format your bot messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages) — `textFormat` values, standard vs extended markdown, per-platform matrix
+- [Format cards in Teams](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format) — Adaptive Card `TextBlock` subset
+- [WhatsApp Help Center — How to format your messages](https://faq.whatsapp.com/539178204879377)
+- [A2A specification](https://a2a-protocol.org/latest/specification/) — `Part` / agent-card input/output modes
+
+Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`.
 
 ---
 
@@ -96,7 +111,7 @@ On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:
 
 **Do not** welcome on: team rename, human member add, roster over threshold, or `add-upgrade` / `remove-upgrade`.
 
-Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`.
+Config keys (all in `channels.config` jsonb): `welcome_enabled`, `welcome_message`, `welcome_max_members`, `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`.
 
 ---
 

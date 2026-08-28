@@ -231,6 +231,8 @@ App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (c
 
 **SR000518 (2026-08-28).** Extends `converse` so Matrix Comms can replace the external HumaticAI RAGChat PaaS for voice-note STT, tap-to-translate, and broker reply coaching. Integration map: `matrix-digital-employees/docs/public-api-comms-integration.md`. Comms client rewiring is a follow-up in `matrix-comms`. Transcription usage writes an estimated `cost_usd` (from audio duration) so tenant **cost** ceilings apply; token ceilings still only count chat tokens.
 
+**Reply formatting.** Channel turns inject a `channel_format` system-env block with surface-specific rules (`channels.config.format_rules`, or the platform default). For the public API (`kind: api`) the default is full GitHub Flavored Markdown — the integrator renders the reply. A2A replies are **plain text**: the Digital Employees agent card advertises `defaultOutputModes: ["text/plain"]` and outbound parts are `{ kind: "text" }` with no `mediaType`, so Markdown syntax would arrive as literal characters. Advertising `text/markdown` would be a separate protocol-contract change. See [teams-channel.md](teams-channel.md) § Output format contract.
+
 ## Cross-Reference
 
 | For | See |
