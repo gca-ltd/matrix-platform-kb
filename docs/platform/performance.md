@@ -50,6 +50,45 @@ The OAuth login chain is a separate hot path from CDL reads and now has its own 
 
 **Instrumentation:** quantify before/after by logging wall-clock around the `oauth-token` resolution block and the client's `code → setUser` span. Track `oauth-token` p99 via `histogram_quantile(0.99, …)` on the EF logs, the same way `listings-search` is monitored.
 
+## Digital Employees turn latency
+
+Digital Employees measures conversational latency separately from CDL read
+latency. The primary user-facing metric is **time to first text delta (TTFT)**,
+not total completion time:
+
+| Turn shape | Target |
+|---|---|
+| No-tool turn | TTFT ≤ 1.5 s |
+| Tool-calling turn | Record TTFT and `first_hop_ms`; do not gate release on the no-tool target |
+| Optional follow-up chips | Best-effort deadline of 1.5 s; an expired deadline returns an empty chip list |
+
+The chip deadline is a transport contract, not permission to change the
+response shape. Teams `suggestedActions`, WhatsApp interactive buttons, the
+`/converse` response, A2A artifact metadata, and Playground SSE suggestions
+remain inline surfaces. If generation misses the deadline, it continues behind
+the response via `EdgeRuntime.waitUntil` and persists to `runs.suggestions` for
+thread reopen.
+
+The critical path ends after the assistant message is persisted, the run is
+settled, and the conversation lock is released. Memory consolidation,
+suggestion completion, and trace export are post-turn work and must run after
+that boundary. Background work must be best-effort and must never make a
+successful assistant reply fail.
+
+Every run records `queue_ms`, `first_token_ms` where streaming is available,
+`first_hop_ms` for tool turns, `post_ms`, and input/output token counts. Each
+`run_steps` checkpoint records a real duration; each tool hop is recorded with
+its hop number and result byte count. Compare p50/p95 over a rolling seven-day
+window, and report no-tool and tool turns separately before changing model or
+prompt defaults.
+
+Prompt assembly keeps stable job, policy, channel, and tool-guidance blocks
+before volatile runtime, caller, memory, and retrieval blocks. History is
+trimmed before the latest user message is dropped; memory and cumulative tool
+results have explicit ceilings and report truncation. This follows the same
+instrument-before/after discipline and `EdgeRuntime.waitUntil` stale-while-
+revalidate boundary used by the read paths below.
+
 ## Index strategy on `public.properties_published`
 
 The hot read table is `properties_published`. The index strategy that achieves the budget above is documented in
