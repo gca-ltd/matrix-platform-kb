@@ -61,13 +61,15 @@ not total completion time:
 | No-tool turn | TTFT ≤ 1.5 s |
 | Tool-calling turn | Record TTFT and `first_hop_ms`; do not gate release on the no-tool target |
 | Optional follow-up chips | Best-effort deadline of 1.5 s; an expired deadline returns an empty chip list |
+| Agent Assist drafts | Awaited in the assisted response, with a 20 s safety deadline; drafts are not optional chips |
 
 The chip deadline is a transport contract, not permission to change the
 response shape. Teams `suggestedActions`, WhatsApp interactive buttons, the
 `/converse` response, A2A artifact metadata, and Playground SSE suggestions
-remain inline surfaces. If generation misses the deadline, it continues behind
+remain inline surfaces. If chip generation misses the deadline, it continues behind
 the response via `EdgeRuntime.waitUntil` and persists to `runs.suggestions` for
-thread reopen.
+thread reopen. Assisted drafts remain in the response payload and use the safety
+deadline above rather than the chip deadline.
 
 The critical path ends after the assistant message is persisted, the run is
 settled, and the conversation lock is released. Memory consolidation,
@@ -75,7 +77,7 @@ suggestion completion, and trace export are post-turn work and must run after
 that boundary. Background work must be best-effort and must never make a
 successful assistant reply fail.
 
-Every run records `queue_ms`, `first_token_ms` where streaming is available,
+Every run records `queue_ms`, `first_token_ms` from request receipt to the first text delta where streaming is available,
 `first_hop_ms` for tool turns, `post_ms`, and input/output token counts. Each
 `run_steps` checkpoint records a real duration; each tool hop is recorded with
 its hop number and result byte count. Compare p50/p95 over a rolling seven-day
