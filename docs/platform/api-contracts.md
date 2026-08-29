@@ -236,7 +236,13 @@ App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (c
 - **`autonomous`** — the digital employee answers the visitor and may return visitor-voice follow-up chips in `suggestions`.
 - **`assisted`** — the digital employee does not answer the visitor; it returns operator-voice drafts in `drafts`. The contact-centre sends the visitor's new message to the same stateful `POST /converse` route and attaches any operator replies that occurred since the previous visitor turn in `operatorReplies`. Those operator replies are stored before the visitor message, so the backend remains the source of conversational context; the client never sends a transcript.
 
-The modes are reversible through the existing assist enable/clear controls. `suggestions` and `drafts` are deliberately separate fields because they have different voices and item shapes. `/converse/suggest` remains the stateless caller-owned-transcript fallback.
+The modes are reversible on the stateful `POST /converse` route with the
+optional request field `mode`: send `"assisted"` to arm the handover before the
+first operator reply, and `"autonomous"` to hand the conversation back. When
+omitted, the current ownership remains sticky. `suggestions` and `drafts` are
+deliberately separate fields because they have different voices and item
+shapes. `/converse/suggest` remains the stateless caller-owned-transcript
+fallback.
 
 **Reply formatting.** Channel turns inject a `channel_format` system-env block with surface-specific rules (`channels.config.format_rules`, or the platform default). For the public API (`kind: api`) the default is full GitHub Flavored Markdown — the integrator renders the reply. A2A replies are **plain text**: the Digital Employees agent card advertises `defaultOutputModes: ["text/plain"]` and outbound parts are `{ kind: "text" }` with no `mediaType`, so Markdown syntax would arrive as literal characters. Advertising `text/markdown` would be a separate protocol-contract change. See [teams-channel.md](teams-channel.md) § Output format contract.
 

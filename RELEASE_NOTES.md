@@ -13,6 +13,7 @@ date: 2026-08-17
 ## Unreleased — 2026-08-29
 
 - **Digital Employees stateful agent assist contract:** `POST /converse` now documents the two public modes (`autonomous` and `assisted`), backend-owned context, `operatorReplies`, and separate operator `drafts` versus visitor follow-up `suggestions`.
+- **Digital Employees assist reliability corrections:** the contract now specifies newest-history drafting, explicit reversible `mode` hand-back, and safe behaviour for archived, skipped, and busy turns.
 
 ## Unreleased — 2026-08-25
 
