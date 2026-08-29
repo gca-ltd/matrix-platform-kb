@@ -10,6 +10,10 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-08-29
+
+- **Digital Employees stateful agent assist contract:** `POST /converse` now documents the two public modes (`autonomous` and `assisted`), backend-owned context, `operatorReplies`, and separate operator `drafts` versus visitor follow-up `suggestions`.
+
 ## Unreleased — 2026-08-25
 
 - ADR-043: person-keyed MCP OAuth grants for channel callers + consent binding (`identityProbe`); extends ADR-041. Documented in `mcp-client.md`.

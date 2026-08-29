@@ -217,11 +217,11 @@ never returns it to the agent. See ADR-032 and `sso-edge-functions.md`.
 
 ## Digital Employees — Conversations public API (`converse`)
 
-App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (channel-bound API key; SHA-256 hashed in `api_keys`). Live OpenAPI: `GET /functions/v1/converse/openapi.json` (version **1.1.0**).
+App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (channel-bound API key; SHA-256 hashed in `api_keys`). Live OpenAPI: `GET /functions/v1/converse/openapi.json` (version **1.2.0**).
 
 | Path | Method | Purpose |
 |------|--------|---------|
-| `/converse` | POST | Stateful turn (default) or `stateless: true` one-shot (no memory / knowledge / persistence) |
+| `/converse` | POST | Stateful turn (default) or `stateless: true` one-shot (no memory / knowledge / persistence); stateful assist attaches preceding `operatorReplies` to the visitor turn |
 | `/converse` | GET | Thread history for `externalId` + optional `threadId` |
 | `/converse/transcribe` | POST | Audio → transcript + language detection; optional `reply: true` runs a stateful turn |
 | `/converse/suggest` | POST | Up to 3 broker-voice draft replies over a caller-owned transcript |
@@ -230,6 +230,13 @@ App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (c
 | `/converse/widget.js` | GET | Embeddable chat widget |
 
 **SR000518 (2026-08-28).** Extends `converse` so Matrix Comms can replace the external HumaticAI RAGChat PaaS for voice-note STT, tap-to-translate, and broker reply coaching. Integration map: `matrix-digital-employees/docs/public-api-comms-integration.md`. Comms client rewiring is a follow-up in `matrix-comms`. Transcription usage writes an estimated `cost_usd` (from audio duration) so tenant **cost** ceilings apply; token ceilings still only count chat tokens.
+
+**Agent-assist ownership (v1.2).** Conversations have two public operating modes:
+
+- **`autonomous`** — the digital employee answers the visitor and may return visitor-voice follow-up chips in `suggestions`.
+- **`assisted`** — the digital employee does not answer the visitor; it returns operator-voice drafts in `drafts`. The contact-centre sends the visitor's new message to the same stateful `POST /converse` route and attaches any operator replies that occurred since the previous visitor turn in `operatorReplies`. Those operator replies are stored before the visitor message, so the backend remains the source of conversational context; the client never sends a transcript.
+
+The modes are reversible through the existing assist enable/clear controls. `suggestions` and `drafts` are deliberately separate fields because they have different voices and item shapes. `/converse/suggest` remains the stateless caller-owned-transcript fallback.
 
 **Reply formatting.** Channel turns inject a `channel_format` system-env block with surface-specific rules (`channels.config.format_rules`, or the platform default). For the public API (`kind: api`) the default is full GitHub Flavored Markdown — the integrator renders the reply. A2A replies are **plain text**: the Digital Employees agent card advertises `defaultOutputModes: ["text/plain"]` and outbound parts are `{ kind: "text" }` with no `mediaType`, so Markdown syntax would arrive as literal characters. Advertising `text/markdown` would be a separate protocol-contract change. See [teams-channel.md](teams-channel.md) § Output format contract.
 
