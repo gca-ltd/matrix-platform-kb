@@ -192,6 +192,15 @@ The 50ms test budget is laxer than the 20ms production budget because the test r
 
 Matrix Sales Automation reads open CRM history from the **Qobrix REST API** via Supabase Edge Functions (`qobrix-pipeline`, `qobrix-contacts`, …). This path is **not** the CDL `listings-search` contract above.
 
+**Preview-first materialize (CRM).** Opening a Qobrix-only lead / opportunity /
+contact / contract is a single authenticated Qobrix GET via
+`qobrix-materialize` `preview` — no App DB write. Explicit `copy` is one GET +
+one App DB insert (and optional claim row). On-demand `sync` is one GET +
+fill-blanks UPDATE + mismatch upserts; it must not overwrite populated fields
+or change assignee. Do not auto-copy on drawer open (that doubled write load
+and raced ownership claims). Listings remain a queued remirror (media
+delete-then-insert) and must not share the CRM sync code path.
+
 | Rule | Rationale |
 |---|---|
 | **Upstream fan-out is the dominant cost** — sequential paginated `GET` loops and per-row enrichment (N+1) dominate latency, not App DB round trips. | Parallelise paginated upstream reads (bounded concurrency, preserve page order). |
