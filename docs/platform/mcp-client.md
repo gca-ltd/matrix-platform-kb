@@ -68,6 +68,15 @@ The MCP server returns its own connect URL inside the tool result text. The clie
 relays that text **verbatim** to the model. No platform `AUTH_REQUIRED:` prefix
 and no chat sign-in UI.
 
+### Chart rendering utility
+
+[Sharp SIR Charts](matrix-mcp-server.md#sharp-sir-charts) is registered as a
+service `api_key` connector, not `oauth_user` or `oauth_service`. Its single
+credential header is `Authorization: Bearer <CHARTS_API_TOKEN>`. Digital
+Employees discovers the server's 11 rendering/design tools and applies the
+normal per-employee Allow / Ask / Deny policy; the server receives only the
+chart data supplied by the caller and has no business-data access.
+
 ### System prompt
 
 The Playground chat system prompt is composed only from operator-edited employee

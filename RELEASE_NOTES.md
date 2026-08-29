@@ -12,6 +12,11 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-29
 
+- **Sharp SIR Charts integration:** documented the Digital Employees service
+  `api_key` registration, bearer-header contract, 11-tool discovery and
+  per-employee policy, plus the charts repository's source-only, no-CI/no-npm
+  distribution model. See `docs/platform/matrix-mcp-server.md` and
+  `docs/platform/mcp-client.md`.
 - ADR-047: Qobrix copy-on-read ownership now preserves the mapped source broker
   and routes supervisor exceptions through manager-approved claims, with RLS
   revocation on rejection. See `docs/architecture/decisions/ADR-047.md`.
