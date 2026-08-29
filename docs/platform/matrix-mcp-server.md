@@ -46,3 +46,41 @@ Full install/user guides live in the two repos' `docs/`.
 | Auth | Shared HS256 bearer (legacy) |
 
 Tools include `search_listings`, `search_by_text`, `get_listing_details`, `geo_search`, `broker_directory`. Schema alignment follows [cdl-schema.md](../data-models/cdl-schema.md). Ops: `matrix-ops` → `runbooks/matrix-mcp.md`.
+
+---
+
+## Sharp SIR Charts
+
+[`gca-ltd/sharpsir-charts`](https://github.com/gca-ltd/sharpsir-charts) is a
+public MIT-licensed, local/server-side Chart.js rendering MCP. It is an
+image-output utility rather than a data-resource server: callers supply JSON
+data and receive PNG, SVG, PDF, or resolved JSON configuration plus an inline
+preview.
+
+| Property | Value |
+|---|---|
+| Repository | `gca-ltd/sharpsir-charts` |
+| Transport | stdio; Streamable HTTP on the operator-managed port 3512 |
+| Hosted endpoint | `https://intranet.sharpsir.group/charts/mcp` |
+| Output path | `/charts/o/` static fallthrough for full-resolution images |
+| Default design | `sothebys` — warm paper, SIR Blue, restrained gold, Playfair Display + Inter |
+| Design state | Session-scoped, memory-only; server default → session base → per-call override |
+| Tools | Five render tools plus strict design discovery/configuration tools |
+
+The server follows the chart-selection and reduced-chrome guidance in the
+Sharp SIR repository's design-system documentation. Agents should render
+without configuration first; they may call `describe_design_schema`,
+`get_design_reference`, `configure_design`, and `preview_design` when a
+controlled variation is needed. JavaScript callbacks and inline styling are
+stripped or warned.
+
+### Deliberate divergence from ADR-039
+
+This utility does **not** implement the Qobrix data Resource Server /
+Authorization Server split from [ADR-039](../architecture/decisions/ADR-039.md).
+That architecture is normative for public MCP servers exposing protected
+Matrix data. Sharp SIR Charts is a local rendering helper with no data access,
+no per-user upstream credentials, and no private business-data tools. Stdio
+uses process-local trust; hosted HTTP uses an operator-managed bearer token
+behind loopback-bound Apache. If the service later gains protected data tools,
+it must adopt ADR-039's OAuth Resource Server contract before that expansion.
