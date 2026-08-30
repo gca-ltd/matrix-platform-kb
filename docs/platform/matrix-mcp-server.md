@@ -66,9 +66,9 @@ preview.
 | Output URL configuration | `CHARTS_OUTPUT_DIR` and `CHARTS_PUBLIC_DIR` point to the same directory; `CHARTS_PUBLIC_URL` is its public URL prefix |
 | Default design | `sothebys` — warm paper, SIR Blue, restrained gold, Playfair Display + Inter |
 | Default canvas | 640×400 logical px at scale 3 (PNG 1920×1200); design tokens authored for this size and scaled proportionally when callers request other dimensions |
-| Axis / label contract | Value vs category axes resolved via `indexAxis` (horizontal bars swap roles); direct labels are cartesian `bar`/`line`/`area` only and suppress the value axis on small charts; subtitle/rule reserves apply without a title; footnote/watermark paint inside the reserved bottom band; `grid.dash` and `legend.marker` are live tokens |
+| Axis / label contract | Value vs category axes via `indexAxis`; direct labels cartesian `bar`/`line`/`area` only; subtitle/rule reserves without a title; footnote/watermark in the reserved bottom band; `grid.dash` / `legend.marker` live; radial charts colour **per slice** (not per dataset) with paper-coloured separators, single-dataset legends, optional cutout/centre/slice labels |
 | Design state | Session-scoped, memory-only; server default → session base → per-call override |
-| Tools | Five render tools plus strict design discovery/configuration tools |
+| Tools | Render tools for series (incl. dot/lollipop/dumbbell/slope), part-to-whole, scatter, KPI card/row, waterfall, bullet, funnel and small multiples, plus design discovery/configuration tools |
 
 The server follows the chart-selection and reduced-chrome guidance in the
 Sharp SIR repository's design-system documentation. Agents should render
@@ -83,7 +83,7 @@ Register the hosted server in Digital Employees with `auth_mode: api_key`
 (the UI label is **API key headers (service)**). Configure one header:
 `Authorization: Bearer <CHARTS_API_TOKEN>`. Do not use the OAuth modes: this
 utility does not publish OAuth metadata and has no per-user credential flow.
-Discovery returns 11 tools (five render tools plus the design and font tools);
+Discovery returns the render exhibit tools plus the design and font tools;
 the discovered tools may be allowed for Neo because they render caller-supplied
 data and do not access business records. The client-side registration and
 governance contract is documented in [mcp-client.md](mcp-client.md#chart-rendering-utility).

@@ -12,6 +12,11 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-30
 
+- **Sharp SIR Charts exhibit library + radial fix:** part-to-whole charts paint
+  per-slice colours with legends; doughnut cutout/centre/slice labels; waterfall,
+  bullet, funnel, KPI row and small multiples tools; series variants
+  dot/lollipop/dumbbell/slope; opt-in annotations; KPI sparkline clear of the
+  hairline rule. See `docs/platform/matrix-mcp-server.md` and ADR-048.
 - **Sharp SIR Charts chrome reserves + label gating:** footnote/watermark paint
   from the reserved bottom band; subtitle/rule reserves apply without a title;
   direct labels are cartesian bar/line/area only. See
