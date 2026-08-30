@@ -69,9 +69,9 @@ Implementation: `supabase/functions/_shared/teams-activity.ts` → `buildTeamsRe
 
 ## Output format contract (system prompt)
 
-Channel turns inject a **`channel_format`** system-env block so the model only emits formatting the outbound surface can render. Playground turns skip it.
+Channel turns inject a **`channel_format`** system-env block so the model only emits formatting the outbound surface can render. Playground turns inject the same block with the explicit `playground` surface (via `agent-chat`), so chart and other image URLs are embedded as `![alt](url)` rather than bare links.
 
-**Implementation:** `_shared/channel-format.ts` → `resolveChannelFormat(kind, config)` returns `{ surface, rules }` → `renderChannelFormatBlock()` in `_shared/agent-run.ts`.
+**Implementation:** `_shared/channel-format.ts` → `resolveChannelFormat(kind, config)` returns `{ surface, rules }` for channel rows; Playground passes `"playground"` directly → `renderChannelFormatBlock()` in `_shared/agent-run.ts` (channels) and `agent-chat` (playground).
 
 **Where to edit:**
 
@@ -87,8 +87,9 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 | `teams-text-extended` | Plain message + `text_format: extendedmarkdown` | CommonMark + tables, task lists, fenced code, math, images. Headings from `###`. Only `<at>Name</at>` HTML. Microsoft **public developer preview**. |
 | `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock`: bold, italic, lists, links only. No tables, headings, images, preformatted, blockquotes. Prefer bold labels. |
 | `whatsapp` | WhatsApp channel | WhatsApp syntax, not Markdown: `*bold*` (one asterisk), `_italic_`, `~strike~`, backticks, `- `/`1. ` lists, `> ` quotes. No headings / MD links / tables. |
-| `api` | Conversations API | Full GFM; integrator renders. |
+| `api` | Conversations API | Full GFM; integrator renders. Embed images as `![short description](url)` rather than bare URLs. |
 | `a2a` | A2A peer | **Plain text** — our agent card advertises `text/plain` and parts have no `mediaType`. No Markdown. |
+| `playground` | Sharp Matrix playground (web chat) | Full GFM including math and images. When a tool returns an image URL, embed it as `![short description](url)` on its own line; do not also paste the bare URL. Passed explicitly by `agent-chat`, not via a channel row. |
 
 **Typing indicator / redelivery:** `teams-webhook` acknowledges the message activity immediately (`EdgeRuntime.waitUntil`) and starts typing only from `onTurnAccepted` after `claimThreadRun` wins the conversation lock. Duplicates, queued turns, and unaddressed group messages produce no typing. At most one "Neo is typing" per conversation. A background turn that throws is logged as `failed` and is **not** retried (the early 200 prevents Bot Framework redelivery); check the function logs rather than waiting for a second attempt. `thread_busy` turns are still parked as `queued` for `inbound-drain`.
 
