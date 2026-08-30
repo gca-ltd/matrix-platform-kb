@@ -60,7 +60,14 @@ not total completion time:
 |---|---|
 | No-tool turn | TTFT ≤ 1.5 s |
 | Tool-calling turn | Record TTFT and `first_hop_ms`; do not gate release on the no-tool target |
-| Optional follow-up chips | Best-effort deadline of 1.5 s; an expired deadline returns an empty chip list |
+| Optional follow-up chips | Best-effort deadline of 4 s; an expired deadline returns an empty chip list |
+
+Follow-up chips and Agent Assist drafts use the light **helper** model path.
+An unset employee follow-up / assist model field keeps
+`google/gemini-3.1-flash-lite` (via `resolveHelperModel`). An explicit `auto`
+resolves the workspace `auto_helper` platform role (same default). They must
+not inherit `auto_chat`, which is sized for conversational replies and routinely
+misses the chip deadline.
 | Agent Assist drafts | Awaited in the assisted response, with a 20 s safety deadline; drafts are not optional chips |
 
 The chip deadline is a transport contract, not permission to change the
