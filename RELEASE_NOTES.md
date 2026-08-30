@@ -10,6 +10,16 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-08-30
+
+- **Sharp SIR Charts axis-role correctness:** documented value/category axis
+  resolution for horizontal bars, direct-label-wins encoding, chrome band
+  reserves, and live `grid.dash` / `legend.marker` tokens. See
+  `docs/platform/matrix-mcp-server.md` and ADR-048.
+- **Sharp SIR Charts output sizing:** documented the chat-native 640×400
+  logical canvas (scale 3), proportional design-token scaling, and relative bar
+  geometry. See `docs/platform/matrix-mcp-server.md` and ADR-048.
+
 ## Unreleased — 2026-08-29
 
 - **Sharp SIR Charts integration:** documented the Digital Employees service

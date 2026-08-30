@@ -65,6 +65,8 @@ preview.
 | Output path | `/charts/o/` static fallthrough for full-resolution images |
 | Output URL configuration | `CHARTS_OUTPUT_DIR` and `CHARTS_PUBLIC_DIR` point to the same directory; `CHARTS_PUBLIC_URL` is its public URL prefix |
 | Default design | `sothebys` — warm paper, SIR Blue, restrained gold, Playfair Display + Inter |
+| Default canvas | 640×400 logical px at scale 3 (PNG 1920×1200); design tokens authored for this size and scaled proportionally when callers request other dimensions |
+| Axis / label contract | Value vs category axes resolved via `indexAxis` (horizontal bars swap roles); direct labels suppress the value axis on small charts; `grid.dash` and `legend.marker` are live tokens |
 | Design state | Session-scoped, memory-only; server default → session base → per-call override |
 | Tools | Five render tools plus strict design discovery/configuration tools |
 
