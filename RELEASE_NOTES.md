@@ -12,6 +12,10 @@ date: 2026-08-17
 
 ## Unreleased — 2026-08-30
 
+- **Sharp SIR Charts chrome reserves + label gating:** footnote/watermark paint
+  from the reserved bottom band; subtitle/rule reserves apply without a title;
+  direct labels are cartesian bar/line/area only. See
+  `docs/platform/matrix-mcp-server.md` and ADR-048.
 - **Sharp SIR Charts axis-role correctness:** documented value/category axis
   resolution for horizontal bars, direct-label-wins encoding, chrome band
   reserves, and live `grid.dash` / `legend.marker` tokens. See
