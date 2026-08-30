@@ -240,12 +240,23 @@ onto a single Qobrix stage. See [ADR-044](../../../architecture/decisions/ADR-04
 | MSA Leads status | Typical Qobrix stage | Notes |
 |------------------|----------------------|-------|
 | `new` | `new` | Fresh enquiry |
-| `contacting` | `in_process` | Call-centre contact attempts |
+| `contacting` | `in_process` | Call-centre contact attempts; also absorbs `not_interested` + `custom_enquiry_stage_type = "Not Reached"` (recyclable retries — inline "Not reached" badge; **Open** tab excludes them) |
 | `enquiry` | `enquiry` | Still pre-qualification |
 | `nurturing` | `asleep` | Return-to-nurture / quiet lead; `nurture_next_touch_at` |
-| `qualified` | *(left Leads)* | After `qualify_lead_v2`; record is on Pipeline |
-| `disqualified` | `not_interested` | Reason from `custom_enquiry_stage_type` |
-| `duplicate` | *(App DB only)* | No leads-surface Qobrix stage; inbox tab is App-DB-only |
+| `qualified` | `potential` **or** `custom_sql == true` | Precedence-bounded: exclude terminal / `not_interested`. Pipeline-linked rows are read-only on Leads |
+| `disqualified` | `not_interested` | Only when `custom_enquiry_stage_type` is `null`, `"Trash"`, or `"Invalid Request"` — **never** map all `not_interested` here |
+| `duplicate` | `custom_enquiry_stage_type = "Double"` | Qobrix + App DB; RULE D keeps Doubles out of every other open bucket |
+
+`not_interested` taxonomy (`custom_enquiry_stage_type`):
+
+| Value | Role |
+|-------|------|
+| `"Not Reached"` | Recyclable → Contacting (retry) |
+| `"Double"` | Duplicate |
+| `"Trash"` / `"Invalid Request"` / `null` | Dead → Disqualified |
+| `"Agent"` / `"Referral"` / `"For distribution"` | Re-route — never Disqualified |
+
+Open lead tabs also exclude the `custom_sql == true` seam (null-safe) so Qualified and New/Contacting/Nurturing do not double-count. Buyer/Seller filter: Seller = `buy_rent in (to_sell,to_let,to_manage)`; Buyer = not-supply (**null included** — `buy_rent` is null on ~66% of rows). Full engine, DEFECT 1–4 corrections, and MSA deviations: MSA repo `docs/qobrix/lead-sales-stage-engine.md`.
 
 The Postgres `lead_status` enum still includes a legacy `qualifying` label for
 historical rows; writers and filters no longer emit it.
