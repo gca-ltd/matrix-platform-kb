@@ -83,9 +83,9 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 
 | Surface | When | What the model is told (defaults from vendor docs) |
 |---|---|---|
-| `teams-text` | Plain message + `text_format` unset/`markdown` | Safe cross-client: bold, italic, inline/preformatted code, blockquote, links. Lists desktop-only. No headings / HR / images. Tables not in the documented standard subset — if unavoidable, blank line + GFM separator, ~4 cols. |
+| `teams-text` | Plain message + `text_format` unset/`markdown` | Safe cross-client: bold, italic, inline/preformatted code, blockquote, links. Lists desktop-only. No headings / HR. When a tool returns a chart or image URL, emit `![short description](url)` on its own line — the outbound path lifts it into an Adaptive Card `Image`. Tables not in the documented standard subset — if unavoidable, blank line + GFM separator, ~4 cols. |
 | `teams-text-extended` | Plain message + `text_format: extendedmarkdown` | CommonMark + tables, task lists, fenced code, math, images. Headings from `###`. Only `<at>Name</at>` HTML. Microsoft **public developer preview**. |
-| `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock`: bold, italic, lists, links only. No tables, headings, images, preformatted, blockquotes. Prefer bold labels. |
+| `teams-card` | `suggestion_style: "card"` (default) | Adaptive Card `TextBlock`: bold, italic, lists, links only. No tables, headings, preformatted, blockquotes. Prefer bold labels. Chart/image URLs as `![alt](url)` are lifted into Adaptive Card `Image` elements on the same card. |
 | `whatsapp` | WhatsApp channel | WhatsApp syntax, not Markdown: `*bold*` (one asterisk), `_italic_`, `~strike~`, backticks, `- `/`1. ` lists, `> ` quotes. No headings / MD links / tables. |
 | `api` | Conversations API | Full GFM; integrator renders. Embed images as `![short description](url)` rather than bare URLs. |
 | `a2a` | A2A peer | **Plain text** — our agent card advertises `text/plain` and parts have no `mediaType`. No Markdown. |
@@ -103,6 +103,21 @@ Channel turns inject a **`channel_format`** system-env block so the model only e
 - [A2A specification](https://a2a-protocol.org/latest/specification/) — `Part` / agent-card input/output modes
 
 Config keys (format-related, all in `channels.config` jsonb): `suggestion_style`, `reply_format`, `card_header`, `text_format`, `format_rules`; deprecated/ignored: `suggestions_mention_bot`.
+
+---
+
+## Images and charts
+
+Teams standard markdown and Adaptive Card `TextBlock` both **ignore** `![alt](url)`. The only documented way to show an image is an Adaptive Card `Image` element ([cards-format](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format)).
+
+Outbound path (`_shared/teams-images.ts` → `buildTeamsReply()`):
+
+1. Extract up to three `https` image URLs from `![alt](url)` embeds and bare image-URL lines (`.png` / `.jpg` / `.jpeg` / `.gif`).
+2. Strip those embeds from the text so Teams never shows literal `![chart](…)`.
+3. **Card style:** append `Image` elements (with `msTeams.allowExpand` for Stage View) to the existing Adaptive Card body; skip duplicate `Action.OpenUrl` buttons for the same URLs.
+4. **Text styles (chips / compose / submit / off):** send an image-only Adaptive Card activity **first**, then the plain-text bubble with `suggestedActions`. Attachments and `suggestedActions` cannot share a message, and in personal scope only the latest message keeps its chips — so the image must precede the text.
+
+Chart PNG hosting (`https://intranet.sharpsir.group/charts/o/…`) is anonymous static Apache (`Require all granted`) so Teams' cloud fetchers can retrieve the image. Retention is `CHARTS_RETENTION_HOURS=2160` (90 days) on `sharpsir-charts-mcp-server` — Teams re-fetches card images when history is scrolled, so a short retention would blank charts in old threads.
 
 ---
 
