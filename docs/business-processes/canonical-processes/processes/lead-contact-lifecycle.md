@@ -245,6 +245,10 @@ onto a single Qobrix stage. See [ADR-044](../../../architecture/decisions/ADR-04
 | `nurturing` | `asleep` | Return-to-nurture / quiet lead; `nurture_next_touch_at` |
 | `qualified` | *(left Leads)* | After `qualify_lead_v2`; record is on Pipeline |
 | `disqualified` | `not_interested` | Reason from `custom_enquiry_stage_type` |
+| `duplicate` | *(App DB only)* | No leads-surface Qobrix stage; inbox tab is App-DB-only |
+
+The Postgres `lead_status` enum still includes a legacy `qualifying` label for
+historical rows; writers and filters no longer emit it.
 
 Do **not** conflate lead qualification with the Pipeline board column named
 `qualification` (requirements gate before Matching).
