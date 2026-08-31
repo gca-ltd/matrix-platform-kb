@@ -116,6 +116,15 @@ The hot read table is `properties_published`. The index strategy that achieves t
 | "Within 5 km of (lat,lng)" | `gist_pp_geo` (PostGIS GIST on generated `geo` column) |
 | "Updated since timestamp" (large window) | `brin_pp_published_at` (BRIN, `pages_per_range=32`) |
 
+**Reading the Supabase performance advisor:** it is a generic linter and its
+`unindexed_foreign_keys` findings are row-count blind. On the MSA App DB every
+table it flagged held 0-360 live rows (`leads`: 7 rows with 18 indexes already),
+where a sequential scan beats an index probe and each added index is pure write
+amplification on the sync path. Check `pg_stat_user_tables.n_live_tup` before
+acting. `duplicate_index` and `auth_rls_initplan` are worth taking regardless —
+the former is free, the latter is a `(SELECT current_setting(...))` wrap that
+preserves semantics exactly.
+
 **Index design principles:**
 - **Covering** — list the columns the search EF returns in `INCLUDE (...)` so Postgres never visits the heap.
 - **Partial** — `WHERE is_visible AND NOT is_deleted AND status IN ('Active', ...)` keeps indexes small (30-50% of full-table size).
@@ -133,6 +142,25 @@ The hot read table is `properties_published`. The index strategy that achieves t
 | `Prefer: count=estimated` (PostgREST) | Facet counts cost ~1 ms via `pg_class.reltuples` (vs 50-200 ms for `count(*) over()`) |
 | Module-scope `supabase-js` client | Eliminates per-request construction cold-start tax |
 | Field projection via explicit `select=` | Never `select *` — only return what the channel asks for |
+
+## Client transport & bundle (all Matrix SPAs)
+
+The SPAs reach Edge Functions over `supabase.functions.invoke` (POST), so the HTTP
+cache rules above do not apply. Two things still dominate what the user waits for.
+
+| Rule | Why |
+|---|---|
+| **Set `Access-Control-Max-Age` on the preflight response.** | A cross-origin POST with an `Authorization` header is never a simple request, so the browser must preflight it. `corsHeaders` from `npm:@supabase/supabase-js@2/cors` does **not** include a max-age, and Chrome then caches the preflight for ~5s — measured on MSA: 1,282 `OPTIONS` in 8 hours at 138-721 ms each, every one a blocking round trip to the function region ahead of the real request. `7200` is Chrome's ceiling; larger values are clamped. Own this in a single `_shared/cors.ts` rather than importing the SDK object in every function. |
+| **A slow `OPTIONS` is almost never cold start.** | Edge Function boot on this platform measures 20-34 ms. When a preflight costs hundreds of ms it is network to the function region, so caching the preflight is the only lever — there is no boot to optimise away. |
+| **Code-split by route.** | Statically importing every page into `App.tsx` compiles the whole app into one chunk: MSA shipped 5.9 MB / 1.57 MB gzipped to every user on every first load, including `mapbox-gl` and `recharts` for users who never opened a map or a report. Lazy routes took the initial payload to 403 KB gzipped. Put the `Suspense` boundary *inside* `SidebarLayout` so the shell stays mounted while a chunk loads. |
+| **Keep auth-path routes eager.** | Lazy-loading `Auth` / `AuthCallback` adds a chunk fetch to the OAuth redirect and eats into the ≤800 ms code → first-authenticated-paint budget above. |
+| **Do NOT name a route-only library in `manualChunks`.** | Naming it makes Rollup hoist the chunk into the entry's static imports and Vite then emits a `modulepreload` for it, so the "split out" library is downloaded by everyone on first paint anyway. Verify by grepping the built `index.html` for the chunk name. Pin only genuinely global libraries (`react`, `react-dom`, `react-router-dom`, `@tanstack/react-query`) — there the separate chunk is what survives in cache across a several-deploys-a-day cadence, since `index.html` is `no-store` while hashed assets are `immutable`. |
+
+**Status (2026-08-31):** only `matrix-sales-automation` sets a preflight max-age.
+`matrix-itsm`, `matrix-digital-employees`, `matrix-hrms`, `matrix-pipeline-2-0`,
+`matrix-qobrix-sales-automation-rls`, `matrix-atlas-mls` and
+`matrix-apps-template-2-1` all still import the SDK `corsHeaders` unchanged and
+pay a preflight per call. Fixing the template first stops new apps inheriting it.
 
 ## Multi-channel capacity (RPS to Postgres)
 
@@ -221,6 +249,26 @@ delete-then-insert) and must not share the CRM sync code path.
 | **Per-agent-scoped payloads must NOT be shared across viewers** | Qobrix scopes record visibility per logged-in agent; board rows are further filtered by SSO scope. Never cache opportunity/contact lists tenant-wide without session isolation. |
 | **POST-invoked EFs cannot use HTTP `Cache-Control`** | The SPA calls EFs via `supabase.functions.invoke` (POST). CDN/ETag caching does not apply; optimise upstream parallelism and Postgres mirrors instead. |
 | **Instrument before/after** | Emit one structured JSON timing line per request (`ef`, `tab`, `ms_total`, `phases`) — same pattern as `listings-search` monitoring. |
+| **A phase that wraps concurrent work only reports the slowest member** | `Promise.all` under one `timing.run('enrich', …)` hides which resolver is slow. Wrap each member in its own `timing.run` — they still run concurrently and each records its own span. MSA's agenda showed `enrich 12,574ms`; split apart it was `enrich_contacts 12,572` vs `enrich_campaigns 222` / `enrich_owners 178` / `enrich_reasons 83`. |
+| **Bound every per-id fallback on width, timeout AND total budget** | An OR-batch followed by `Promise.all(missed.map(…))` with default timeouts is a latency bomb: 200 unresolved MSA agenda contacts fired 200 concurrent `GET /contacts/{id}` that all hit the 12,000ms `qFetch` abort, so the phase measured 12,572ms. A phase whose duration ≈ the `qFetch` timeout is mass-timeout, not slow I/O. Cap concurrency, shorten the per-request timeout, add a wall-clock budget, and return what resolved. |
+
+### Measured: MSA read paths, 2026-08-31
+
+Before/after on the same tenant and traffic shape. The "before" column is p50 over
+115 `qobrix-pipeline` and 130 `qobrix-crm-mirror` requests in an 8-hour window.
+
+| Surface | Before (p50) | After | What it was |
+|---|---|---|---|
+| `qobrix-pipeline` `opportunities_board` | 8,000 ms | **2,004 ms** | `campaign_names` 5,133-7,293 ms → 186 ms once the campaign map moved to the Postgres tier |
+| `qobrix-crm-mirror` `leads` | 4,189 ms | **1,062 ms** | same campaign sweep, plus serial owner/campaign hydration |
+| `qobrix-pipeline` `board_stages` | 8,689 ms | instrumented | `getCampaignsMap` sat outside any `timing.run`, so ~8s of an 8.7s request was invisible |
+| `qobrix-pipeline` `opportunity_board_row` | 6,569 ms | instrumented | same untimed campaign lookup on the single-deal path |
+| `qobrix-pipeline` `agenda` | 13,174 ms | fallback bounded | `enrich_contacts` was 200 concurrent per-id GETs timing out at 12s |
+
+Two lessons worth generalising: an `ms_total` far larger than the sum of its
+`phases` means the expensive call is not wrapped in a span, and a phase duration
+that matches the upstream client's abort timeout means concurrent timeouts rather
+than a slow dependency.
 
 
 ### Safety properties carried by transport
