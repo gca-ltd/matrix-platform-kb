@@ -769,6 +769,53 @@ simplification) deliberately does **not** adopt the BFF / HttpOnly-cookie postur
 remains the tracked future security-upgrade initiative — it is out of scope here,
 which keeps this change "same security level, faster + simpler."
 
+## Anti-pattern: a service-harvested cache on a user read path
+
+**Rule.** A table populated under a service account or a shared upstream login
+carries the **harvester's** visibility, not the caller's. It may only be served to
+viewers whose scope already entitles them to everything (`global`, `org_admin`,
+`system_admin`). Restricted viewers (`self`, `team`) must read the authoritative
+source **as themselves**.
+
+This applies to any read path where the upstream system owns the ACL — a mirror of
+a third-party CRM, a denormalised cache, a materialised view, or a pre-joined
+"fast path" table. `service_role`-only + RLS-enabled-with-no-policies protects the
+table from the *anon/authenticated* client, but says nothing about an Edge Function
+that reads it with the service key and returns the rows to whoever called.
+
+**How it ships undetected.** Where the permission guarantee is carried by the
+*transport* — a per-user token on a live upstream call — replacing the transport
+with a shared cache removes the guarantee while **deleting no permission code**.
+The diff reads as a pure performance change and review passes.
+
+MSA, 2026-08-28 → 2026-08-31: the Leads list was repointed from a live per-user
+Qobrix read to `qobrix_opportunity_mirror` (harvested every 5 min by one shared
+Qobrix account). Any Broker (`self` scope) could then read **45,901 opportunities
+across 66 owners, 45,778 of them carrying a client phone or email**. It also
+silently reverted an earlier deliberate fix that had removed an MSA-side
+`owner==CURRENT_USER` filter, because that filter *under*-shows rows to users with
+legitimate team or delegated access — the upstream ACL is richer than any flag MSA
+can reconstruct.
+
+**Required controls** (all three — docs alone did not hold):
+
+1. **Type-level.** Make the viewer scope a **required** parameter of the cache
+   query helper, and throw for restricted callers. Omitting it must be a compile
+   error, not a review comment.
+2. **Guardrail in CI.** Static check that every call site passes it
+   (MSA: `scripts/check_mirror_viewer_scope.mjs` in `npm run guardrails`).
+3. **Fail-safe + signal.** Strip PII from rows the viewer does not own on
+   restricted paths, and **count** the maskings. A non-zero counter means the
+   upstream is not filtering per user and only the fail-safe is holding —
+   escalate rather than silence it.
+
+Also report which path served the response (`source: 'upstream' | 'mirror'`) so
+the guarantee is observable in UAT rather than inferred.
+
+Contract for the MSA instance: [ADR-044](../architecture/decisions/ADR-044.md)
+D3c/D3d; the performance framing is in
+[`performance.md`](performance.md) § "Safety properties carried by transport".
+
 ## Security Hardening Backlog
 
 > Tracked findings from Supabase security linter and platform audit (April 2026).

@@ -120,6 +120,7 @@ scripts/
 | Dash fields, field mapping, x_* extensions | `docs/data-models/dash-data-model.md`, `docs/data-models/property-field-mapping.md`, `docs/data-models/platform-extensions.md` |
 | CDL schema / ETL pipeline / RESO Web API | `docs/data-models/cdl-schema.md`, `docs/data-models/etl-pipeline.md`, `docs/data-models/reso-web-api.md` |
 | Auth, roles, permissions, RLS | `docs/platform/security-model.md` |
+| Serve a mirror / cache / materialised view on a **user** read path (who may see it?) | `docs/platform/security-model.md` § "Anti-pattern: a service-harvested cache on a user read path" — **read before repointing any list off its authoritative source** |
 | Weekly infosec audit (Advisors + Matrix SQL) | `docs/platform/security-audit-runbook.md` |
 | ES256 JWT (ADR-011), SSO/CDL Third-Party Auth (ADR-012) | `docs/architecture/decisions/` |
 | SSO Edge Function API contracts | `docs/platform/sso-edge-functions.md`, `docs/platform/api-contracts.md` |
