@@ -244,7 +244,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | Date | Report |
 |------|--------|
 | 2026-08-25 | [security-audits/2026-08-25.md](security-audits/2026-08-25.md) — first baseline |
-| 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + 6 first-audit; S10 TRUNCATE drift on 9 projects |
+| 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + remediations; [RU](security-audits/2026-09-01-ru.md) |
 
 ## Related
 
