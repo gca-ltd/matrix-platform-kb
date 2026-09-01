@@ -12,7 +12,7 @@
 | **Sharp Matrix** | The **technology platform** powering Sharp SIR. Comprises four module families that all share the CDL: **CRM** (`matrix-pipeline`, `matrix-comms`, `matrix-client-connect`), **FM / Financial Management** (financial-entries, commissions, deal closings), **HR** (`matrix-hrms`), **MLS** (`matrix-atlas-mls`, `matrix-mls-2-0`, `matrix-cy-website`). |
 | **Sharp SIR** | The **brokerage business** that operates on Sharp Matrix — a Sotheby's International Realty affiliate under Anywhere Brands. Currently active in **Cyprus**, **Hungary**, and **Kazakhstan**; more markets planned. |
 | **Anywhere Dash** | The **SIR network's data exchange** between affiliated SIR offices worldwide. For Sharp SIR, Dash is the **primary bidirectional data contract**. See [dash-data-model.md](../data-models/dash-data-model.md). |
-| **Qobrix** | Sharp SIR's **legacy CRM for Cyprus**. Currently exposed to the CDL via the `mls.sharpsir.group` RESO Web API projection. **Being decommissioned as the MLS source once Atlas runs Cyprus listing creation.** |
+| **Qobrix** | Sharp SIR's **legacy CRM for Cyprus**. Currently exposed to the CDL via the `mls.sharpsir.group` RESO Web API projection. **Being decommissioned as the MLS source once Atlas runs Cyprus listing creation.** The MSA (Sales Automation) CY bridge no longer uses a shared `QOBRIX_SHARE_*` service account or opportunity/contract mirrors on the user read path — see [ADR-050](../architecture/decisions/ADR-050.md). |
 | **`matrix-pipeline`** | The Sharp Matrix CRM (lead/opportunity/listing pipeline). Replaces Qobrix as the system of record for new listings. |
 
 ## Three-Platform Architecture
@@ -206,6 +206,7 @@ See [mls-datamart.md](mls-datamart.md) for details.
 
 **Current state (Cyprus, today):**
 - Qobrix legacy CRM → exposed as `mls.sharpsir.group` (RESO Web API projection over our own data) → CDL `mls-sync` EF. **This is a self-loop during the migration period.** `qobrix` source is `kind = 'legacy-internal'`, `is_sunsetting = true`.
+- **MSA CY bridge:** App DB is the CRM read surface under SSO RLS; Qobrix is a thin upstream reached only under each agent's own token (refresh / materialise). Service-harvested mirrors are removed **before** full Qobrix sunset ([ADR-050](../architecture/decisions/ADR-050.md)) — distinct from this doc's Phase-7 MLS decommission timeline.
 - Anywhere Dash → Databricks bronze (via `mls_2_0` ETL); flipping to direct CDL bidirectional in Phase-2.5.
 
 **Target state (per market, as Atlas covers listing creation):**

@@ -49,6 +49,10 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-041](ADR-041.md) | Single-path Qobrix MCP (auto routing on `/mcp`); vanilla chat baseline | Accepted |
 | [ADR-042](ADR-042.md) | Per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs | Accepted |
 | [ADR-043](ADR-043.md) | Person-keyed MCP grants and OAuth consent binding (Digital Employees) | Accepted |
-| [ADR-044](ADR-044.md) | Qobrix Opportunity surface partition (Leads vs Pipeline) + copy-on-write | Accepted |
+| [ADR-044](ADR-044.md) | Qobrix Opportunity surface partition (Leads vs Pipeline) + copy-on-write | Accepted (D3c/D3d → ADR-050) |
 | [ADR-045](ADR-045.md) | Permission reads fail loud, not fail closed/open (ProtectedRoute three-state + telemetry) | Accepted |
 | [ADR-046](ADR-046.md) | Qobrix broker → SSO identity as a persisted map; only exact-email and confirmed matches own a deal | Accepted |
+| [ADR-047](ADR-047.md) | Qobrix copy ownership preserved; manager-approved claims on mismatch | Accepted |
+| [ADR-048](ADR-048.md) | Agent-configured chart rendering and image-output conventions | Accepted |
+| [ADR-049](ADR-049.md) | HU listings MCP on Supabase Edge Function (Mode B) | Accepted |
+| [ADR-050](ADR-050.md) | Retire Qobrix service account — MSA thin client under caller tokens | Accepted |

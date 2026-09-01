@@ -225,37 +225,41 @@ The 50ms test budget is laxer than the 20ms production budget because the test r
 
 ## MSA / Qobrix read path (legacy CRM bridge)
 
-Matrix Sales Automation reads open CRM history from the **Qobrix REST API** via Supabase Edge Functions (`qobrix-pipeline`, `qobrix-contacts`, …). This path is **not** the CDL `listings-search` contract above.
+Matrix Sales Automation bridges the legacy Qobrix CRM via Supabase Edge
+Functions. After [ADR-050](../architecture/decisions/ADR-050.md), CRM screens
+(**Leads, Pipeline, contacts**) read **App DB under MSA RLS**; Qobrix is
+reached only on explicit per-user refresh / first materialise (caller token).
+**Inventory search** remains a live caller-token Qobrix read (documented
+exception). This path is **not** the CDL `listings-search` contract above.
 
 **Preview-first materialize (CRM).** Opening a Qobrix-only lead / opportunity /
 contact / contract is a single authenticated Qobrix GET via
-`qobrix-materialize` `preview` — no App DB write. Explicit `copy` is one GET +
-one App DB insert (and optional claim row). On-demand `sync` is one GET +
-fill-blanks UPDATE + mismatch upserts; it must not overwrite populated fields
-or change assignee. Do not auto-copy on drawer open (that doubled write load
-and raced ownership claims). Listings remain a queued remirror (media
-delete-then-insert) and must not share the CRM sync code path.
+`qobrix-materialize` `preview` — no App DB write. Explicit `copy` / refresh
+admission goes through the `SECURITY DEFINER` RPC (owner from identity map,
+never the refresher as `created_by`). Listings materialise on first open;
+do not share the CRM refresh prune semantics with listing remirror.
 
 | Rule | Rationale |
 |---|---|
-| **Upstream fan-out is the dominant cost** — sequential paginated `GET` loops and per-row enrichment (N+1) dominate latency, not App DB round trips. | Parallelise paginated upstream reads (bounded concurrency, preserve page order). |
-| **Restricted viewers read live Qobrix as the caller** | Do not serve the service-harvested opportunity mirror to `self`/`team` scopes, and do not invent an MSA `owner==` filter that overrides Qobrix ACL (ADR-044 D3c). Unrestricted scopes may use the mirror. Never download a tenant-wide open set into JS for a broker. |
-| **Named safety ceilings must report truncation honestly** | Prefer `BOARD_MAX_ROWS`-style budgets over hard-coded silent slices. Return upstream `total` + `truncated` / `has_next_page` so the UI can show “showing X of N”. |
-| **Best-effort upstream enrichment must not gate the response** | Optional Qobrix OR-batch enrichment (contracts, campaigns, …) sits behind a soft deadline. On expiry return what is resolved and continue; never `catch {}` a fan-out that can burn tens of seconds of 12s `qFetch` aborts. Prefer App DB mirrors when the enrichment already lives there. |
-| **Prefer an App-DB opportunity mirror for unrestricted viewers only** | `qobrix_opportunity_mirror` is harvested under the shared `QOBRIX_SHARE_*` account and has no RLS. Serve it only to `global` / `org_admin` / `system_admin`. Restricted viewers (`self` / `team`) must `qFetch` live as the caller so Qobrix's ACL is the authority (ADR-044 D3c/D3d). Require `viewerScope: { unrestricted: true }` on mirror query helpers; guardrail `check_mirror_viewer_scope.mjs`. |
-| **Prefer an App-DB contract mirror for Contracting/Payment** | `qobrix_contract_mirror` (cron-synced, tenant-global) feeds buyer-contract column hints. Never revive the live `/contracts` OR-batch on the board path. MSA `public.contracts` wins when present; copy-on-open from the mirror populates it. |
-| **Never issue a second full-collection fetch to resolve one record** | Detail pages and pickers must not call the full board just to find one id. Use a single-row action (`opportunity_board_row`) or a capped search-driven query. |
-| **Tenant-global lookups may be cached in Postgres** | Qobrix user display names, reference vocab, developer mirror — identical for every viewer. Precedent: `developer_cache`, `qobrix_reference_cache`, `qobrix_user_cache`, `qobrix_opportunity_mirror`, `qobrix_contract_mirror`. |
-| **Per-agent-scoped payloads must NOT be shared across viewers** | Qobrix scopes record visibility per logged-in agent; board rows are further filtered by SSO scope. Never cache opportunity/contact lists tenant-wide without session isolation. |
-| **POST-invoked EFs cannot use HTTP `Cache-Control`** | The SPA calls EFs via `supabase.functions.invoke` (POST). CDN/ETag caching does not apply; optimise upstream parallelism and Postgres mirrors instead. |
-| **Instrument before/after** | Emit one structured JSON timing line per request (`ef`, `tab`, `ms_total`, `phases`) — same pattern as `listings-search` monitoring. |
-| **A phase that wraps concurrent work only reports the slowest member** | `Promise.all` under one `timing.run('enrich', …)` hides which resolver is slow. Wrap each member in its own `timing.run` — they still run concurrently and each records its own span. MSA's agenda showed `enrich 12,574ms`; split apart it was `enrich_contacts 12,572` vs `enrich_campaigns 222` / `enrich_owners 178` / `enrich_reasons 83`. |
-| **Bound every per-id fallback on width, timeout AND total budget** | An OR-batch followed by `Promise.all(missed.map(…))` with default timeouts is a latency bomb: 200 unresolved MSA agenda contacts fired 200 concurrent `GET /contacts/{id}` that all hit the 12,000ms `qFetch` abort, so the phase measured 12,572ms. A phase whose duration ≈ the `qFetch` timeout is mass-timeout, not slow I/O. Cap concurrency, shorten the per-request timeout, add a wall-clock budget, and return what resolved. |
+| **CRM lists are App-DB RLS reads** | No service-harvested opportunity/contract mirror on the user path (ADR-050). Qobrix calls scale with deliberate refreshes, not page views. |
+| **Every Qobrix fetch uses the caller's token** | Browser-held session only; no `QOBRIX_SHARE_*` on reads. Chunked client-driven refresh because the token can expire mid-walk. |
+| **RLS helpers must be scalar-subquery wrapped** | Policies that call `can_read_claimed_row(...)` / `get_active_scope()` directly re-evaluate (and re-parse JWT JSON) **per row**. At ~46k promoted opportunities that is hundreds of thousands of parses. Write `(SELECT public.can_read_claimed_row(...))` so Postgres hoists an InitPlan, and collapse `get_active_scope()` to a single `current_setting` parse. Confirm with `EXPLAIN ANALYZE` before/after. |
+| **Upstream fan-out is the dominant cost on live legs** | Inventory search and refresh walks: parallelise paginated upstream reads (bounded concurrency, preserve page order); cooldown + single-flight + global concurrency cap. |
+| **Named safety ceilings must report truncation honestly** | Prefer named budgets over hard-coded silent slices. Return upstream `total` + `truncated` / `has_next_page` where a live page still exists. |
+| **Best-effort upstream enrichment must not gate the response** | Optional OR-batch enrichment sits behind a soft deadline. On expiry return what is resolved; never `catch {}` a fan-out of 12s `qFetch` aborts. |
+| **Never issue a second full-collection fetch to resolve one record** | Detail pages and pickers use a single-row action or capped search. |
+| **Tenant-global lookups may be cached in Postgres** | Display names, reference vocab — identical for every viewer (`qobrix_user_cache`, `qobrix_reference_cache`). Not opportunity/contact lists. |
+| **Per-agent-scoped payloads must NOT be shared across viewers without RLS** | Shared *storage* of CRM rows is fine only when SELECT RLS is owner-scoped (ADR-050). Never serve a service-role harvested table to restricted scopes. |
+| **POST-invoked EFs cannot use HTTP `Cache-Control`** | The SPA calls EFs via `supabase.functions.invoke` (POST). CDN/ETag caching does not apply. |
+| **Instrument before/after** | Emit one structured JSON timing line per request (`ef`, `tab`, `ms_total`, `phases`). |
+| **A phase that wraps concurrent work only reports the slowest member** | Wrap each `Promise.all` member in its own `timing.run`. |
+| **Bound every per-id fallback on width, timeout AND total budget** | Cap concurrency, shorten per-request timeout, add a wall-clock budget, return what resolved. |
 
-### Measured: MSA read paths, 2026-08-31
+### Measured: MSA read paths
 
-Before/after on the same tenant and traffic shape. The "before" column is p50 over
-115 `qobrix-pipeline` and 130 `qobrix-crm-mirror` requests in an 8-hour window.
+**Pre-ADR-050 (2026-08-31)** — dual-leg + mirror era. Before/after on the same
+tenant; "before" is p50 over 115 `qobrix-pipeline` and 130 `qobrix-crm-mirror`
+requests in an 8-hour window.
 
 | Surface | Before (p50) | After | What it was |
 |---|---|---|---|
@@ -264,6 +268,13 @@ Before/after on the same tenant and traffic shape. The "before" column is p50 ov
 | `qobrix-pipeline` `board_stages` | 8,689 ms | instrumented | `getCampaignsMap` sat outside any `timing.run`, so ~8s of an 8.7s request was invisible |
 | `qobrix-pipeline` `opportunity_board_row` | 6,569 ms | instrumented | same untimed campaign lookup on the single-deal path |
 | `qobrix-pipeline` `agenda` | 13,174 ms | fallback bounded | `enrich_contacts` was 200 concurrent per-id GETs timing out at 12s |
+
+**Post-promotion (ADR-050).** After CRM rows land in App DB and lists stop
+hitting live Qobrix / the service mirror, re-measure Leads list and Pipeline
+board p50/p99 under RLS with scalar-subquery policies at full promoted scale
+(~46k opportunities). Record the new numbers here; until then treat the
+2026-08-31 table as historical only. Gate: board open must not depend on a
+Qobrix round-trip except the inventory-search exception.
 
 Two lessons worth generalising: an `ms_total` far larger than the sum of its
 `phases` means the expensive call is not wrapped in a span, and a phase duration
@@ -278,15 +289,19 @@ If a permission guarantee depends on **who** the upstream call authenticates as
 service account removes that guarantee without a visible “permission” diff.
 The MSA Leads list did this on 2026-08-28 (mirror cutover) after `98dc263b`
 correctly deferred to Qobrix — brokers then saw ~46k leads / 66 owners with
-contact phone and email. Mitigations that stick: (1) refuse the privileged
-cache for restricted scopes at the API boundary, (2) fail closed on PII for
-unowned rows, (3) a CI guardrail on call sites.
+contact phone and email. Mitigations that stick when a privileged cache still
+exists: (1) refuse it for restricted scopes at the API boundary, (2) fail
+closed on PII for unowned rows, (3) a CI guardrail on call sites. Prefer
+eliminating the shared harvester ([ADR-050](../architecture/decisions/ADR-050.md))
+over living with those controls forever.
 
 ### Cache discipline for tenant-global Postgres mirrors
 
 A Postgres mirror that is never re-synced is a **frozen cache**: it serves confidently
 wrong data forever. `_shared/qobrix-users.ts` is the reference implementation — any new
-mirror (`developer_cache`, `qobrix_reference_cache`, …) must satisfy all seven rules.
+tenant-global lookup cache (`qobrix_reference_cache`, …) must satisfy all seven rules.
+Do **not** apply this pattern to owner-scoped CRM rows — those use per-user refresh
+into RLS-protected App tables (ADR-050), not a service-role mirror.
 
 | Rule | Why |
 |---|---|

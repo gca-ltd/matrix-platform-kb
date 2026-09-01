@@ -797,13 +797,21 @@ silently reverted an earlier deliberate fix that had removed an MSA-side
 legitimate team or delegated access — the upstream ACL is richer than any flag MSA
 can reconstruct.
 
-**Required controls** (all three — docs alone did not hold):
+**MSA status (2026-09-01).** [ADR-050](../architecture/decisions/ADR-050.md)
+retires that service-harvested cache entirely: CRM screens read App DB under
+MSA RLS; every Qobrix fetch uses the caller's own token; mirrors and
+`QOBRIX_SHARE_*` leave the read path. The historical incident and the
+controls below remain the platform template for **any other** service-harvested
+cache — MSA itself must not reintroduce one.
+
+**Required controls** (all three — docs alone did not hold) when a privileged
+cache still exists:
 
 1. **Type-level.** Make the viewer scope a **required** parameter of the cache
    query helper, and throw for restricted callers. Omitting it must be a compile
    error, not a review comment.
 2. **Guardrail in CI.** Static check that every call site passes it
-   (MSA: `scripts/check_mirror_viewer_scope.mjs` in `npm run guardrails`).
+   (historical MSA: `scripts/check_mirror_viewer_scope.mjs`).
 3. **Fail-safe + signal.** Strip PII from rows the viewer does not own on
    restricted paths, and **count** the maskings. A non-zero counter means the
    upstream is not filtering per user and only the fail-safe is holding —
@@ -812,9 +820,39 @@ can reconstruct.
 Also report which path served the response (`source: 'upstream' | 'mirror'`) so
 the guarantee is observable in UAT rather than inferred.
 
-Contract for the MSA instance: [ADR-044](../architecture/decisions/ADR-044.md)
-D3c/D3d; the performance framing is in
+Contract for MSA after cutover: [ADR-050](../architecture/decisions/ADR-050.md).
+Historical D3c/D3d wording lives under
+[ADR-044](../architecture/decisions/ADR-044.md). Performance framing:
 [`performance.md`](performance.md) § "Safety properties carried by transport".
+
+## Anti-pattern: unique key vs per-agent visibility
+
+A tenant-global unique key on an upstream id (`(tenant_id, external_qobrix_id)`)
+combined with **owner-scoped** SELECT RLS creates a silent trap: agent B
+legitimately authorised upstream cannot INSERT a second copy of a contact or
+deal that agent A already holds, and the `23505` error itself leaks that
+another agent owns the row — while B still cannot SELECT it.
+
+**Required shape.** One shared row per upstream id; a second authorised agent's
+write raises a **claim** (`mirror_claim_state = 'pending'`, …) via a
+`SECURITY DEFINER` admission RPC so B gains read immediately, and an admin
+adjudicates *ownership*. Do not invent per-agent duplicate rows or drop the
+unique key.
+
+## Anti-pattern: `created_by` as an accidental permanent grant
+
+INSERT policies that force `created_by = get_current_user_id()` look like
+provenance hygiene. On a **caller-harvested** cache they are a privilege
+escalation: whoever first refreshes a colleague's row keeps durable MSA read
+via the creator branch of `can_read_scoped_row`, even after their upstream
+visibility narrows. Same leak class as a service-harvested mirror, with a
+person as harvester (especially call-centre / team-lead roles with broad
+upstream visibility and restricted MSA scope).
+
+**Required shape.** Cache/admission writes set `created_by` to the **resolved
+owner** (via the identity map), never the refresher. Prefer a single
+`SECURITY DEFINER` write path; block direct client INSERTs on those tables.
+See [ADR-050](../architecture/decisions/ADR-050.md) D4.
 
 ## Security Hardening Backlog
 
@@ -839,6 +877,14 @@ D3c/D3d; the performance framing is in
 | S12 | **Pipeline 2.0: anon DML on 9 CRM tables** | MEDIUM | TRUNCATE fixed 2026-08-25 but anon INSERT/UPDATE/DELETE remain. Deferred. | Wave 2 anon DML revoke (S9 pattern). |
 | ~~S13~~ | ~~**SSO: anon DML on `sso_permission_load_failures`**~~ | RESOLVED (2026-09-01) | EF `log-permission-failure` writes via service_role; SPA call EF only. | `20260901122000_sso_anon_hygiene.sql` (+ revoke orphaned `handle_new_user*` / metadata readers from anon). |
 | ~~S14~~ | ~~**HU Storefront: anon write hole on admin tables**~~ | RESOLVED (2026-09-01) | CRITICAL: policies `Allow anon insert/update` on `properties` / `Member` / `Office` with `USING(true)`; anon SELECT of full `audit_log`. | Dropped exploitable policies; revoked anon DML on admin tables; Wave 2F TRUNCATE; retained public INSERT surfaces. `20260901124000_s14_hu_anon_write_hole.sql`. |
+| S15 | **HU Storefront: anon can UPDATE any `shared_collections` row** | HIGH | Policy `Anyone can update view count` is `UPDATE … USING (true) WITH CHECK (true)` for role `public`, and `anon` retains the UPDATE grant, so the write is not limited to the counter column. Same class as S14; survived the S14 migration because the policy name did not match the drop list. Found by the post-remediation re-audit. | Move the counter behind a `SECURITY DEFINER` RPC (or a column-scoped policy), then revoke anon UPDATE. Not behaviour-neutral — needs a UI change. |
+| S16 | **HU Storefront: default privileges still grant anon write on future tables** | HIGH | The `ALTER DEFAULT PRIVILEGES` half of the S14 migration never ran (the transaction aborted on a pre-existing policy). `pg_default_acl` for `postgres` reads `anon=arwdxtm`, so the next Lovable-created table re-opens the S14 class with no code change. HRMS shows `anon=rxtm` — proof the statement works when it lands. | **Deferred by ops decision 2026-09-01** — the fix (re-running the `ALTER DEFAULT PRIVILEGES` block alone) affects future objects only and is provably behaviour-neutral, but HU is the live Hungarian production site and no further changes were authorised. **Compensating control: re-check HU anon DML after any release that adds tables** — the invariant is not self-sustaining while this is open. |
+| S17 | **HU Storefront: any authenticated user can forge `audit_log` rows** | MEDIUM | Policy `Service role can insert audit logs` is declared for `public` with `WITH CHECK (true)` while `authenticated` holds the INSERT grant. The real writer, `audit_trigger_function`, is `SECURITY DEFINER` and does not need that grant. | Scope the policy to `service_role` and revoke `authenticated` INSERT, once confirmed no client writes audit rows directly. |
+
+**Durability caveat on Wave 2F (S6/S10):** on SSO, CDL, HRMS, ITSM and HU Storefront the
+`supabase_admin`-owned default ACL still reads `anon=arwdDxtm`, TRUNCATE included. Wave 2F
+holds for tables created by `postgres` (the normal path) but not for ones created by
+`supabase_admin`. Do not state the invariant more strongly than that.
 
 ### Medium-Term (Hardening)
 
