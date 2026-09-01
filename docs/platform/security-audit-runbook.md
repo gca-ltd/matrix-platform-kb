@@ -79,25 +79,44 @@ Priority: blast radius → data sensitivity (PII / money / HR) → public intern
 | 9 | MSA Hungary | `ykgyzqnuqpwasxvesxva` | `user-supabase-msa-hungary` |
 | 10 | Qobrix RLS | `ycbwgnihbrqammkgngum` | `user-supabase-msa-rls` |
 | 11 | Matrix Comms | `ujowkipnqgtazmtdsnlm` | — |
+| 12 | HU Storefront (Matrix Storefront 2.0 Hungary) | `bpaxqtxaysolzaeguwvg` | — (Management API; MCP `user-supabase-hu-website` needs auth) |
 
 ### P2 — operational / widely used
 
 | # | System | Project ref | MCP namespace (if any) |
 |---|--------|-------------|------------------------|
-| 12 | ITSM | `irjrcskfcyierdbefrpk` | `user-supabase-itsm` |
-| 13 | Atlas MLS app DB | `wckwfbbqiupvallmhqbu` | `user-supabase-atlas-mls` |
-| 14 | Digital Employees | `mihslqjjclbrqelnjjpb` | — |
-| 15 | Analytics + Stardom | `wjsafhylqujwbpqgjjlj` | — (shared app DB) |
-| 16 | Client Connect | `jnmssbsjhsoyyxuxxzop` | — |
-| 17 | Meeting Hub | `hefqrtlmxwvvtximsvsy` | — |
+| 13 | ITSM | `irjrcskfcyierdbefrpk` | `user-supabase-itsm` |
+| 14 | Atlas MLS app DB | `wckwfbbqiupvallmhqbu` | `user-supabase-atlas-mls` |
+| 15 | Digital Employees | `mihslqjjclbrqelnjjpb` | — (**403** — second org) |
+| 16 | Analytics + Stardom | `wjsafhylqujwbpqgjjlj` | — (shared app DB) |
+| 17 | Client Connect | `jnmssbsjhsoyyxuxxzop` | — (**403** — second org) |
+| 18 | Meeting Hub | `hefqrtlmxwvvtximsvsy` | — (**403** — second org) |
+| 19 | Career Connect | `zsjwbspjlpaxfadjeymd` | — |
+| 20 | Task Manager HU | `rwgfixcfgviaqonhhqev` | — |
+| 21 | Performance Dashboard | `patgnfubqbyaiapviksu` | — |
+| 22 | Vacations Management | `kposeyhvgusosuzjjrdv` | — |
+| 23 | matrix-lead-generator | `ddairradcxczsvwntwmw` | — |
 
 ### P3 — legacy / staging (in scope, last)
 
 | System | Project ref | Notes |
 |--------|-------------|-------|
 | Pipeline v1 (legacy) | `mydojctcewxrbwjckuyz` | Legacy integrations only |
-| CY SPA staging | `rlfxsieleseimylumhwc` | Staging |
+| CY SPA staging | `rlfxsieleseimylumhwc` | Staging (**403** — second org) |
 | HRMS Sandbox 3.0 | `xyvkeefqxabfcptiyoxm` | Audit only if it holds prod-like PII |
+
+### Coverage gap — second Supabase org
+
+Management API PAT (`~/.supabase/access-token`) can reach projects in org
+`iipqkbmihgjxngwqjvzd` only. These refs return **403** until PAT org access is
+expanded or per-project MCP is configured:
+
+| System | Ref |
+|--------|-----|
+| Digital Employees | `mihslqjjclbrqelnjjpb` |
+| Client Connect | `jnmssbsjhsoyyxuxxzop` |
+| Meeting Hub | `hefqrtlmxwvvtximsvsy` |
+| CY SPA staging | `rlfxsieleseimylumhwc` |
 
 ### Out of scope (small / non-prod)
 
@@ -163,6 +182,21 @@ ORDER BY tablename, policyname;
 
 Interpret `qual = 'true'` carefully: intentional `TO authenticated` catalog reads differ from `{public}` / `{anon}` + GRANT. See security-model § Anon GRANT vs RLS.
 
+**Anon EXECUTE on SECURITY DEFINER functions** (S8 class — Advisors miss some RPC paths):
+
+```sql
+SELECT n.nspname AS schema, p.proname AS function_name,
+       pg_get_function_identity_arguments(p.oid) AS args
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.prosecdef = true
+  AND has_function_privilege('anon', p.oid, 'EXECUTE')
+ORDER BY p.proname;
+```
+
+Flag admin/mutation RPCs (`update_user_role`, `remove_user_role`, …) for `REVOKE` from `PUBLIC, anon`.
+
 ### Auth / EF spot-checks (sample each week; deep-dive P0)
 
 | Check | Where | Known backlog |
@@ -210,6 +244,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | Date | Report |
 |------|--------|
 | 2026-08-25 | [security-audits/2026-08-25.md](security-audits/2026-08-25.md) — first baseline |
+| 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + 6 first-audit; S10 TRUNCATE drift on 9 projects |
 
 ## Related
 

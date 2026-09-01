@@ -41,7 +41,8 @@ Supabase projects are split across two organizations:
 |------|-----------|------|
 | **Matrix SSO** | `xgubaguglsnokjyudgvc` | Identity only: Auth, RBAC, Tenants, AD Users (ADR-012). Nano, `eu-west-1` (Ireland). **Active** (~230k req / 7 days; last migration `fix_sso_roles_and_rls`). Owner: `matrix-platform-foundation/supabase/`. |
 | **Matrix CDL** (a.k.a. "Matrix Data Model Studio") | `ofzcokolkeejgqfjaszq` | CDL backend (Micro, `eu-central-1` Frankfurt). Hosts the canonical listing tables (`public.properties`, `public.properties_published`, `public.property_media`), the `cdl_staging.*` raw/mapped/media-staging tables, the MLS Sync control plane (`mls_settings`, `mls_sync_jobs`, `mls_sync_state`, `mls_orchestrator_runs`), and the Edge Functions: the 5-stage pipeline (`reso-import` / `field-mapping-apply` / `listing-merge` / `media-import` (page-capped) / `listing-publish`) plus the `merge_media_from_staging` RPC, the admin EFs (`mls-sync-orchestrator` — sole sync engine; `mls-sync` — admin/CRUD/read API with `start` proxying to the orchestrator), and the read EF (`listings-search`). Per ADR-012/013, ADR-014 implementation status note + Phase 1 Best-in-Class (Apr 2026). Owner: `matrix-platform-foundation/supabase/cdl/`. See Matrix-CICD §7.3. |
-| **HU Website 1GH — prod** | TBD (to be provisioned) | Target prod Supabase for `sothebys-realty.hu`. Recommended region: `eu-central-1`. See Matrix-CICD §0.1. |
+| **HU Website 1GH — staging (clone)** | `bpaxqtxaysolzaeguwvg` | Matrix Storefront 2.0 Hungary (`hu-website`). Clone of legacy sandbox for HU site development; semantic listings MCP + embeddings (ADR-049). Region: `eu-central-1`. |
+| **HU Website 1GH — prod** | TBD (to be provisioned) | Target prod Supabase for `sothebys-realty.hu`. Recommended region: `eu-central-1`. Migrate from `bpaxqtxaysolzaeguwvg` clone. See Matrix-CICD §0.1. |
 | **HU Website 1GH — staging** | TBD (to be provisioned) | Target staging Supabase for `sothebys-realty.hu`. Recommended region: `eu-central-1`. See Matrix-CICD §0.1. |
 | **CY Website 2.0 — prod** | TBD (to be provisioned) | Target prod Supabase for CY SPA (after legacy-PHP cutover). See Matrix-CICD §0.3 / §5.2. |
 | **CY Website 2.0 — staging** | TBD (to be provisioned) | Target staging Supabase for CY SPA. See Matrix-CICD §0.3. |
@@ -54,7 +55,22 @@ Supabase projects are split across two organizations:
 
 | Name | Project ID | Role |
 |------|-----------|------|
-| **Matrix MLS app DB** | `wckwfbbqiupvallmhqbu` | `matrix-mls` application DB (role_configurations, app-local). Org unverified. |
+| **Matrix MLS app DB** | `wckwfbbqiupvallmhqbu` | `matrix-mls` / Atlas MLS application DB (role_configurations, app-local). |
+| **Matrix Datacore** | `zcajghoohycimpubufsy` | Qobrix photograph / insights (initiatives 005–006). |
+| **Matrix Sales Automation (MSA CY)** | `rpoeezssicpzexarmwqq` | Qobrix-strangler sales CRM staging. |
+| **Matrix Sales Automation Hungary** | `ykgyzqnuqpwasxvesxva` | Hungary MSA variant. |
+| **Matrix Qobrix Sales Automation RLS** | `ycbwgnihbrqammkgngum` | Thin Qobrix client (`/qobrix-rls/`). |
+| **Matrix Comms** | `ujowkipnqgtazmtdsnlm` | WhatsApp / messaging app DB. |
+| **Matrix Analytics + Stardom** | `wjsafhylqujwbpqgjjlj` | Shared app DB for analytics workspace and Stardom. |
+| **Career Connect** | `zsjwbspjlpaxfadjeymd` | HR recruiting / applications. |
+| **Task Manager HU** | `rwgfixcfgviaqonhhqev` | Hungary task manager. |
+| **Matrix Performance Dashboard** | `patgnfubqbyaiapviksu` | Performance dashboard app DB. |
+| **Matrix Vacations Management** | `kposeyhvgusosuzjjrdv` | Leave / vacation management. |
+| **matrix-lead-generator** | `ddairradcxczsvwntwmw` | Lead generator (provisioned 2026-08-28). |
+| **Matrix HRMS Sandbox 3.0** | `xyvkeefqxabfcptiyoxm` | HRMS sandbox — audit if prod-like PII. |
+| **Digital Employees** | `mihslqjjclbrqelnjjpb` | AI Agents app DB (**second org** — PAT 403). |
+| **Client Connect** | `jnmssbsjhsoyyxuxxzop` | Contact registration (**second org** — PAT 403). |
+| **Meeting Hub** | `hefqrtlmxwvvtximsvsy` | Meeting registration (**second org** — PAT 403). |
 | **Matrix Pipeline 2.0 app DB** | `kzvhqgpedapzqmwgikrw` | `matrix-pipeline-2-0` application DB (app-private: `role_configurations`, `activities`, `notifications`, drafts, workflow cache). Confirmed via `src/integrations/supabase/client.ts`. **This is the active Pipeline app DB.** |
 | **Matrix Pipeline v1 (legacy) app DB** | `mydojctcewxrbwjckuyz` | Legacy Pipeline CRM (leads/opportunities, `smpipeline` era). Superseded by Pipeline 2.0; retained for legacy integrations only (e.g. `lead-webhook`, O365). Org unverified. |
 | **Matrix HRMS app DB** | `wltuhltnwhudgkkdsvsr` | HR Management System (domain-specific app). Org unverified. |
