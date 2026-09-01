@@ -797,12 +797,11 @@ silently reverted an earlier deliberate fix that had removed an MSA-side
 legitimate team or delegated access — the upstream ACL is richer than any flag MSA
 can reconstruct.
 
-**MSA status (2026-09-01).** [ADR-050](../architecture/decisions/ADR-050.md)
-retires that service-harvested cache entirely: CRM screens read App DB under
-MSA RLS; every Qobrix fetch uses the caller's own token; mirrors and
-`QOBRIX_SHARE_*` leave the read path. The historical incident and the
-controls below remain the platform template for **any other** service-harvested
-cache — MSA itself must not reintroduce one.
+**MSA status (2026-09-02).** [ADR-051](../architecture/decisions/ADR-051.md)
+supersedes the ADR-050 App-DB-only **list** read: Leads and Pipeline lists call
+live Qobrix under the caller's token for all scopes; the mirror stays dropped.
+App DB remains the write/copy overlay. The historical incident and the controls
+below remain the platform template for **any other** service-harvested cache.
 
 **Required controls** (all three — docs alone did not hold) when a privileged
 cache still exists:
