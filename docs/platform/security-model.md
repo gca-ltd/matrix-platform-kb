@@ -803,6 +803,13 @@ live Qobrix under the caller's token for all scopes; the mirror stays dropped.
 App DB remains the write/copy overlay. The historical incident and the controls
 below remain the platform template for **any other** service-harvested cache.
 
+**MSA merge contract (ADR-052).** On per-user-isolated surfaces the App DB may
+decorate or correct a row the caller's own Qobrix read returned, and may
+introduce only app-authored rows (`external_qobrix_id IS NULL`). It must never
+re-introduce a Qobrix-sourced row the caller did not see — including via a
+"local-only" board leg or additive aggregates. See
+[ADR-052](../architecture/decisions/ADR-052.md).
+
 **Required controls** (all three — docs alone did not hold) when a privileged
 cache still exists:
 
