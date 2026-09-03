@@ -215,6 +215,20 @@ never returns it to the agent. See ADR-032 and `sso-edge-functions.md`.
 
 **Common subset**: Every app calls `oauth-authorize`, `oauth-token`, `switch-role`, `check-permissions`. `switch-tenant` is available to all apps but only usable by `system_admin` users. Admin apps add `admin-*` functions. Apps with AD sync add `sync-ad-users`. Matrix Pipeline owns O365 integration via `ms-graph-proxy` (broker / manager role-filtered). Each app deploys its own Edge Functions to its app-specific Supabase instance (see app-catalog.md for project IDs). The previously-listed separate **Broker App** / **Manager App** rows are consolidated into the single **Matrix Pipeline** row above.
 
+## MSA — `qobrix-pipeline` board tabs (`saved_here_only`)
+
+App DB project for staging: `rpoeezssicpzexarmwqq`. Auth: SSO JWT verified in-function (`verify_jwt: false` at the gateway). Board tabs share one engine (`runBoardQuery`).
+
+| Tab | Purpose |
+|-----|---------|
+| `opportunities_board` | Table view — paged rows + `stage_counts` |
+| `board_stages` | Kanban bootstrap — first page + count per column |
+| `board_stage` | Kanban load-more for one column |
+
+**`saved_here_only` (ADR-054, default `false`).** When `true`, skip the live Qobrix merge and page App-DB `opportunities` the viewer may see (app-authored and promoted). Totals are exact (`totalExact: true`). Restricted viewers require a scope predicate on `x_assigned_user_id` / `owner_team_id` — see [security-model.md](security-model.md) § service-harvested cache and [ADR-054](../architecture/decisions/ADR-054.md). Older clients omit the flag and keep the ADR-052 merge path.
+
+Accepted body aliases: `saved_here_only` / `savedHereOnly` (boolean).
+
 ## Digital Employees — Conversations public API (`converse`)
 
 App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (channel-bound API key; SHA-256 hashed in `api_keys`). Live OpenAPI: `GET /functions/v1/converse/openapi.json` (version **1.2.0**).

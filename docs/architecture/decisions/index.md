@@ -59,3 +59,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-051](ADR-051.md) | Live Qobrix read for CRM lists — supersede ADR-050 D1 read half | Accepted |
 | [ADR-052](ADR-052.md) | Two-source virtual dataset — Qobrix + App DB merge contract | Accepted |
 | [ADR-053](ADR-053.md) | In-app build-status surface — repo Markdown, structure-agnostic renderer, `alwaysVisible` nav | Accepted |
+| [ADR-054](ADR-054.md) | Pipeline board visibility prefs — `saved_here_only` + Won/Lost column toggle | Accepted |

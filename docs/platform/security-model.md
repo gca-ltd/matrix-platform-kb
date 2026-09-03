@@ -810,6 +810,14 @@ re-introduce a Qobrix-sourced row the caller did not see — including via a
 "local-only" board leg or additive aggregates. See
 [ADR-052](../architecture/decisions/ADR-052.md).
 
+**MSA materialised board mode (ADR-054).** When the broker opts to hide
+Qobrix-only deals, `qobrix-pipeline` pages App-DB `opportunities` under a
+**required** viewer-scope predicate (`fetchMaterializedOpportunities`). That
+set includes promoted Qobrix copies the viewer owns — still a privileged
+cache relative to live Qobrix ACLs — so the helper must not compile without
+`viewer`, and restricted scopes filter on `x_assigned_user_id` /
+`owner_team_id`. See [ADR-054](../architecture/decisions/ADR-054.md).
+
 **Required controls** (all three — docs alone did not hold) when a privileged
 cache still exists:
 
