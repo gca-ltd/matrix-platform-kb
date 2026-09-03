@@ -478,6 +478,16 @@ Every route uses `ProtectedRoute` with a `requiredPage` key:
 
 The `requiredPage` key is checked against the role's `pages` list from `sso_role_configurations` (scoped by the app's `ROLE_CONFIG_APP_ID`) for the user's role. `ProtectedRoute` must wait for the role-config query and treat load failure as distinct from denial — see [ADR-045](../architecture/decisions/ADR-045.md).
 
+**Exception — pages open to every signed-in user:** omit `requiredPage` (auth
+only) and mark the nav item `alwaysVisible: true` in the app's page registry
+so the sidebar / mobile menu shows it without a role grant, and so it does
+**not** appear as a tickable row in Administration → Roles (an admin must not
+be able to un-grant a page the code always shows). Use this only for
+coordination / help surfaces that must be universal — see
+[ADR-053](../architecture/decisions/ADR-053.md). Do not reuse a coarse key like
+`home` or `profile` for this purpose: those still require an explicit grant for
+non-admin roles.
+
 ### Sidebar Structure
 
 The sidebar is defined in `AppSidebar.tsx` as an array of sections. Each item has a `pageKey` for permission-based visibility:
