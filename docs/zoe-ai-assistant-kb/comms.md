@@ -187,6 +187,14 @@ Matrix Comms uses an AI assistant for:
 
 > **Platform note (ops):** the AI backend is moving from the external HumaticAI service onto the in-platform Digital Employees Conversations API (SR000518). Brokers do not need to change how they use suggestions or translation.
 
+> **Platform note (ops, 2026-09-04):** every Comms API route is served by the single
+> `api` edge function (`/functions/v1/api/...`, handlers `api/handle-*.ts`). The fourteen
+> earlier single-purpose functions (`templates`, `contacts`, `analytics`, `leads`, …) were
+> undeployed because they still carried their original authorisation and let any
+> token-holding broker bypass the gateway's permission rules. Only `twilio-webhook`,
+> `twilio-worker`, `campaign-worker`, `reminders-cron` and `meta-template-sync` remain as
+> separate entry points. Do not reintroduce a per-resource function.
+
 ### How to Use AI Suggestions
 
 1. Open a conversation.
