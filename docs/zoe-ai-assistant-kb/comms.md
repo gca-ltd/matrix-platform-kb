@@ -28,10 +28,15 @@ If you cannot log in, your account may not have been set up with access to Comms
 
 | Role | Sidebar Pages | What They Can Do |
 |------|--------------|-----------------|
-| **Broker** | Chats, Assignments, Contacts, Campaigns, Analytics, Settings | View conversations, send/receive messages, use quick replies, manage contacts |
-| **Marketing** | Templates, Campaigns, Analytics, Settings | Create and manage WhatsApp templates, run campaigns, view analytics |
-| **Sales** | Analytics, Settings | View messaging analytics and settings |
-| **Admin** | All pages | Full access: channel configuration, Twilio settings, permissions, all conversations |
+| **Broker** | Chats, Contacts, Analytics, Settings (profile/notifications/quick replies) | View own + unassigned chats, send/receive messages, use quick replies, claim chats by answering |
+| **Team lead** | Chats, Assignments, Contacts, Analytics, Settings | Same as broker + assign/reassign chats across the org |
+| **Admin (org/global)** | All pages including Templates, Campaigns, Twilio, Permissions | Full access: channels, templates, campaigns, role matrix |
+
+**Notes (2026-09 launch):**
+- The **Templates** page is admin-only. Brokers still pick templates from inside a chat (required outside the 24-hour WhatsApp window).
+- **Campaigns** are admin-only (server-enforced).
+- **Twilio / Permissions** settings tabs are admin-only. The old Data Layer settings tab was removed (unused).
+- **Voice calls are not supported** — Comms is WhatsApp messaging only. Clients cannot call the WhatsApp Business number through this app.
 
 ---
 
@@ -47,6 +52,8 @@ The Chats page is your main workspace. It shows all WhatsApp conversations organ
 - **Waiting** — conversations awaiting a response
 - **Archived** — closed or archived conversations
 
+**How contacts appear:** when a customer messages your WhatsApp number for the first time, Comms automatically creates a **Contact** and an unassigned conversation. Brokers see that chat in the shared unassigned pool; answering it **claims** the chat for them.
+
 **How to use the inbox:**
 
 1. Click a conversation on the left panel to open it.
@@ -54,11 +61,17 @@ The Chats page is your main workspace. It shows all WhatsApp conversations organ
 3. You can also:
    - **Send a template** — click the template icon to choose a pre-approved WhatsApp template.
    - **Use a quick reply** — click the Zap (⚡) icon to open the Quick Replies popover and insert a saved reply.
-   - **Attach media** — send images or documents.
+   - **Attach media** — send images, video, documents, or voice notes.
    - **Add an internal note** — notes visible only to staff, not to the client.
    - **Set a reminder** — schedule a follow-up reminder for this conversation.
    - **Pin/unpin** — pin important conversations to the top.
    - **Archive** — move conversation to the Archived tab.
+
+**24-hour window:** after 24 hours without a customer reply, free-form text and media are blocked. Use a pre-approved template to reopen the conversation.
+
+### Assignments
+
+Team leads and admins assign chats on the Assignments page. Brokers may only claim an unassigned chat for themselves (or by answering it). Reassigning someone else's chat requires elevated access.
 
 ### Starting a New Conversation
 
@@ -66,7 +79,7 @@ The Chats page is your main workspace. It shows all WhatsApp conversations organ
 2. Enter the client's WhatsApp phone number (or select an existing contact).
 3. The conversation is created and you can begin messaging.
 
-**Note:** WhatsApp requires approved templates when you message someone for the first time or after 24 hours of no reply. The app lets you start conversations freely, but WhatsApp may block messages that don't follow these rules. When in doubt, use a template for your first message.
+**Note:** WhatsApp requires approved templates when you message someone for the first time or after 24 hours of no reply. The app blocks free-form send outside the window and opens the template picker.
 
 ### Templates
 
