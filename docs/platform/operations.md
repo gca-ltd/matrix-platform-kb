@@ -14,7 +14,7 @@ Every component in the Sharp Matrix platform deploys via a different mechanism:
 | SSO Edge Functions (17) | Supabase (Deno) | GitHub Actions → `supabase functions deploy` | Push to `main` in `matrix-platform-foundation` |
 | SSO Console | Apache htdocs | Manual build → rsync | Manual |
 | SSO Login Page | Apache htdocs | Manual build → rsync | Manual |
-| Matrix Apps (HRMS, Pipeline, ITSM, FM, etc.) | Apache htdocs / Lovable | Manual build → rsync, or Lovable Publish | Manual |
+| Matrix Apps (HRMS, Pipeline, ITSM, FM, MSA, …) | Apache htdocs via **github-watcher** | Push → webhook → immutable release + atomic symlink (`/opt/bitnami/apache/releases/<subpath>/<sha>/`) | Push to watched branch (`main`, or `cdto` for MSA staging) |
 | RESO Web API | PM2 (FastAPI) | `pm2 restart mls2-api` | Manual |
 | MLS 2.0 ETL Pipeline | Databricks | `databricks runs submit` via cron | Cron (3:00 AM MSK daily) |
 | Database Migrations | Supabase | `supabase db push` or MCP `apply_migration` | Manual |
@@ -44,11 +44,29 @@ All functions deploy with `--no-verify-jwt` because they implement custom JWT ve
 
 **Configuration**: `supabase/config.toml` sets `verify_jwt = false` for all 17 functions.
 
-### Planned: Frontend App CI/CD
+### Matrix SPA frontend deploys (github-watcher)
 
-Frontend apps (Console, Login, HRMS, all Matrix Apps) currently deploy manually. A CI/CD pipeline using GitHub Actions is planned:
+Intranet Matrix SPAs deploy through `sharpsir-group/github-watcher` (pm2 on the intranet host,
+port `:9001`). Agents and operators **push to the watched branch** and never run `deploy.sh`
+or copy into htdocs. See ADR-055 for the immutable-release publish model.
+
+| Concern | Behaviour |
+|---------|-----------|
+| Trigger | GitHub `push` webhook + 5-minute reconciler |
+| Publish | `/opt/bitnami/apache/releases/<subpath>/<sha>/` + atomic symlink at htdocs |
+| Hang protection | Build `timeout` (900s) + parent process-group watchdog (20 min) |
+| Failure recovery | Exit `10`/`20`/`30` → classified backoff / fast retry; stamp mismatch auto-rolls back |
+| Status | `GET http://127.0.0.1:9001/status` |
+| Rollback | `POST http://127.0.0.1:9001/rollback` (loopback) with `{"target":"org/repo"}` |
+
+### Planned: Frontend App CI/CD (lint gate)
+
+GitHub Actions for **lint + type-check on PR** remains useful as a merge gate. Production
+publish for Matrix SPAs is already owned by github-watcher — do not reintroduce a
+`deploy.yml` that rsyncs to Apache.
+
 - `build.yml`: lint + type-check + build on PR (blocks merge on failure)
-- `deploy.yml`: build + rsync to Apache htdocs on push to main
+- ~~`deploy.yml`: build + rsync to Apache htdocs on push to main~~ — superseded by github-watcher
 
 ## Process Management
 
@@ -212,7 +230,7 @@ All Matrix business apps (HRMS, Pipeline, ITSM, FM, Client Connect, Meeting Hub,
 1. **CDL data loss**: Restore Supabase from daily backup via dashboard or support ticket
 2. **ETL pipeline failure**: Re-run full refresh via `run_pipeline.sh all` — idempotent by design
 3. **Edge Function outage**: Redeploy via GitHub Actions `workflow_dispatch` or manual `supabase functions deploy`
-4. **App outage**: Redeploy from latest build in repo (`npm run build` + rsync to htdocs)
+4. **App outage (Matrix SPA)**: Confirm `/status`, then push a fix to the watched branch (or `POST /rollback` on loopback to the previous release). Do **not** `npm run build` + rsync into htdocs — that bypasses the watcher and breaks the symlink publish model (ADR-055).
 
 ## Planned Infrastructure
 

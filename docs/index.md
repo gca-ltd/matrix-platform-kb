@@ -61,7 +61,7 @@ Three-platform architecture: Supabase (CDL), Databricks (DWH), Lovable (app buil
 | Document | Description |
 |----------|-------------|
 | [architecture/overview.md](architecture/overview.md) | Technology map, three-platform architecture, dual-Supabase, data flow |
-| [architecture/decisions/index.md](architecture/decisions/index.md) | Architecture Decision Records (ADR-001…); latest: [ADR-054](architecture/decisions/ADR-054.md) Pipeline board visibility prefs (`saved_here_only`, Won/Lost columns) |
+| [architecture/decisions/index.md](architecture/decisions/index.md) | Architecture Decision Records (ADR-001…); latest: [ADR-055](architecture/decisions/ADR-055.md) Immutable github-watcher releases + atomic symlink publish |
 | [architecture/intelligence-layer.md](architecture/intelligence-layer.md) | **Phase-2 roadmap** — semantic + algebraic search, recsys, MCP server, syndication channels. Phase-1 → Phase-2 contract (pgvector + embeddings + `marketing_metadata`). |
 | [architecture/data-distribution-and-stewardship.md](architecture/data-distribution-and-stewardship.md) | **Phase-2.5 roadmap** — source-of-record & listing lifecycle, channel distribution rules, multi-source merge precedence, field-level overrides (data stewardship). Four source kinds: `internal` (matrix-internal — target state), `legacy-internal` (Qobrix CY — sunsetting), `brand-network` (Anywhere Dash — bidirectional SIR-affiliate primary; covers HU + KZ inbound today), `external` (developers, partner brokerages). Phase-1 → Phase-2.5 contract (`mls_sources.kind` + `is_sunsetting` + `sunset_at` + `lifecycle_state` + `property_lifecycle_events` + `locked_fields` + `property_field_overrides` + `cdl_lock_field` RPCs). |
 
