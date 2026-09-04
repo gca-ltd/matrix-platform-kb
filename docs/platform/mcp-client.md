@@ -77,6 +77,23 @@ Employees discovers the server's 11 rendering/design tools and applies the
 normal per-employee Allow / Ask / Deny policy; the server receives only the
 chart data supplied by the caller and has no business-data access.
 
+### HU Property Concierge (two connectors)
+
+Register **two** Mode B `api_key` servers for the Hungary concierge employee
+([ADR-049](../architecture/decisions/ADR-049.md),
+[matrix-mcp-server.md](matrix-mcp-server.md#hu-property-listings-mcp-public-catalogue)):
+
+| Connector | Header | Policy |
+|-----------|--------|--------|
+| `hu-properties` | `Authorization: Bearer <HU_PROPERTIES_MCP_TOKEN>` | **Allow** all six read tools |
+| `hu-leads` | `Authorization: Bearer <HU_LEADS_MCP_TOKEN>` | **Require approval** on `hu_capture_lead` / `hu_request_viewing` |
+
+Agent working rules should teach: prices are EUR; default `transaction=sale`;
+prefer `slug` + returned `url`; read `applied_filters` / `relaxed` / `total_matching`
+from every search; never invent listings; only call lead tools after explicit consent.
+
+Operator checklist: `/home/bitnami/supabase/docs/digital-employees-setup.md`.
+
 ### System prompt
 
 The Playground chat system prompt is composed only from operator-edited employee

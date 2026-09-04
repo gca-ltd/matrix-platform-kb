@@ -104,6 +104,13 @@ This is the industry-standard pattern. It combines literal MLS-id matches ("VIL-
   - Idempotent; safe to retry.
 - The same EF handles `members` agent-bio embeddings.
 
+**HU website precedent (2026-09):** project `bpaxqtxaysolzaeguwvg` validates the
+1024-dim hybrid contract in production path: `property_embeddings` + HNSW,
+Qwen3-Embedding-8B (HF) with query instruct-prefix, EUR-normalized algebraic
+filters, RRF fusion, and Mode B MCP tools for Digital Employees ([ADR-049](decisions/ADR-049.md)).
+Lead write path is a second MCP (`hu-leads-mcp`). This is catalogue-scoped
+(public site data), not CDL `properties_published` — same retrieval shape, different host.
+
 ---
 
 ## 2. Algebraic search

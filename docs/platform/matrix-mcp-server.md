@@ -108,3 +108,30 @@ no per-user upstream credentials, and no private business-data tools. Stdio
 uses process-local trust; hosted HTTP uses an operator-managed bearer token
 behind loopback-bound Apache. If the service later gains protected data tools,
 it must adopt ADR-039's OAuth Resource Server contract before that expansion.
+
+---
+
+## HU Property Listings MCP (public catalogue)
+
+> Accepted pattern in [ADR-049](../architecture/decisions/ADR-049.md).
+> Backend lives in `/home/bitnami/supabase` on project `bpaxqtxaysolzaeguwvg`.
+
+Two Mode B Edge Function MCP servers co-located with HU website data:
+
+| Server | Endpoint | Auth |
+|--------|----------|------|
+| `hu-properties-mcp` (read) | `…/functions/v1/hu-properties-mcp` | `HU_PROPERTIES_MCP_TOKEN` |
+| `hu-leads-mcp` (write) | `…/functions/v1/hu-leads-mcp` | `HU_LEADS_MCP_TOKEN` |
+
+| Property | Value |
+|---|---|
+| Transport | Streamable HTTP (JSON-RPC 2.0) |
+| Embeddings | Qwen3-Embedding-8B via HF Inference Providers (1024-dim); DashScope fallback |
+| Retrieval | Hybrid HNSW + `simple`/`unaccent` FTS RRF; EUR-normalized hard filters; served slice `is_visible` + For Sale/For Rent |
+| Addressing | Public `slug` URLs; `property_key` is Listing ID only |
+| Write path | `lead_intents` table + MSA-HU adapter stub |
+
+Read tools: `hu_search_properties`, `hu_get_property`, `hu_find_similar`, `hu_list_facets`, `hu_search_developments`, `hu_get_agent`.  
+Write tools: `hu_capture_lead`, `hu_request_viewing` (Digital Employees policy = Require approval).
+
+Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-search.mjs`.
