@@ -142,9 +142,26 @@ The `oauth-token` and `switch-role` Edge Functions implement a **hybrid signing 
 4. **Done (2026-05-31)**: SSO mints `iss` = SSO issuer URL; **Third-Party Auth registered on the MLS app DB** (`wckwfbbqiupvallmhqbu`) so Pipeline / Atlas / Matrix MLS verify ES256 natively via PostgREST — [ADR-018](../architecture/decisions/ADR-018.md)
 5. **Done (2026-07-02)**: **HRMS migrated to ES256** — TPA registered on the HRMS app DB (`wltuhltnwhudgkkdsvsr`, integration `82baa4cc`) + `jwt_secret_name` cleared, so HRMS mints ES256 and reads `sso_roles` / `sso_role_configurations` on the SSO project natively (fixes Settings > Permissions `PGRST301`). HRMS frontend sends the SSO token to SSO PostgREST via the `postgrestAccessToken` hook (no native token).
 6. **Done (2026-06-09 TPA; hardened 2026-08-17)**: **ITSM migrated to ES256** — TPA provisioned on app DB `irjrcskfcyierdbefrpk` (`jwt_secret_name` null). Frontend rejects non-ES256 bearers (guards against sibling-app HS256 overwrite of shared `matrix_sso_*` localStorage). MCP access-token issuer rekeyed from HMAC to ES256 P-256 — [ADR-038](../architecture/decisions/ADR-038.md).
-7. **Next**: Register the same TPA on remaining own-DB app projects (FM, Meeting Hub, …), then drop their `jwt_secret_name` (ES256)
-8. **Next**: Promote ES256 to "current" key in all projects, retire HS256 legacy keys
-9. **Final**: Remove HS256 signing code from Edge Functions
+7. **Done (2026-09-07)**: **MSA Hungary migrated to ES256** — TPA had been provisioned on app DB `ykgyzqnuqpwasxvesxva` (integration `4575d23d`) on 2026-08-14, but an `admin-apps` PUT 16 s later restored `jwt_secret_name = 'jwt_secret_msa_hungary'`, so the client kept minting HS256. The app DB accepted those tokens (legacy secret still verifies) while the SSO project rejected every `sso_role_configurations` / `tenants` read with `401 PGRST301`, leaving the app stuck on "Checking permissions". Cleared by migration `20260907103000_msa_hungary_es256.sql`; the frontend also rotates a non-ES256 bearer once per page load.
+8. **Next**: Register the same TPA on remaining own-DB app projects (FM, Meeting Hub, …), then drop their `jwt_secret_name` (ES256)
+9. **Next**: Promote ES256 to "current" key in all projects, retire HS256 legacy keys
+10. **Final**: Remove HS256 signing code from Edge Functions
+
+> **`tpa_status = 'provisioned'` AND `jwt_secret_name IS NOT NULL` is an invalid
+> combination.** `provision-tpa` clears `jwt_secret_name` as its last step, but a
+> later Console `admin-apps` PUT can write the old value back — the app then mints
+> HS256 that its own (TPA-only) DB and the SSO project both reject with
+> `PGRST301`, while `oauth-userinfo` still accepts it via the HS256 fallback, so
+> login looks healthy and only table reads fail. Audit with:
+>
+> ```sql
+> SELECT client_id, app_title, jwt_secret_name, tpa_status
+>   FROM sso_applications
+>  WHERE tpa_status = 'provisioned' AND jwt_secret_name IS NOT NULL;
+> ```
+>
+> Known remaining hit: **Matrix HRMS Sandbox 3.0** (`jwt_secret_smhrms_sandbox`,
+> app DB `wltuhltnwhudgkkdsvsr`) — still HS256 despite the shared HRMS TPA.
 
 ### Token Verification Order (canonical — `_shared/verify-sso-jwt.ts`)
 
