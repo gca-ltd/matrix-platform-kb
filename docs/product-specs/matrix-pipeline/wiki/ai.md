@@ -103,6 +103,15 @@ Quickly qualify new inbound inquiries (Lead-state `Contacts`) and split the extr
 
 Source: raw/context-v2.md §9.13.4.
 
+**MSA precursor (deterministic, advisory).** Before the AI Lead Score lands in
+matrix-pipeline, MSA ships a rule-based triage score on the unclaimed Leads
+inbox (status `new` only): propensity weights calibrated on 643 closings
+(2026-09-08), urgency multiplier, value tilt, hover breakdown, and a Triage
+mode that ranks the live pool client-side. It never writes to the CRM, is not
+labelled MQL/SQL, and does not replace qualification. Model card:
+`matrix-sales-automation` → `docs/qobrix/lead-triage-scoring.md`. When FR-AI-LQ-02
+ships, beat this baseline on the same calibration set.
+
 ## AI Property Matching Assistant (FR-AI-PM) {#property-matching}
 
 Matching always runs in the context of a specific `SavedSearch` and combines `SearchQuery` parameters with personal `Contacts` preferences.

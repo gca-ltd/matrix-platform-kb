@@ -264,6 +264,13 @@ historical rows; writers and filters no longer emit it.
 Do **not** conflate lead qualification with the Pipeline board column named
 `qualification` (requirements gate before Matching).
 
+**Advisory triage score (MSA).** Unclaimed (`new`) leads in the MSA Leads inbox
+carry a deterministic, non-persisted triage score (badge + hover breakdown +
+optional Triage ranking mode). It is not CRM state, not MQL/SQL vocabulary, and
+not a substitute for `qualify_lead_v2`. Model card in the MSA repo:
+`docs/qobrix/lead-triage-scoring.md`. Platform AI Lead Score remains FR-AI-LQ-02
+in [`wiki/ai.md`](../../../product-specs/matrix-pipeline/wiki/ai.md).
+
 ## Cross-resource interactions
 
 - A `Contacts` row's `OwnerMember` is a `Member` row; see
