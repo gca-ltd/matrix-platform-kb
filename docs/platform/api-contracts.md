@@ -229,6 +229,22 @@ App DB project for staging: `rpoeezssicpzexarmwqq`. Auth: SSO JWT verified in-fu
 
 Accepted body aliases: `saved_here_only` / `savedHereOnly` (boolean).
 
+### MSA App-DB RPC — `demote_opportunity_to_lead`
+
+Postgres `SECURITY DEFINER` on App DB `rpoeezssicpzexarmwqq`. Archives an active
+opportunity and returns (or recreates) its lead in `nurturing`.
+
+| Arg | Type | Default | Notes |
+|-----|------|---------|-------|
+| `p_opp` | uuid | — | Opportunity id |
+| `p_reason` | text | — | Required free-text reason |
+| `p_keep_owner` | boolean | `true` | `true` = keep broker; `false` = release to marketing pool |
+| `p_nurture_next_touch_at` | timestamptz | null | Follow-up reminder; ignored when releasing |
+| `p_marketing_consent` | boolean | null | Written to `contacts.marketing_consent` when not null; **required true** when releasing |
+
+Release path sets `leads.assigned_reason = released_to_marketing` (enum value).
+Prior 2-arg callers remain valid via defaults. See [ADR-044](../architecture/decisions/ADR-044.md) § D5.
+
 ## Digital Employees — Conversations public API (`converse`)
 
 App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (channel-bound API key; SHA-256 hashed in `api_keys`). Live OpenAPI: `GET /functions/v1/converse/openapi.json` (version **1.2.0**).
