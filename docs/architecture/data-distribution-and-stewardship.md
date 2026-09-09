@@ -40,6 +40,24 @@ Every row in `public.properties` is classified by `mls_sources.kind` for the row
 | **`brand-network`** | **Anywhere Dash (SIR network)** — Sharp Matrix powers an SIR affiliate. **Bidirectional** primary contract. | Shared with sister SIR offices via Anywhere. | Phase-2.5 `dash-import` EF pulls sister-SIR-office listings; normalizes into RESO-keyed CDL tables. | Phase-2.5 `dash-export` EF pushes our internally-sourced `Active` listings back to Anywhere via the `v_dash_*` projection. | No |
 | **`external`** | Third-party feeds we ingest from organizations outside Sharp SIR: **real estate developers** (new-build / off-plan inventory), **partner brokerages** (referrals, co-broke), future industry MLS exchanges. | The partner / developer. We're a downstream consumer. | `mls-sync` (or a per-partner ingestion EF) honors `lifecycle_state` from the source. Locked fields prevent overwrites. | Restricted by the partner's terms-of-use (attribution / branding required, may forbid further syndication). The Phase-2.5 channel-distribution engine reads `kind` and per-partner rules to enforce this. | Per partner relationship |
 
+### Hungary MSA — Storefront 2.0 read path
+
+**Status (Sep 2026):** shipped in `gca-ltd/matrix-sales-automation-hungary`.
+
+Hungary broker offices author listings on the public website stack (**Matrix Digital Storefront 2.0 Hungary**, Supabase project `bpaxqtxaysolzaeguwvg`, tables `properties` / `developments`). The **Hungary MSA** broker app does **not** read those rows through CDL or a future `dash-import` leg today. Instead it uses a **deliberate app-layer read contract**:
+
+| Surface | Mechanism | Auth | Direction |
+|---|---|---|---|
+| Published listings / projects | Browser anon PostgREST to `bpaxqtxaysolzaeguwvg` (`src/integrations/storefront/client.ts`) | Storefront publishable key only — **never** the broker SSO JWT | Read-only |
+| Website inquiries → leads | App-DB EF `storefront-leads-ingest` (service role on Storefront, upsert App-DB `leads`) | SSO on invoke | Read Storefront → write App DB |
+| Off-market / broker-authored inventory | App-DB `properties` / `projects` with `source` ≠ storefront | SSO + RLS | Read/write App DB |
+
+This is **not** a contradiction of the `brand-network` / `dash` row above for CDL taxonomy: HU offices may eventually land in CDL via `dash-import`, but until that path exists the **broker CRM's catalog source of truth for published inventory is the Storefront project directly**. Matching and Listings merge App-DB off-market cards with a full Storefront catalog snapshot (`storefrontAdapter.ts`).
+
+**Lead path:** Storefront `property_inquiries` → `storefront-leads-ingest` → App-DB `leads.external_storefront_id` (idempotent). Facebook/Zapier uses `zapier-facebook-lead` separately.
+
+**Related:** [ADR-049](decisions/ADR-049.md) (Digital Employees MCP over the same Storefront project); [app-catalog.md § Matrix Sales Automation — Hungary](../platform/app-catalog.md).
+
 For internally-sourced listings, RESO's `StandardStatus` covers public-facing states only (`Active`, `Pending`, `Closed`, `Withdrawn`). The internal workflow needs additional pre-publish stages, so we keep both:
 
 - **`status`** = RESO StandardStatus (what channels see)
