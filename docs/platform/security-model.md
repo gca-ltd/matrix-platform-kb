@@ -835,6 +835,22 @@ cache relative to live Qobrix ACLs — so the helper must not compile without
 `viewer`, and restricted scopes filter on `x_assigned_user_id` /
 `owner_team_id`. See [ADR-054](../architecture/decisions/ADR-054.md).
 
+### Deliberate cross-broker disclosure: listing shortlist membership
+
+MSA's listing detail may answer one tenant-wide coordination question that normal
+`collections` RLS cannot answer for a `self` broker: **who already added this listing to a
+client shortlist?** [ADR-056](../architecture/decisions/ADR-056.md) permits this only through
+`list_listing_shortlist_shares`, a narrow `SECURITY DEFINER` RPC over authoritative rows.
+It is not a precedent for client-side collection access or a harvested cache.
+
+The RPC derives tenant, actor, CRUD, and active scope from the JWT; requires the caller to
+pass that viewer scope explicitly; rejects a mismatch; and first proves that the caller may
+read the requested listing under the normal `properties_select` privacy policy. Result rows are limited to broker
+display name, client first/last name, and date added. The thin Edge Function never uses
+`service_role`, allow-lists those result keys, and emits a `pii_masked_fields` counter on
+every request. Any non-zero counter is a contract breach. Email, phone, contact IDs,
+collection IDs, notes, budgets, and snapshots must never enter this response.
+
 **Required controls** (all three — docs alone did not hold) when a privileged
 cache still exists:
 

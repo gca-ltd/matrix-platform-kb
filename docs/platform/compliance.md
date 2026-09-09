@@ -37,6 +37,17 @@ GDPR applies to both EU markets. Kazakhstan's PDPL has similar principles but di
 | Health/personal (passport, tax ID) | HRMS DB | Column-level access control via CASE statements |
 | Client financial (deal values, budgets) | CDL | RLS tenant + scope isolation |
 
+### Data minimisation: cross-broker shortlist visibility
+
+MSA may show that a property was added to a client shortlist by another broker in the same
+tenant solely to prevent duplicate client outreach. Under
+[ADR-056](../architecture/decisions/ADR-056.md), this purpose permits only the broker display
+name, client first and last name, and date added. It does not permit email, phone, contact or
+collection identifiers, notes, budget, preferences, snapshots, or a service-harvested
+cache. The authenticated Edge Function strips unexpected fields and logs a
+`pii_masked_fields` counter; a non-zero value requires investigation as a data-contract
+breach. Normal collection/contact RLS continues to govern every broader use.
+
 ## Data Retention Policy
 
 | Data Category | Retention Period | Legal Basis | Action After Expiry |

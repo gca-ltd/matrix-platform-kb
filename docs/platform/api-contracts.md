@@ -215,6 +215,43 @@ never returns it to the agent. See ADR-032 and `sso-edge-functions.md`.
 
 **Common subset**: Every app calls `oauth-authorize`, `oauth-token`, `switch-role`, `check-permissions`. `switch-tenant` is available to all apps but only usable by `system_admin` users. Admin apps add `admin-*` functions. Apps with AD sync add `sync-ad-users`. Matrix Pipeline owns O365 integration via `ms-graph-proxy` (broker / manager role-filtered). Each app deploys its own Edge Functions to its app-specific Supabase instance (see app-catalog.md for project IDs). The previously-listed separate **Broker App** / **Manager App** rows are consolidated into the single **Matrix Pipeline** row above.
 
+## MSA — `listing-shortlist-shares`
+
+App DB project: `rpoeezssicpzexarmwqq`. `POST /functions/v1/listing-shortlist-shares`
+is an authenticated, read-only proxy to `list_listing_shortlist_shares(text, text)`.
+Gateway `verify_jwt` is `false` for SSO compatibility; the caller's bearer token is forwarded
+to PostgREST and the RPC validates its Matrix claims.
+
+Request:
+
+```json
+{ "listing_id": "<App UUID or Qobrix external id>", "viewer_scope": "self|team|global|org_admin|system_admin" }
+```
+
+`viewer_scope` is required and must equal the JWT's active scope. The caller must have read
+CRUD and must be able to read the corresponding App-DB property under
+the normal `properties_select` privacy policy. Failure is `400` for malformed input, `401` without bearer auth,
+`403` for a scope/authorization mismatch, and `500` for an internal query failure.
+
+Success:
+
+```json
+{
+  "data": [{
+    "broker_display_name": "Broker name",
+    "client_first_name": "Client",
+    "client_last_name": "Name",
+    "date_added": "2026-09-09T06:20:00Z"
+  }],
+  "meta": { "pii_masked_fields": 0 }
+}
+```
+
+No user/contact/collection IDs, email, phone, notes, budgets, or snapshots are permitted.
+The Edge Function strips unexpected row keys and logs the `pii_masked_fields` tripwire.
+It uses no service-role client and no harvested cache. See
+[ADR-056](../architecture/decisions/ADR-056.md).
+
 ## MSA — `qobrix-pipeline` board tabs (`saved_here_only`)
 
 App DB project for staging: `rpoeezssicpzexarmwqq`. Auth: SSO JWT verified in-function (`verify_jwt: false` at the gateway). Board tabs share one engine (`runBoardQuery`).
