@@ -249,7 +249,8 @@ Success:
 
 No user/contact/collection IDs, email, phone, notes, budgets, or snapshots are permitted.
 The Edge Function strips unexpected row keys and logs the `pii_masked_fields` tripwire.
-It uses no service-role client and no harvested cache. See
+Responses are `Cache-Control: private, no-store`. The function uses no service-role client
+and no harvested cache. See
 [ADR-056](../architecture/decisions/ADR-056.md).
 
 ## MSA — `qobrix-pipeline` board tabs (`saved_here_only`)
