@@ -574,7 +574,7 @@ managers and individual contributors can be gated separately:
 
 | Page key | Sidebar section / items |
 |----------|-------------------------|
-| `home` | **Agent Workspace** — My Day, Calendar, Pipeline, Follow-ups, Offers, Contacts, Properties, Projects |
+| `home` | **Agent Workspace** — My Day, Calendar, Pipeline, Follow-ups, Offers, Contacts, **Listings** (Properties and Projects pages retired 2026-09; bookmarks redirect to `/listings`) |
 | `management` | **Management View** — Dashboard, Agents, Reports |
 | `trash` | Trash / Restore |
 | `properties` | MLS Properties (CDL catalog) |
