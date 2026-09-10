@@ -267,6 +267,25 @@ App DB project for staging: `rpoeezssicpzexarmwqq`. Auth: SSO JWT verified in-fu
 
 Accepted body aliases: `saved_here_only` / `savedHereOnly` (boolean).
 
+## MSA Hungary — App-DB pipeline board (no Qobrix EF)
+
+App DB project: `ykgyzqnuqpwasxvesxva`. Hungary permanently excludes Qobrix session /
+mirror / `qobrix-pipeline`. The Pipeline table and kanban read **App-DB
+`opportunities` only** via the client helpers in
+`matrix-sales-automation-hungary`:
+
+| Helper | Purpose |
+|--------|---------|
+| `listOpportunitiesForBoard` | Filtered board (stage / buyRent / search / date range), App-DB owner enrichment, client page+sort for the table |
+| `usePipelineBoard` | React Query wrapper for the table |
+| `usePipelineBoardStages` | Same board rows bucketed into stage columns with per-column reveal windows |
+
+Search uses the shared `tokensMatchHaystack` matcher. When search is active the
+UI clears the creation-date range so long-nurtured deals remain findable.
+Viewer scope is the signed-in SSO JWT on the App DB (RLS) — there is no
+service-harvested cache on this path. See [security-model.md](security-model.md)
+§ service-harvested cache.
+
 ### MSA App-DB RPC — `demote_opportunity_to_lead`
 
 Postgres `SECURITY DEFINER` on App DB `rpoeezssicpzexarmwqq`. Archives an active
