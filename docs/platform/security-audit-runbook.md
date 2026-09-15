@@ -79,7 +79,7 @@ Priority: blast radius → data sensitivity (PII / money / HR) → public intern
 | 9 | MSA Hungary | `ykgyzqnuqpwasxvesxva` | `user-supabase-msa-hungary` |
 | 10 | Qobrix RLS | `ycbwgnihbrqammkgngum` | `user-supabase-msa-rls` |
 | 11 | Matrix Comms | `ujowkipnqgtazmtdsnlm` | — |
-| 12 | HU Storefront (Matrix Storefront 2.0 Hungary) | `bpaxqtxaysolzaeguwvg` | — (Management API; MCP `user-supabase-hu-website` needs auth) |
+| 12 | HU Storefront (Matrix Storefront 2.0 Hungary) — **prod** `sothebys-realty.hu` since 2026-09-09 | `bpaxqtxaysolzaeguwvg` | `user-supabase-hu-website` |
 
 ### P2 — operational / widely used
 
@@ -104,6 +104,7 @@ Priority: blast radius → data sensitivity (PII / money / HR) → public intern
 | Pipeline v1 (legacy) | `mydojctcewxrbwjckuyz` | Legacy integrations only |
 | CY SPA staging | `rlfxsieleseimylumhwc` | Staging (**403** — second org) |
 | HRMS Sandbox 3.0 | `xyvkeefqxabfcptiyoxm` | Audit only if it holds prod-like PII |
+| MSA Hungary sandbox | `mstvgnekgeoftwajxscv` | Lovable clone of MSA HU (SR000537); prod-like PII — first audited 2026-09-15 |
 
 ### Coverage gap — second Supabase org
 
@@ -245,6 +246,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 |------|--------|
 | 2026-08-25 | [security-audits/2026-08-25.md](security-audits/2026-08-25.md) — first baseline |
 | 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + remediations; [RU](security-audits/2026-09-01-ru.md) |
+| 2026-09-15 | [security-audits/2026-09-15.md](security-audits/2026-09-15.md) — 23 projects scan-only; HU S18; [RU](security-audits/2026-09-15-ru.md) |
 
 ## Related
 
