@@ -191,7 +191,10 @@ Four apps are backfilled into **every** role's `apps_allowed` so they stay broad
 **Status**: Done
 **Users**: Brokers, Marketing, Sales
 **URL**: `/comms/`
-**OAuth client_id**: `WSvfGsovutXBHJfQOdL9uPA4TnMIIVrZ`
+**Repo**: [`gca-ltd/matrix-comms`](https://github.com/gca-ltd/matrix-comms) — SPA at repo root (flattened from `frontend/`). Analog App DB = ITSM / MSA Hungary (Supabase CLI), **not** Digital Employees Lovable Cloud.
+**Deploy**: github-watcher `gca-ltd/matrix-comms@prod` → `https://intranet.sharpsir.group/comms/` (`/opt/bitnami/apache/htdocs/comms`). Secret env `WEBHOOK_SECRET_COMMS`. Committed Vite `base` / `BrowserRouter` / `BASE_PATH` are root for Lovable preview; watcher patches `/comms/` on deploy. Branch `main` does **not** deploy intranet (Lovable twin PRs land on `main`, then PR `main` → `prod`).
+**Lovable**: Connect GitHub **cannot import** this repo — operator creates a twin; UI PRs into `main`. **Do not** attach Lovable Cloud to App DB `ujowkipnqgtazmtdsnlm`. EF deploy: `npx supabase functions deploy … --project-ref ujowkipnqgtazmtdsnlm` from `prod`.
+**OAuth client_id**: `WSvfGsovutXBHJfQOdL9uPA4TnMIIVrZ` — intranet redirect `https://intranet.sharpsir.group/comms/auth/callback`. Add Lovable preview `https://<preview-host>/auth/callback` once the twin exists.
 **App DB**: `ujowkipnqgtazmtdsnlm`
 **Permissions model**: SSO `sso_role_configurations` with `app_id = 'comms'` (pages + actions including `view_all` / `assign`); entitled via `sso_roles.apps_allowed` containing OAuth client `WSvfGsovutXBHJfQOdL9uPA4TnMIIVrZ`. Local `app_permissions` mirrors actions for Edge Function elevation. Universal Home at `/` excluded from permission matrix. Per-app SSO token storage (`:comms` suffix) — see ADR-032.
 **Powered by**: Twilio + Meta WhatsApp Business API
