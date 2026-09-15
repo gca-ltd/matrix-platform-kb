@@ -71,7 +71,7 @@ Priority: blast radius → data sensitivity (PII / money / HR) → public intern
 
 | # | System | Project ref | MCP namespace (if any) |
 |---|--------|-------------|------------------------|
-| 4 | HRMS | `wltuhltnwhudgkkdsvsr` | `user-supabase-hrms` |
+| 4 | HRMS | `wltuhltnwhudgkkdsvsr` | `user-supabase-hrms` — **standing weekly deep-dive** (HR PII + S19 SECDEF mutators) |
 | 5 | Matrix FM | `retujkznogwplfrbniet` | — (Management API / CLI) |
 | 6 | Datacore | `zcajghoohycimpubufsy` | `user-supabase-datacore` |
 | 7 | Pipeline 2.0 | `kzvhqgpedapzqmwgikrw` | `user-supabase-pipeline-2-0` |
@@ -198,7 +198,13 @@ ORDER BY p.proname;
 
 Flag admin/mutation RPCs (`update_user_role`, `remove_user_role`, …) for `REVOKE` from `PUBLIC, anon`.
 
-### Auth / EF spot-checks (sample each week; deep-dive P0)
+### Auth / EF spot-checks (sample each week; deep-dive P0 **and HRMS**)
+
+HRMS (`wltuhltnwhudgkkdsvsr`) is a **standing weekly deep-dive** (HR PII), not
+just a grant-count row: re-check Wave 2F / anon DML **and** anon EXECUTE on
+`SECURITY DEFINER` mutators (`copy_ad_*`, `create_*_manager_relationships` —
+backlog **S19**). Do not treat the HRMS sandbox (`xyvkeefqxabfcptiyoxm`) as a
+substitute for prod.
 
 | Check | Where | Known backlog |
 |-------|-------|---------------|
@@ -206,6 +212,7 @@ Flag admin/mutation RPCs (`update_user_role`, `remove_user_role`, …) for `REVO
 | JWT signing keys (ES256 current) | SSO project JWT settings | **H1** |
 | Third-Party Auth registered on app DBs | SSO Console / Management API | ADR-027 |
 | EF `verify_jwt` vs in-code verify | `config.toml` + function source | Platform convention: SSO-compatible EFs use `--no-verify-jwt` + in-code verify |
+| HRMS anon SECDEF mutators | Matrix SQL `has_function_privilege('anon', …, 'EXECUTE')` + function body | **S19** |
 
 ## Report template
 
