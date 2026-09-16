@@ -41,9 +41,8 @@ Supabase projects are split across two organizations:
 |------|-----------|------|
 | **Matrix SSO** | `xgubaguglsnokjyudgvc` | Identity only: Auth, RBAC, Tenants, AD Users (ADR-012). Nano, `eu-west-1` (Ireland). **Active** (~230k req / 7 days; last migration `fix_sso_roles_and_rls`). Owner: `matrix-platform-foundation/supabase/`. |
 | **Matrix CDL** (a.k.a. "Matrix Data Model Studio") | `ofzcokolkeejgqfjaszq` | CDL backend (Micro, `eu-central-1` Frankfurt). Hosts the canonical listing tables (`public.properties`, `public.properties_published`, `public.property_media`), the `cdl_staging.*` raw/mapped/media-staging tables, the MLS Sync control plane (`mls_settings`, `mls_sync_jobs`, `mls_sync_state`, `mls_orchestrator_runs`), and the Edge Functions: the 5-stage pipeline (`reso-import` / `field-mapping-apply` / `listing-merge` / `media-import` (page-capped) / `listing-publish`) plus the `merge_media_from_staging` RPC, the admin EFs (`mls-sync-orchestrator` — sole sync engine; `mls-sync` — admin/CRUD/read API with `start` proxying to the orchestrator), and the read EF (`listings-search`). Per ADR-012/013, ADR-014 implementation status note + Phase 1 Best-in-Class (Apr 2026). Owner: `matrix-platform-foundation/supabase/cdl/`. See Matrix-CICD §7.3. |
-| **HU Website 1GH — staging (clone)** | `bpaxqtxaysolzaeguwvg` | Matrix Storefront 2.0 Hungary (`hu-website`). Clone of legacy sandbox for HU site development; semantic listings MCP + embeddings (ADR-049). Region: `eu-central-1`. |
-| **HU Website 1GH — prod** | TBD (to be provisioned) | Target prod Supabase for `sothebys-realty.hu`. Recommended region: `eu-central-1`. Migrate from `bpaxqtxaysolzaeguwvg` clone. See Matrix-CICD §0.1. |
-| **HU Website 1GH — staging** | TBD (to be provisioned) | Target staging Supabase for `sothebys-realty.hu`. Recommended region: `eu-central-1`. See Matrix-CICD §0.1. |
+| **HU Storefront 2.0 — prod** (`sothebys-realty.hu`) | `bpaxqtxaysolzaeguwvg` | Matrix Storefront 2.0 Hungary (`hu-website`). **Production** since cutover 2026-09-09. Semantic listings MCP + embeddings (ADR-049). Region: `eu-central-1`. Standing infosec contour (runbook 2026-09-16). |
+| **HU Website — separate staging** | TBD (optional) | Earlier Matrix-CICD plan assumed a second staging project; prod currently *is* `bpaxqtxaysolzaeguwvg`. Provision only if a true staging split is required. |
 | **CY Website 2.0 — prod** | TBD (to be provisioned) | Target prod Supabase for CY SPA (after legacy-PHP cutover). See Matrix-CICD §0.3 / §5.2. |
 | **CY Website 2.0 — staging** | TBD (to be provisioned) | Target staging Supabase for CY SPA. See Matrix-CICD §0.3. |
 
@@ -63,7 +62,7 @@ Supabase projects are split across two organizations:
 | **Matrix Comms** | `ujowkipnqgtazmtdsnlm` | WhatsApp / messaging app DB. |
 | **Matrix Analytics + Stardom** | `wjsafhylqujwbpqgjjlj` | Shared app DB for analytics workspace and Stardom. |
 | **Career Connect** | `zsjwbspjlpaxfadjeymd` | HR recruiting / applications. |
-| **Task Manager HU** | `rwgfixcfgviaqonhhqev` | Hungary task manager. |
+| ~~Task Manager HU~~ | ~~`rwgfixcfgviaqonhhqev`~~ | **Deleted** (confirmed 2026-09-16) — removed from standing infosec contour. |
 | **Matrix Performance Dashboard** | `patgnfubqbyaiapviksu` | Performance dashboard app DB. |
 | **Matrix Vacations Management** | `kposeyhvgusosuzjjrdv` | Leave / vacation management. |
 | **matrix-lead-generator** | `ddairradcxczsvwntwmw` | Lead generator (provisioned 2026-08-28). |

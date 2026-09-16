@@ -1,27 +1,49 @@
 # Security Audit Runbook — Weekly Infosec Review
 
 > Operational playbook for the **weekly** Sharp Matrix infosec audit across
-> production Supabase projects (plus a short non-Supabase spot-check).
+> the **agreed standing contour** of Supabase projects.
 >
 > **Companion docs:** [security-model.md](security-model.md) (RLS patterns +
 > hardening backlog), [compliance.md](compliance.md) (GDPR / breach),
 > [operations.md](operations.md) (deploy / DR). This runbook is **not** the
 > schema↔code drift playbook — that is [alignment-audit-playbook.md](alignment-audit-playbook.md).
+>
+> Contour agreed with leadership **2026-09-16**: public sites + SSO + HR/finance/
+> IT + CRM/sales + Comms/AI + catalog (incl. **CDL**). Task Manager HU project
+> deleted. Skip full Matrix SQL when a project fingerprint is unchanged.
 
 ## Cadence
 
 | Layer | Frequency | What | Cost |
 |-------|-----------|------|------|
-| **Advisors snapshot** | Daily (optional automation) or at least weekly | Supabase Security Advisor per in-scope project | **$0** (included in Pro) |
-| **Full weekly audit** | Weekly (owner: platform / CDTO ops) | Advisors + Matrix SQL + Auth/EF/infra spot-checks | **$0** scan; remediations are separate eng work |
-| **Team plan ($599/mo)** | N/A for this audit | SOC2/ISO, Dashboard SSO, longer backups/logs — **not** required for Advisors | Do not buy Team *only* for linting |
+| **Advisors (all in-scope reachable)** | Weekly (mandatory) | Security Advisor ERROR/WARN fingerprints per project | **$0** |
+| **Matrix SQL + Auth/EF** | Weekly **only if fingerprint changed**, or always for **HU Storefront** | Truncate / anon DML / permissive policies / anon SECDEF | **$0** scan |
+| **Full baseline** | When contour changes, or after a major remediations wave | Advisors + Matrix SQL on every reachable project | One-off |
+| **Remediation** | Separate eng work after report (except explicitly approved prod fixes) | Migrations / EF / Auth toggles | Eng time |
 
-There is **no** native Supabase “email me a daily security report” or billed
-security-scan SKU. Daily = our thin wrapper (MCP `get_advisors`, Management API,
-or `supabase db advisors --linked`) over the free Advisors.
+There is **no** native Supabase “email me a daily security report”. Advisors catch
+`rls_disabled_in_public` (the email class that fired for HU `conversion_sync_log`
+on 2026-09-13). Matrix SQL catches what Advisors miss (TRUNCATE, anon GRANT +
+`USING(true)`, anon SECDEF mutators).
 
-**Do not** enable noisy daily cron until a baseline report exists and accepted
-risks are documented (otherwise every WARN floods the inbox).
+**Do not** enable noisy daily cron until accepted risks are documented.
+
+## Efficient weekly loop (skip-unchanged)
+
+```
+1. Advisors on every reachable in-scope project
+2. Build fingerprint: ERROR lint names + public table count + pg_default_acl
+   summary (anon write bits) for projects that support Matrix SQL
+3. Compare to last dated report under security-audits/
+4. Full Matrix SQL + Auth/EF only if fingerprint ≠ last OR project is HU Storefront
+5. Report: delta + open backlog. Say explicitly which projects were skipped as unchanged
+```
+
+**Why HU always full:** public internet; Advisors miss anon GRANT + `USING(true)`
+on intentional form tables and on share/counter policies (S15 class).
+
+**This pass exception:** when the standing contour itself changes, run a **full
+baseline** once; skip-unchanged starts on the *next* weekly cycle.
 
 ## Built-in Supabase capabilities
 
@@ -29,8 +51,8 @@ risks are documented (otherwise every WARN floods the inbox).
 |---------|-----|-------|
 | Dashboard | `Database → Security Advisor` / `Performance Advisor` | Runs automatically; manual rerun after fixes |
 | MCP | `get_advisors` with `type: security` \| `performance` | Per-project Supabase MCP in Cursor |
-| Management API | `GET /v1/projects/{ref}/advisors/security` (and `/performance`) | PAT needs `advisors_read`. Marked experimental/deprecated but still used by CLI |
-| CLI | `supabase db advisors --type security --linked` | Same remote API; local DB runs embedded splinter SQL |
+| Management API | `GET /v1/projects/{ref}/advisors/security` (and `/performance`) | PAT needs `advisors_read` |
+| CLI | `supabase db advisors --type security --linked` | Same remote API |
 
 **Docs:** [Database Advisors](https://supabase.com/docs/guides/database/database-advisors), [Pricing](https://supabase.com/pricing).
 
@@ -49,100 +71,93 @@ Documented in [security-model.md](security-model.md) § Anon GRANT vs RLS / TRUN
 1. **RLS enabled + anon GRANT + `USING(true)`** — publishable anon key bypasses the JWT path.
 2. **`TRUNCATE` on `anon` / `authenticated`** — RLS does not apply to `TRUNCATE`.
 3. Auth settings (e.g. leaked-password / HaveIBeenPwned — backlog **S4**).
-4. JWT key posture (HS256 vs ES256), Edge Function `verify_jwt` vs in-code SSO verify,
-   secrets in frontend, OAuth redirect URI drift, Apache / `github-watcher` secrets,
-   Databricks warehouse stay-awake cost.
+4. JWT key posture, Edge Function `verify_jwt` vs in-code SSO verify, secrets in frontend.
 
-Weekly audit = **Advisors + Matrix SQL + Auth/EF/infra**.
+Weekly full pass on a changed project = **Advisors + Matrix SQL + Auth/EF**.
 
-## Inventory (priority order)
+## Standing contour (priority order)
 
 Priority: blast radius → data sensitivity (PII / money / HR) → public internet → usage.
 
-### P0 — platform
+Agreed with leadership 2026-09-16. **CDL is in scope** (catalog feeding sites /
+Atlas / CRM). **Task Manager HU** (`rwgfixcfgviaqonhhqev`) — **deleted**, do not audit.
 
-| # | System | Project ref | MCP namespace (if any) |
-|---|--------|-------------|------------------------|
-| 1 | Matrix SSO | `xgubaguglsnokjyudgvc` | `user-supabase-sso` |
-| 2 | Matrix CDL | `ofzcokolkeejgqfjaszq` | `user-supabase-cdl` |
-| 3 | CY Web Site | `yugymdytplmalumtmyct` | `user-supabase-cy-website` |
+### P0 — public internet + platform identity + catalog
 
-### P1 — sensitive domain / CRM
+| # | System | Project ref | MCP / notes |
+|---|--------|-------------|-------------|
+| 1 | HU Storefront — **prod** `sothebys-realty.hu` | `bpaxqtxaysolzaeguwvg` | `user-supabase-hu-website` — **standing weekly deep-dive** (always full Matrix SQL) |
+| 2 | CY Web Site | `yugymdytplmalumtmyct` | `user-supabase-cy-website` |
+| 3 | Matrix SSO (incl. SSO Console UI) | `xgubaguglsnokjyudgvc` | `user-supabase-sso` |
+| 4 | Matrix CDL | `ofzcokolkeejgqfjaszq` | `user-supabase-cdl` |
 
-| # | System | Project ref | MCP namespace (if any) |
-|---|--------|-------------|------------------------|
-| 4 | HRMS | `wltuhltnwhudgkkdsvsr` | `user-supabase-hrms` — **standing weekly deep-dive** (HR PII + S19 SECDEF mutators) |
-| 5 | Matrix FM | `retujkznogwplfrbniet` | — (Management API / CLI) |
-| 6 | Datacore | `zcajghoohycimpubufsy` | `user-supabase-datacore` |
-| 7 | Pipeline 2.0 | `kzvhqgpedapzqmwgikrw` | `user-supabase-pipeline-2-0` |
-| 8 | MSA CY | `rpoeezssicpzexarmwqq` | `user-supabase-msa` |
-| 9 | MSA Hungary | `ykgyzqnuqpwasxvesxva` | `user-supabase-msa-hungary` |
-| 10 | Qobrix RLS | `ycbwgnihbrqammkgngum` | `user-supabase-msa-rls` |
-| 11 | Matrix Comms | `ujowkipnqgtazmtdsnlm` | — |
-| 12 | HU Storefront (Matrix Storefront 2.0 Hungary) — **prod** `sothebys-realty.hu` since 2026-09-09 | `bpaxqtxaysolzaeguwvg` | `user-supabase-hu-website` |
+### P1 — HR / finance / IT + CRM / sales + messaging
 
-### P2 — operational / widely used
+| # | System | Project ref | MCP / notes |
+|---|--------|-------------|-------------|
+| 5 | HRMS | `wltuhltnwhudgkkdsvsr` | `user-supabase-hrms` — standing deep-dive (HR PII + **S19**) |
+| 6 | Vacations Management | `kposeyhvgusosuzjjrdv` | — |
+| 7 | Career Connect | `zsjwbspjlpaxfadjeymd` | — |
+| 8 | Matrix FM | `retujkznogwplfrbniet` | — |
+| 9 | ITSM | `irjrcskfcyierdbefrpk` | `user-supabase-itsm` |
+| 10 | Pipeline 2.0 | `kzvhqgpedapzqmwgikrw` | `user-supabase-pipeline-2-0` |
+| 11 | MSA CY | `rpoeezssicpzexarmwqq` | `user-supabase-msa` |
+| 12 | MSA Hungary | `ykgyzqnuqpwasxvesxva` | `user-supabase-msa-hungary` |
+| 13 | Qobrix RLS | `ycbwgnihbrqammkgngum` | `user-supabase-msa-rls` |
+| 14 | matrix-lead-generator | `ddairradcxczsvwntwmw` | — |
+| 15 | Matrix Comms | `ujowkipnqgtazmtdsnlm` | — |
+| 16 | Analytics + Stardom (shared DB) | `wjsafhylqujwbpqgjjlj` | — |
 
-| # | System | Project ref | MCP namespace (if any) |
-|---|--------|-------------|------------------------|
-| 13 | ITSM | `irjrcskfcyierdbefrpk` | `user-supabase-itsm` |
-| 14 | Atlas MLS app DB | `wckwfbbqiupvallmhqbu` | `user-supabase-atlas-mls` |
-| 15 | Digital Employees | `mihslqjjclbrqelnjjpb` | — (**403** — second org) |
-| 16 | Analytics + Stardom | `wjsafhylqujwbpqgjjlj` | — (shared app DB) |
-| 17 | Client Connect | `jnmssbsjhsoyyxuxxzop` | — (**403** — second org) |
-| 18 | Meeting Hub | `hefqrtlmxwvvtximsvsy` | — (**403** — second org) |
-| 19 | Career Connect | `zsjwbspjlpaxfadjeymd` | — |
-| 20 | Task Manager HU | `rwgfixcfgviaqonhhqev` | — |
-| 21 | Performance Dashboard | `patgnfubqbyaiapviksu` | — |
-| 22 | Vacations Management | `kposeyhvgusosuzjjrdv` | — |
-| 23 | matrix-lead-generator | `ddairradcxczsvwntwmw` | — |
+### P2 — catalog ops + analytics plane
 
-### P3 — legacy / staging (in scope, last)
+| # | System | Project ref | MCP / notes |
+|---|--------|-------------|-------------|
+| 17 | Atlas MLS app DB | `wckwfbbqiupvallmhqbu` | `user-supabase-atlas-mls` |
+| 18 | Datacore | `zcajghoohycimpubufsy` | `user-supabase-datacore` |
 
-| System | Project ref | Notes |
-|--------|-------------|-------|
-| Pipeline v1 (legacy) | `mydojctcewxrbwjckuyz` | Legacy integrations only |
-| CY SPA staging | `rlfxsieleseimylumhwc` | Staging (**403** — second org) |
-| HRMS Sandbox 3.0 | `xyvkeefqxabfcptiyoxm` | Audit only if it holds prod-like PII |
-| MSA Hungary sandbox | `mstvgnekgeoftwajxscv` | Lovable clone of MSA HU (SR000537); prod-like PII — first audited 2026-09-15 |
+### In contour — coverage gap (second Supabase org)
 
-### Coverage gap — second Supabase org
+Still **in standing scope**; report as “could not audit” until PAT/MCP access exists.
+Do **not** drop them from the contour just because Advisors return 403.
 
-Management API PAT (`~/.supabase/access-token`) can reach projects in org
-`iipqkbmihgjxngwqjvzd` only. These refs return **403** until PAT org access is
-expanded or per-project MCP is configured:
+| System | Ref | Notes |
+|--------|-----|-------|
+| Client Connect | `jnmssbsjhsoyyxuxxzop` | Registration of contacts |
+| Meeting Hub | `hefqrtlmxwvvtximsvsy` | Meeting registration |
+| Digital Employees | `mihslqjjclbrqelnjjpb` | AI Agents; try Lovable MCP `user-lovable-mde` when Management API 403 |
 
-| System | Ref |
-|--------|-----|
-| Digital Employees | `mihslqjjclbrqelnjjpb` |
-| Client Connect | `jnmssbsjhsoyyxuxxzop` |
-| Meeting Hub | `hefqrtlmxwvvtximsvsy` |
-| CY SPA staging | `rlfxsieleseimylumhwc` |
+Management API PAT (`~/.supabase/access-token`) currently reaches org
+`iipqkbmihgjxngwqjvzd` only.
 
-### Out of scope (small / non-prod)
+## Out of standing weekly contour
 
-Templates (`matrix-apps-template-2-1` / `2-2`), CDL Studio (read-only inspector),
-Lovable Source `ibqheiuakfjoznqzrpfe`, cleanup candidates
-`tiuansahlsgautkjsajk`, `iooyncgcumgecznfpnsk`, `hxbzyfadhwzlvfjgqase`
-(see [references/index.md](../references/index.md)).
+| Item | Why out |
+|------|---------|
+| Task Manager HU (`rwg…`) | **Deleted** (confirmed 2026-09-16) |
+| Performance Dashboard | Not in leadership list |
+| Pipeline v1 | Legacy; not in leadership list |
+| HRMS Sandbox / MSA Hungary sandbox | Not standing; one-off if prod-like PII suspected |
+| CY SPA staging | Second org + not in leadership list |
+| Templates, CDL Studio, Lovable Source | Non-prod / read-only |
+| Dangling / personal Supabase projects | **One-off cleanup inventory**, not weekly |
+| github-watcher / Nyx / Databricks / Twilio / Azure AD | Not mandatory weekly; optional spot-check |
 
-### Non-Supabase (short weekly spot-check)
+### One-off dangling inventory (not weekly)
 
-- Intranet Apache + `github-watcher` (named-but-missing webhook secret = unverified deploy).
-- Nyx TLS / uptime (already automated).
-- Databricks warehouse (do not leave awake on shallow probes).
-- Azure AD / Graph sync surfaces.
-- Twilio (Comms).
+Refs historically noted for cleanup — check alive/traffic when contour changes or
+on request: `tiuansahlsgautkjsajk`, `iooyncgcumgecznfpnsk`, `hxbzyfadhwzlvfjgqase`,
+Lovable Source `ibqheiuakfjoznqzrpfe` (see [references/index.md](../references/index.md)).
 
 ## Procedure — per project
 
 1. **Security Advisors** via MCP `get_advisors` (`type: security`) or Management API / CLI.
-2. **Matrix SQL** (read-only) — run via MCP `execute_sql` or SQL editor.
-3. **Storage** — list buckets; flag public buckets that allow listing.
-4. **Edge Functions** — list functions; confirm `verify_jwt=false` only where in-code SSO JWT verify exists.
-5. Record ERROR / WARN counts; link remediation URLs from Advisor output.
-6. Compare to known backlog in [security-model.md](security-model.md) (S1–S4, H1–H5, C7/C8).
-7. **Do not remediate production in the same pass** unless explicitly approved — report first.
+2. If skip-unchanged says skip → record “unchanged vs YYYY-MM-DD” and stop.
+3. **Matrix SQL** (read-only) — MCP `execute_sql` or SQL editor.
+4. **Storage** — list buckets; flag public buckets that allow listing.
+5. **Edge Functions** — list; confirm `verify_jwt=false` only where in-code SSO verify exists.
+6. Record ERROR / WARN; compare to [security-model.md](security-model.md) backlog.
+7. **Do not remediate production in the same pass** unless explicitly approved
+   (exception documented in dated report — e.g. HU **S18+S16** on 2026-09-16).
 
 ### Matrix SQL checklist
 
@@ -183,7 +198,7 @@ ORDER BY tablename, policyname;
 
 Interpret `qual = 'true'` carefully: intentional `TO authenticated` catalog reads differ from `{public}` / `{anon}` + GRANT. See security-model § Anon GRANT vs RLS.
 
-**Anon EXECUTE on SECURITY DEFINER functions** (S8 class — Advisors miss some RPC paths):
+**Anon EXECUTE on SECURITY DEFINER functions** (S8 / S19 class):
 
 ```sql
 SELECT n.nspname AS schema, p.proname AS function_name,
@@ -196,35 +211,40 @@ WHERE n.nspname = 'public'
 ORDER BY p.proname;
 ```
 
-Flag admin/mutation RPCs (`update_user_role`, `remove_user_role`, …) for `REVOKE` from `PUBLIC, anon`.
+Flag admin/mutation RPCs for `REVOKE` from `PUBLIC, anon`.
 
-### Auth / EF spot-checks (sample each week; deep-dive P0 **and HRMS**)
+**Default ACL fingerprint** (catches next Lovable table before Advisors email):
 
-HRMS (`wltuhltnwhudgkkdsvsr`) is a **standing weekly deep-dive** (HR PII), not
-just a grant-count row: re-check Wave 2F / anon DML **and** anon EXECUTE on
-`SECURITY DEFINER` mutators (`copy_ad_*`, `create_*_manager_relationships` —
-backlog **S19**). Do not treat the HRMS sandbox (`xyvkeefqxabfcptiyoxm`) as a
-substitute for prod.
+```sql
+SELECT defaclrole::regrole, defaclnamespace::regnamespace, defaclobjtype, defaclacl
+FROM pg_default_acl
+WHERE defaclnamespace = 'public'::regnamespace OR defaclnamespace = 0;
+```
+
+### Auth / EF spot-checks (sample each week; deep-dive HU + HRMS)
 
 | Check | Where | Known backlog |
 |-------|-------|---------------|
-| Leaked password protection | Dashboard → Auth → Security | **S4** |
-| JWT signing keys (ES256 current) | SSO project JWT settings | **H1** |
-| Third-Party Auth registered on app DBs | SSO Console / Management API | ADR-027 |
-| EF `verify_jwt` vs in-code verify | `config.toml` + function source | Platform convention: SSO-compatible EFs use `--no-verify-jwt` + in-code verify |
-| HRMS anon SECDEF mutators | Matrix SQL `has_function_privilege('anon', …, 'EXECUTE')` + function body | **S19** |
+| HU Storefront forms + journal + default ACL | Always full Matrix SQL | **S15/S17** open; **S16/S18** closed 2026-09-16 |
+| HRMS anon SECDEF mutators | Matrix SQL + function body | **S19** |
+| Leaked password protection | Auth → Security | **S4** |
+| JWT signing keys (ES256 current) | SSO JWT settings | **H1** |
+| EF `verify_jwt` vs in-code verify | `config.toml` + source | SSO-compatible EFs: `--no-verify-jwt` + in-code verify |
 
 ## Report template
 
-Save dated reports under [`security-audits/`](security-audits/) as `YYYY-MM-DD.md`.
+Save dated reports under [`security-audits/`](security-audits/) as `YYYY-MM-DD.md`
+(+ optional `YYYY-MM-DD-ru.md` for leadership).
 
 ```markdown
 # Security audit — YYYY-MM-DD
 
+## Contour
+Standing list from runbook; note skip-unchanged vs prior report.
+
 ## Summary
-| Priority | Project | Ref | ERROR | WARN | INFO | Notes |
-|----------|---------|-----|-------|------|------|-------|
-| P0 | SSO | xgub… | n | n | n | |
+| Priority | Project | Ref | ERROR | WARN | Full SQL? | Notes |
+|----------|---------|-----|-------|------|-----------|-------|
 
 ## New HIGH (propose for security-model backlog)
 | ID | Project | Finding | Remediation |
@@ -232,20 +252,19 @@ Save dated reports under [`security-audits/`](security-audits/) as `YYYY-MM-DD.m
 ## Accepted / known (no change)
 | ID | Finding | Why accepted |
 
-## Matrix SQL
-| Project | Truncate anon/auth | Anon DML | Notes |
+## Remediations this pass (if any — must be pre-approved)
+| ID | What landed | Verify |
 
-## Non-Supabase
-- …
+## Coverage gap
+…
 ```
 
-Promote new **HIGH** items into [security-model.md](security-model.md) § Security Hardening Backlog. Do not silently “fix” without a migration + ownership.
+Promote new **HIGH** items into [security-model.md](security-model.md) § Security Hardening Backlog.
 
 ## Automation (optional, after baseline)
 
-1. GitHub Action or VM cron: loop project refs → `GET …/advisors/security` with PAT from vault (`sso_supabase_management_pat` — never commit the value).
-2. Fail / alert only on **new** ERROR vs last snapshot (diff cache keys / lint names).
-3. Keep weekly human review for Matrix SQL + Auth/EF.
+1. Cron / Action: loop standing refs → Advisors; alert only on **new** ERROR vs last snapshot.
+2. Keep weekly human review for Matrix SQL on changed + HU + HRMS.
 
 ## Dated reports
 
@@ -254,6 +273,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | 2026-08-25 | [security-audits/2026-08-25.md](security-audits/2026-08-25.md) — first baseline |
 | 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + remediations; [RU](security-audits/2026-09-01-ru.md) |
 | 2026-09-15 | [security-audits/2026-09-15.md](security-audits/2026-09-15.md) — 23 projects scan-only; HU S18; [RU](security-audits/2026-09-15-ru.md) |
+| 2026-09-16 | [security-audits/2026-09-16.md](security-audits/2026-09-16.md) — new standing contour baseline + HU S18/S16; [RU](security-audits/2026-09-16-ru.md) |
 
 ## Related
 
