@@ -557,10 +557,30 @@ Safari’s compact URL / bottom control bars are **translucent**. Stability come
 |-------|---------|
 | **Outer shell** | `flex min-h-svh min-h-[100dvh] w-full min-w-0 overflow-x-hidden bg-transparent px-safe md:h-svh md:h-[100dvh] md:min-h-0 md:overflow-hidden md:bg-background` |
 | **On `/menu`** | also `h-svh h-[100dvh] min-h-0 overflow-hidden` (lock the menu panel; list scrolls inside) |
+| **Chat surfaces** | also `h-svh max-md:h-[100lvh] min-h-0 overflow-hidden` — see "Chat shells" below |
 | **Header** | `relative z-30 h-14 shrink-0 box-content pt-safe … md:sticky md:top-0` |
 | **Main scroller** | normal routes: `pb-safe-content`; `/menu`: `min-h-0 flex-1 overflow-hidden` (**no** `pb-safe-content`) |
 
 Reference implementations: `matrix-itsm`, `matrix-apps-template-2-1`, `matrix-apps-template-2-2`, MSA staging.
+
+#### Chat shells (the one sanctioned exception to document scroll)
+
+A chat surface cannot scroll the document: the composer is pinned and the
+transcript owns its own scrollport. Sizing that shell to `100dvh` stops the app
+exactly where Safari's bars begin, so the glass fills with flat `--background`
+— the failure this whole section exists to prevent. Size it to the **large**
+viewport instead, so the shell paints behind the retractable chrome:
+
+| Layer | Classes |
+|-------|---------|
+| **Outer shell** | `h-svh max-md:h-[100lvh] min-h-0 overflow-hidden` (`h-svh` is the fallback where `lvh` is unsupported; `max-md:` keeps desktop on `md:h-[100dvh]`) |
+| **Composer wrapper** | `absolute inset-x-0 bottom-0` + inner `.pb-safe-composer` |
+| **Transcript scrollport** | reserve the **measured** composer height, not a constant — the wrapper grows by the chrome offset |
+
+The composer's own surface (including its fade-to-background gradient) is what
+shows through the bottom glass, and `.pb-safe-composer` keeps the input above
+the bar as it collapses. Reference implementation: `matrix-digital-employees`
+(`SidebarLayout` `ownsScroll` + `EmployeePlayground`).
 
 #### Safe-area utilities (in `index.css`)
 
@@ -570,6 +590,7 @@ Reference implementations: `matrix-itsm`, `matrix-apps-template-2-1`, `matrix-ap
 | `.px-safe-4` / `.px-safe-6` | `max(1rem\|1.5rem, env(…))` | Full-page flows that also need a fixed gutter. Bare `.px-safe` is unlayered CSS after Tailwind utilities and **wins the cascade**, collapsing `px-4` / `p-6` to 0 on non-notched viewports |
 | `.pb-safe-6` | `max(1.5rem, env(safe-area-inset-bottom))` | Same floor rule for bottom padding |
 | `.pb-safe-content` | `calc(env(safe-area-inset-bottom, 0px) + 4.5rem)` mobile; `1rem` at `md+` | Scrollable main content under Safari’s floating bottom toolbar |
+| `.pb-safe-composer` | `max(env(safe-area-inset-bottom), calc(100lvh - 100dvh))` mobile; none at `md+` | Fixed composer/bar pinned to the bottom of a `100lvh` chat shell. **Not** `.pb-safe-content`: that reserves 4.5rem of toolbar clearance, which on a fixed element is dead space, not clearance |
 | `.bottom-safe-fab` / `.right-safe-fab` | `max(1.25rem, env(…) + 0.75rem)` | Fixed FABs / floating panels (see below) |
 
 **Decision tree**
@@ -577,7 +598,8 @@ Reference implementations: `matrix-itsm`, `matrix-apps-template-2-1`, `matrix-ap
 - Pinned footers, `/menu` footer → `.pb-safe` (hardware inset only).
 - Scrollable route content inside `SidebarLayout` → `.pb-safe-content` (inset + **4.5rem** toolbar reserve).
 - Full-page auth / OAuth / share heroes outside the shell → `min-h-svh min-h-[100dvh]` + `.px-safe-4` (or `-6`) + `.pb-safe-content` when the page scrolls; `.pb-safe` / `.pb-safe-6` when it is a short centered card.
-- Fixed floating action (Ask AI, composer, help) → `.bottom-safe-fab` + `.right-safe-fab` — **never** bare `bottom-5` alone on notched devices.
+- Fixed floating action (Ask AI, help) → `.bottom-safe-fab` + `.right-safe-fab` — **never** bare `bottom-5` alone on notched devices.
+- Full-width fixed composer in a chat shell → `.pb-safe-composer` (not a FAB, not scroll content).
 
 #### Floating controls vs Safari bottom bar (calculated distance)
 
@@ -605,11 +627,11 @@ Open chat / sheet panels that share the same corner must use the **same** `.bott
 
 Other Sheets still need `SheetOverlay` at `fixed inset-x-0 top-0 h-[100vh] h-[100lvh]` — plain `inset-0` resolves against iOS Safari's small viewport and leaves a gap under the overlay.
 
-#### Adoption status (as of 2026-08-17)
+#### Adoption status (as of 2026-09-21)
 
 | Status | Apps |
 |--------|------|
-| Landed (shell + safe-area + `/menu`) | `matrix-itsm`, `matrix-apps-template-2-1`, `matrix-apps-template-2-2`, `matrix-sa-staging-main` (`main` + `cdto`), `matrix-sa-hungary-staging-main` |
+| Landed (shell + safe-area + `/menu`) | `matrix-itsm`, `matrix-apps-template-2-1`, `matrix-apps-template-2-2`, `matrix-sa-staging-main` (`main` + `cdto`), `matrix-sa-hungary-staging-main`, `matrix-digital-employees` (chat-shell variant, 2026-09-21) |
 | FAB utilities (`.bottom-safe-fab`) | Templates + MSA Ask AI widget; other apps adopt when they add a fixed FAB |
 | Still on locked shell (follow-up) | `matrix-pipeline-2-0`, `matrix-atlas-mls`, `matrix-stardom`, `matrix-fm`, `matrix-qobrix-sales-automation-rls`, `task-manager-hu-1.3`, `matrix-analytics`, `matrix-hrms`, `matrix-hrms-sandbox-3.0`, `matrix-cdl-studio` |
 
