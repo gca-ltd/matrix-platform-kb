@@ -243,8 +243,8 @@ onto a single Qobrix stage. See [ADR-044](../../../architecture/decisions/ADR-04
 | `contacting` | `in_process` | Call-centre contact attempts; also absorbs `not_interested` + `custom_enquiry_stage_type = "Not Reached"` (recyclable retries — inline "Not reached" badge; **Open** tab excludes them) |
 | `enquiry` | `enquiry` | Still pre-qualification |
 | `nurturing` | `asleep` | Return-to-nurture / quiet lead; `nurture_next_touch_at` |
-| `qualified` | `potential` **or** `custom_sql == true` | Precedence-bounded: exclude terminal / `not_interested`. Pipeline-linked rows are read-only on Leads |
-| `disqualified` | `not_interested` | Only when `custom_enquiry_stage_type` is `null`, `"Trash"`, or `"Invalid Request"` — **never** map all `not_interested` here |
+| `qualified` | `potential` **or** `custom_sql == true` | Precedence-bounded: exclude terminal / `not_interested`. **After marketing releases the lead** the row is read-only on Leads. During the joint window (allocated, not yet released) marketing still edits the lead; those seven shared fields propagate onto the linked Qualification opportunity. |
+| `disqualified` | `not_interested` | Only when `custom_enquiry_stage_type` is `null`, `"Trash"`, or `"Invalid Request"` — **never** map all `not_interested` here. A broker send-back after release may also land here. |
 | `duplicate` | `custom_enquiry_stage_type = "Double"` | Qobrix + App DB; RULE D keeps Doubles out of every other open bucket |
 
 `not_interested` taxonomy (`custom_enquiry_stage_type`):
@@ -263,6 +263,13 @@ historical rows; writers and filters no longer emit it.
 
 Do **not** conflate lead qualification with the Pipeline board column named
 `qualification` (requirements gate before Matching).
+
+**Who performs the handoff (MSA, D7).** Marketing (Call Centre role) allocates a
+broker (`allocate_lead_to_agent`); that creates the Pipeline opportunity at
+Qualification without setting lead `status = qualified`. Marketing then
+releases the lead (`release_lead_to_broker`) when they are done. The assigned
+broker's self-qualify path (`qualify_lead_v2`, D2) remains for unallocated
+leads and must not create a second opportunity on an already-allocated row.
 
 **Advisory triage score (MSA).** Unclaimed (`new`) leads in the MSA Leads inbox
 carry a deterministic, non-persisted triage score (badge + hover breakdown +
