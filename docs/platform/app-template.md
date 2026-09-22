@@ -600,6 +600,23 @@ shows through the bottom glass, and `.pb-safe-composer` keeps the input above
 the bar as it collapses. Reference implementation: `matrix-digital-employees`
 (`SidebarLayout` `ownsScroll` + `EmployeePlayground`).
 
+**iPhone Safari keyboard.** iOS keeps the *layout* viewport at full height when
+the software keyboard opens (`interactive-widget=resizes-visual`, the default;
+WebKit has not shipped `resizes-content` in a public Safari as of 2026-09).
+MDN's [Visual Viewport API](https://developer.mozilla.org/en-US/docs/Web/API/Visual_Viewport_API)
+is the supported way to read the area still on screen. Safari then scrolls the
+document to keep the focused field visible, which parks a `bottom: 0` composer
+in the middle of the screen; after blur, `dvh` can stay stale.
+
+Do **not** use `calc(100lvh - 100dvh)` for composer padding — when `dvh` tracks
+(or fails to recover from) the keyboard, that difference is ~keyboard height.
+Use `min(6.5rem, 100lvh - 100svh)` (chrome stack only, capped). While the
+keyboard is up, size the chat shell to `visualViewport.height`, offset it by
+`offsetTop` (`html[data-kb=open] [data-chat-shell]`), focus text fields with
+`focus({ preventScroll: true })`, and reset `window.scrollY`. Same pattern as
+WhatsApp Web / Telegram Web / Slack and `viewport-lock`. Hook:
+`useVisualViewportChat` in Digital Employees.
+
 #### Safe-area utilities (in `index.css`)
 
 | Class | CSS | When to use |
@@ -608,7 +625,7 @@ the bar as it collapses. Reference implementation: `matrix-digital-employees`
 | `.px-safe-4` / `.px-safe-6` | `max(1rem\|1.5rem, env(…))` | Full-page flows that also need a fixed gutter. Bare `.px-safe` is unlayered CSS after Tailwind utilities and **wins the cascade**, collapsing `px-4` / `p-6` to 0 on non-notched viewports |
 | `.pb-safe-6` | `max(1.5rem, env(safe-area-inset-bottom))` | Same floor rule for bottom padding |
 | `.pb-safe-content` | `calc(env(safe-area-inset-bottom, 0px) + 4.5rem)` mobile; `1rem` at `md+` | Scrollable main content under Safari’s floating bottom toolbar |
-| `.pb-safe-composer` | `max(env(safe-area-inset-bottom), calc(100lvh - 100dvh))` mobile; none at `md+` | Fixed composer/bar pinned to the bottom of a `100lvh` chat shell. **Not** `.pb-safe-content`: that reserves 4.5rem of toolbar clearance, which on a fixed element is dead space, not clearance |
+| `.pb-safe-composer` | `max(env(safe-area-inset-bottom), min(6.5rem, 100lvh − 100svh))` mobile; `0` while `html[data-kb=open]`; none at `md+` | Fixed composer/bar pinned to the bottom of a `100lvh` chat shell. **Never** `lvh − dvh` — `dvh` can become the keyboard-open height on iPhone Safari and lift the card to mid-screen. **Not** `.pb-safe-content` |
 | `.bottom-safe-fab` / `.right-safe-fab` | `max(1.25rem, env(…) + 0.75rem)` | Fixed FABs / floating panels (see below) |
 
 **Decision tree**
