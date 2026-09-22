@@ -531,6 +531,24 @@ The app template ships `useNotifications` + `NotificationBell` in the header. Tw
 
 HRMS person-scoped migrations live in `matrix-hrms/supabase/migrations/20260215200001_notifications.sql`. Digital Employees migrations live in `matrix-digital-employees/supabase/migrations/`.
 
+### Digital Employees — playground conversation links
+
+A Playground conversation URL (`/playground?employee=<id>&thread=<uuid>`) is a **tenant-wide read/write capability** (2026-09-22). Anyone signed in to the same tenant who holds the id can open the thread and continue it.
+
+| Surface | Scope |
+|---------|-------|
+| `runs-api` `getConversation` / `getRunState` / `cancelRun` / `recoverRun` / `generateInsights` | Tenant + conversation id. No `started_by` filter. |
+| `agent-chat` append | Already resolved by tenant + id only. |
+| `listConversations` / `renameConversation` / `setConversationStarred` / `deleteConversation` | Still `started_by` = caller. The sidebar stays personal; a recipient cannot rename, star, or archive someone else's chat. |
+
+This is **not** the `conversation_participants` owner/member/observer model (migration `20260828160000_conversation_participants.sql`). Link-as-key is the chosen simplification. Consequences to record:
+
+- The transcript may contain whatever the digital employee retrieved under the **author's** permissions.
+- Playground writes do not set `messages.author_identity_id`, so a colleague's turns are indistinguishable from the author's.
+- The shared thread does not appear in the recipient's conversation list; they reach it by URL.
+
+Do not silently re-introduce a `started_by` filter on the read or continue path — that is how a copied link opened empty for a colleague.
+
 ### Mobile navigation and safe areas
 
 Mobile navigation is a **real routed page** (`/menu`), not a Radix Sheet/drawer overlay. This section is the **platform design-system contract** for translucent browser chrome, safe-area gutters, and floating controls. Templates ship the utilities and shell classes; apps must not invent a parallel stack.
