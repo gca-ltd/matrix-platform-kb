@@ -193,13 +193,34 @@ Rules that hold for every kind:
   a gap, which is why chart blocks also emit a text line.
 - **`Chart.Gauge` must carry `min` and `max`.** Without them the needle sits on
   an implicit 0-based dial, so a gauge running 60–95 reads at the wrong angle
-  beside a correct number. The scale is **derived, never passed through**: it is
-  ordered and widened to contain both the value and the bands, because an
-  inverted pair or a value outside the range draws a broken dial — worse than
-  the default Teams picks when neither is given. `bullet` spans
-  `min(0, ranges, actual, target)` to `max(ranges, actual, target)`, so an
-  over-target actual still lands on the face and an all-negative variance
-  bullet keeps a real scale instead of being clipped at zero.
+  beside a correct number. The scale is **derived, never passed through**,
+  because an inverted pair or a value outside the range draws a broken dial —
+  worse than the default Teams picks when neither is given.
+- **A gauge's segments are widths, not positions**, laid end to end from `min`.
+  Three rules follow, and all three have been got wrong here:
+  - **The floor stays where the bands begin.** Dropping `min` to reach a low
+    value slides every band off the number it is labelled with: a 60–95 dial
+    banded "Watch ≤75" and "Healthy ≤95", shown a 10, draws Watch over 10–25.
+    The face is widened and the gap filled with a neutral `Below range` /
+    `Above range` segment instead, so the needle lands on the face and each
+    band keeps its own number.
+  - **The widths sum to exactly `max - min`.** Besides keeping the bands in
+    place, this settles a question we cannot test: charts do not survive
+    Developer Portal, so whether a client positions segments absolutely or
+    normalises them to fill the face is unverified, and a set that spans the
+    scale exactly renders the same under either reading.
+  - **Bands tile from the floor, not from zero.** `bullet` spans
+    `min(0, ranges, actual, target)` to `max(ranges, actual, target)`, so an
+    over-target actual still lands on the face and an all-negative variance
+    bullet keeps a real scale — but its bands must then be measured from that
+    floor. Tiling from zero under a negative floor draws ranges 10/20/30 at 5,
+    15 and 25 while still reading 10, 20 and 30.
+- **A gauge segment's width is `size`, not `value`.** The charts reference's
+  property table says `value`; its own sample on the same page, the
+  [published schema dump](https://github.com/microsoft/slack-plus-teams/blob/main/AdaptiveCardSchema-02132026.md)
+  (`GaugeChartLegend: key, size, legend, color`) and the table's own description
+  ("The size of the segment") all say `size`. The table is wrong. "Correcting"
+  it defaults every band to 0 and silently empties every gauge.
 - A set arrives **collapsed** behind Teams' own `Action.ShowCard`, so the chat
   stays a conversation.
 - Positive / destructive action styling is unsupported in Teams.
@@ -276,8 +297,14 @@ Two traps when extending it:
   `imBack` — none of which is an Adaptive Card element.
 - **Assert over hostile input, not only the catalogue examples.** Every example
   is well-formed, so an assertion like "the gauge scale is valid" passes while
-  malformed model output still renders a broken dial. Both gauge defects found
-  in review were invisible to a test that only walked the examples.
+  malformed model output still renders a broken dial. Every gauge defect found
+  in review was invisible to a test that only walked the examples.
+- **Assert the position, not only the total.** "The segments cover the face"
+  is necessary but not sufficient: bands tiled from the wrong origin still add
+  up, because the filler at the far end absorbs the difference. That mutation
+  survived a full suite. Bullet legends name their own top ("up to 30%"), so
+  the running boundary is checkable against the label — which is the only
+  assertion that sees a band sitting on the wrong number.
 
 ---
 
@@ -336,3 +363,4 @@ Two separate systems:
 - [api-contracts.md](api-contracts.md) — Teams JWT on MCP chat paths
 - [app-catalog.md](app-catalog.md) — Digital Employees entry
 - Microsoft Learn: [suggested-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/suggested-actions), [subscribe-to-conversation-events](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/subscribe-to-conversation-events), [cards-actions](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-actions) (`msTeams.feedback.hide`), [format-your-bot-messages](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/format-your-bot-messages) (markdown / extendedmarkdown / tables), [cards-format](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-format) (Adaptive Card TextBlock subset)
+- Microsoft: [AdaptiveCardSchema-02132026.md](https://github.com/microsoft/slack-plus-teams/blob/main/AdaptiveCardSchema-02132026.md) — property-level dump of the whole schema. Authoritative where the prose reference contradicts itself, and it does: gauge segment widths, the `version` enum, `Chart.Donut.thickness`, `colorSet` values. Every element and chart data shape we emit was re-checked against it.
