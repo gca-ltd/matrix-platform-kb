@@ -154,7 +154,7 @@ Four apps are backfilled into **every** role's `apps_allowed` so they stay broad
 
 ### App Builder Template
 **Status**: Done
-**Repo**: `/home/bitnami/matrix-apps-template-2-1` (canonical; the prior `/home/bitnami/matrix-apps-template` is obsolete — do not use or update)
+**Repo**: `/home/bitnami/matrix-apps-template-2-1` (canonical scaffold; the prior `/home/bitnami/matrix-apps-template` is obsolete — do not use or update). Sibling generation: `/home/bitnami/matrix-apps-template-2-2` (`sharpsir-group/matrix-apps-template-2-2`), auto-deployed by `github-watcher` on push to `main` (config key `sharpsir-group/matrix-apps-template-2-2`, secret env `WEBHOOK_SECRET_APPS_TEMPLATE_22`, Apache path `/apps-template-2-2/`). Production URL: `https://intranet.sharpsir.group/apps-template-2-2/`. OAuth client `ugUL3FrJiHg_eJg6~3NzNxUdF2-NSSzY` — intranet redirect `https://intranet.sharpsir.group/apps-template-2-2/auth/callback` (migration `20260922120000`).
 **Key Features**:
 - Vite + React 18 + TypeScript + shadcn/ui starter kit
 - Dual-Supabase architecture (SSO + App DB)
