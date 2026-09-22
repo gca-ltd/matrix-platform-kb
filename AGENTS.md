@@ -124,6 +124,7 @@ scripts/
 | Weekly infosec audit (Advisors + Matrix SQL) | `docs/platform/security-audit-runbook.md` |
 | ES256 JWT (ADR-011), SSO/CDL Third-Party Auth (ADR-012) | `docs/architecture/decisions/` |
 | SSO Edge Function API contracts | `docs/platform/sso-edge-functions.md`, `docs/platform/api-contracts.md` |
+| Teams bot replies, or **any** Adaptive Card change (Teams drops bad elements silently) | `docs/platform/teams-channel.md` — § Adaptive Card rendering contract pins schema 1.5, the Insight block → element map, chart tokens and size budgets |
 | Deploy / operate / perf / mobile / test | `docs/platform/operations.md`, `docs/platform/performance.md`, `docs/platform/mobile-strategy.md`, `docs/platform/testing-strategy.md` |
 | Phase-2 AI / Phase-2.5 stewardship roadmaps | `docs/architecture/intelligence-layer.md`, `docs/architecture/data-distribution-and-stewardship.md` |
 | Alignment audit / drift / KB methodology | `docs/platform/alignment-audit-playbook.md`, `docs/platform/kb-methodology.md` |

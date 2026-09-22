@@ -121,6 +121,140 @@ Chart PNG hosting (`https://intranet.sharpsir.group/charts/o/…`) is anonymous 
 
 ---
 
+## Adaptive Card rendering contract
+
+Insights are **not** sent as PNGs to Teams. They render as native Adaptive Card
+chart elements, so the numbers stay selectable, themeable and accessible. The
+whole contract is machine-checked by `supabase/functions/_shared/teams-card-schema.ts`
+and asserted in `teams-insights_test.ts`.
+
+**Teams validates cards on the client, silently.** An element it does not know
+is dropped; an enum value outside the documented range is ignored. Nothing fails
+server-side and nothing reaches a log — a wrong value ships as an empty gap in
+somebody's chat. Assume no runtime signal and rely on the test.
+
+### Schema version — pinned at 1.5
+
+Every card root declares `"version": "1.5"`. `version` is the **minimum** the
+host must support: a client below it renders `fallbackText` instead of the body,
+and declaring a version lower than the features used (the old `1.2` on the reply
+card) is simply a version the card does not honour.
+
+Microsoft's own documentation contradicts itself, so the pin is deliberate:
+
+| Source | Says |
+|---|---|
+| [cards-reference](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/cards-reference) (published) | Teams supports "v1.6 or earlier"; mobile 1.6 |
+| [cards-reference.md](https://github.com/MicrosoftDocs/msteams-docs/blob/main/msteams-platform/task-modules-and-cards/cards/cards-reference.md) (its own source) | "v1.5 or earlier"; mobile 1.2 |
+| Copilot Studio card reference | "Teams is also limited to version 1.5" |
+| [charts-in-adaptive-cards](https://learn.microsoft.com/en-us/microsoftteams/platform/task-modules-and-cards/cards/charts-in-adaptive-cards) | All 8 chart samples declare `1.5` |
+| [AdaptiveCards#9378](https://github.com/microsoft/AdaptiveCards/issues/9378) | Open regression: 1.6 cards fail to render in Teams |
+
+There is **no API to query a client's version**; the only documented method is
+behavioural — declare a version and see whether the body or `fallbackText`
+renders. Measured on the Sharp tenant 2026-09-22 (desktop build
+`26225.1806.5074.1452` and mobile): both render a `1.6` body, so 1.5 is pinned
+with headroom rather than at the edge.
+
+A nested `Action.ShowCard.card` inherits the host card's schema and declares
+**neither** `$schema` nor `version` — matching Microsoft's nested-ShowCard sample.
+
+### Insight block → Teams element
+
+The `InsightSnapshot` envelope (`{ schemaVersion, artifactId, sequence, state,
+title, widgets[] }`) is defined in `_shared/insight-widgets.ts`; the 34 block
+kinds and their data shapes in `_shared/insight-catalogue.ts`. Teams renders
+them as:
+
+| Teams element | Insight kinds |
+|---|---|
+| `Chart.Line` | `chart` (line/area), `small_multiples` |
+| `Chart.VerticalBar` | `chart` (bar, single series, short labels) |
+| `Chart.VerticalBar.Grouped` | `chart` (multi-series / stacked), `dumbbell`, `slope` |
+| `Chart.HorizontalBar` | `funnel` (`AbsoluteNoAxis`), `waterfall`, `polar`, `dot`, `lollipop`, long-label bars |
+| `Chart.HorizontalBar.Stacked` | `share_bar` |
+| `Chart.Donut` / `Chart.Pie` | `donut`, `breakdown` / `pie` |
+| `Chart.Gauge` | `gauge`, `goal`, `bullet` |
+| `Table` | `table` |
+| `ProgressBar` | `progress_set`, `progress` |
+| `Badge` | `status_badges` |
+| `Rating` | `rating` |
+| `ColumnSet` | `kpi_tiles` |
+| `TextBlock` | `callout`, `summary` |
+| `FactSet` | `stat`, `metrics`, `ranked_list`, `next_actions`, `comparison`, `timeline`, `assumptions`, `sources`, `scatter`, `quadrants` |
+
+Rules that hold for every kind:
+
+- Each block is a `Container` with a bold title, optional description and an
+  optional `As of` line, separated from the previous block.
+- Every element above the 1.2 core carries a **`fallback`** restating the same
+  numbers as a `Container` of `TextBlock` / `FactSet`. A client that does not
+  know the type renders the fallback; one that knows it but cannot draw it shows
+  a gap, which is why chart blocks also emit a text line.
+- **`Chart.Gauge` must carry `min` and `max`.** Without them the needle sits on
+  an implicit 0-based dial, so a gauge running 60–95 reads at the wrong angle
+  beside a correct number. `bullet` tops its dial at `max(ranges, actual,
+  target)` so an over-target actual still lands on the face.
+- A set arrives **collapsed** behind Teams' own `Action.ShowCard`, so the chat
+  stays a conversation.
+- Positive / destructive action styling is unsupported in Teams.
+
+### Design tokens — nearest match, never exact
+
+Adaptive Cards accept only named `ChartColor` tokens, **never hex**, so the app
+palette maps to the closest token rather than reproducing it:
+
+| App token (`src/index.css`) | HSL | Teams `ChartColor` |
+|---|---|---|
+| `--chart-1` | 199 89% 48% (sky) | `categoricalLightBlue` |
+| `--chart-2` | 213 47% 30% (navy) | `categoricalBlue` |
+| `--chart-3` | 174 62% 37% (teal) | `categoricalTeal` |
+| `--chart-4` | 38 92% 50% (amber) | `categoricalMarigold` |
+| `--chart-5` | 266 55% 58% (violet) | `categoricalPurple` |
+| `--chart-6` | 215 16% 47% (slate) | `neutral` |
+
+Series 7+ continue through the remaining categorical tokens. `--chart-1` is
+`--primary`, which a tenant rebrands at runtime — the Teams card therefore
+tracks the **default Sharp sky blue** and cannot follow a tenant brand colour.
+Order is what matters: series 2 of a block is the same slot in both surfaces.
+
+### Size budget and degradation
+
+Teams caps a bot message at **100 KB** (28 KB for an Incoming Webhook). Two
+tighter budgets sit under it, and they must be read together:
+
+| Budget | Value | Enforced in |
+|---|---|---|
+| Widget payload accepted from the model | 48 KB | `validateInsightWidgets()` |
+| Insight card body | 20 KB | `fitTeamsCard()` in `teams-insights.ts` |
+| Whole outbound activity | 25 KB | `withinTeamsBudget()` in `teams-activity.ts` |
+
+Every chart duplicates its data as a `fallback`, so a rendered set runs two to
+three times the payload behind it. Degradation is graded: `fitTeamsCard()` drops
+blocks **from the end** until the body fits, appending a line naming how many
+are missing, and falls back to a single explanatory `TextBlock` only if even one
+block will not fit. Fallbacks are never stripped to save bytes. The activity
+gate is the last resort and is all-or-nothing — it replaces every drawn block
+with the markdown summary, which is what the body budget exists to avoid.
+
+### Known limitations
+
+- **Charts do not render in Developer Portal.** Its card editor rejects
+  `Chart.*`, `Badge` and `ProgressBar` as unknown elements and strips them —
+  together with their `fallback` — before sending, so it cannot be used to probe
+  those. Verify through the bot itself.
+- **Charts on Teams mobile are unreliable** ([Teams-AdaptiveCards-Mobile#314](https://github.com/microsoft/Teams-AdaptiveCards-Mobile/issues/314)).
+- **`ProgressBar` does not render in Copilot chat** ([msteams-docs#13220](https://github.com/MicrosoftDocs/msteams-docs/issues/13220)).
+
+### Changing any of this
+
+`npm run test:ef` (wired into `.github/workflows/build.yml`) walks every
+catalogued kind and asserts the element allow-list, enum values, fallback
+presence, gauge scale, declared version and size budget. Adding a block type
+that emits an element Teams cannot draw fails there rather than in a chat.
+
+---
+
 ## Install welcome
 
 On `installationUpdate` add or bot-self `conversationUpdate`, the webhook:

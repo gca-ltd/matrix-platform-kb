@@ -31,6 +31,7 @@ What Sharp Matrix is, the three-platform architecture (Supabase + Databricks + L
 | [platform/kb-methodology.md](platform/kb-methodology.md) | KB design principles, versioning, contribution guidelines |
 | [platform/testing-strategy.md](platform/testing-strategy.md) | Testing: unit (Vitest), integration, E2E (Playwright), contract testing |
 | [platform/api-contracts.md](platform/api-contracts.md) | Edge Function API surface, OpenAPI reference, per-app dependencies |
+| [platform/teams-channel.md](platform/teams-channel.md) | Microsoft Teams bot channel: inbound routing, reply formats, Adaptive Card rendering contract (schema 1.5, Insight block → element map, chart tokens, size budgets) |
 | [platform/alignment-audit-playbook.md](platform/alignment-audit-playbook.md) | Harness-style audit playbook: eliminate DB ↔ types ↔ code ↔ UI ↔ EF ↔ permission-key drift |
 
 ## Chapter 1: Vision & Strategy
