@@ -193,8 +193,13 @@ Rules that hold for every kind:
   a gap, which is why chart blocks also emit a text line.
 - **`Chart.Gauge` must carry `min` and `max`.** Without them the needle sits on
   an implicit 0-based dial, so a gauge running 60–95 reads at the wrong angle
-  beside a correct number. `bullet` tops its dial at `max(ranges, actual,
-  target)` so an over-target actual still lands on the face.
+  beside a correct number. The scale is **derived, never passed through**: it is
+  ordered and widened to contain both the value and the bands, because an
+  inverted pair or a value outside the range draws a broken dial — worse than
+  the default Teams picks when neither is given. `bullet` spans
+  `min(0, ranges, actual, target)` to `max(ranges, actual, target)`, so an
+  over-target actual still lands on the face and an all-negative variance
+  bullet keeps a real scale instead of being clipped at zero.
 - A set arrives **collapsed** behind Teams' own `Action.ShowCard`, so the chat
   stays a conversation.
 - Positive / destructive action styling is unsupported in Teams.
@@ -231,11 +236,18 @@ tighter budgets sit under it, and they must be read together:
 
 Every chart duplicates its data as a `fallback`, so a rendered set runs two to
 three times the payload behind it. Degradation is graded: `fitTeamsCard()` drops
-blocks **from the end** until the body fits, appending a line naming how many
-are missing, and falls back to a single explanatory `TextBlock` only if even one
-block will not fit. Fallbacks are never stripped to save bytes. The activity
-gate is the last resort and is all-or-nothing — it replaces every drawn block
-with the markdown summary, which is what the body budget exists to avoid.
+blocks **from the end** until the body fits, appending a line that **names** the
+dropped blocks so the reader knows what to ask for, and falls back to a single
+explanatory `TextBlock` only if even one block will not fit. Fallbacks are never
+stripped to save bytes, and the collapsed chip is labelled from the blocks that
+survived rather than the snapshot length — a chip promising eight views over a
+card holding one is its own defect. The activity gate is the last resort and is
+all-or-nothing: it replaces every drawn block with the markdown summary, which
+is what the body budget exists to avoid.
+
+In practice the budget is far from binding — a full eight-block body measures
+~5.4 KB and a card reply with an 8,000-character answer ~15.3 KB — so trimming
+is a safety net, not a routine path.
 
 ### Known limitations
 
@@ -249,9 +261,23 @@ with the markdown summary, which is what the body budget exists to avoid.
 ### Changing any of this
 
 `npm run test:ef` (wired into `.github/workflows/build.yml`) walks every
-catalogued kind and asserts the element allow-list, enum values, fallback
-presence, gauge scale, declared version and size budget. Adding a block type
-that emits an element Teams cannot draw fails there rather than in a chat.
+catalogued kind **and the whole reply card** — `adaptive-card.ts` contributes
+the avatar `ColumnSet`, the approval `TextBlock` and the action set — asserting
+the element allow-list, enum values, fallback presence, gauge scale, declared
+version and size budget. Adding a block type that emits an element Teams cannot
+draw fails there rather than in a chat.
+
+Two traps when extending it:
+
+- **A walk over a card must skip `data`, `suggestedActions`, `msTeams`,
+  `channelData` and `entities`** (`NON_CARD_KEYS`). Those hold Bot Framework
+  payloads with their own `type` vocabulary — an activity is `message`,
+  `Action.Submit`'s `data.msteams.type` is `messageBack`, a suggested action is
+  `imBack` — none of which is an Adaptive Card element.
+- **Assert over hostile input, not only the catalogue examples.** Every example
+  is well-formed, so an assertion like "the gauge scale is valid" passes while
+  malformed model output still renders a broken dial. Both gauge defects found
+  in review were invisible to a test that only walked the examples.
 
 ---
 
