@@ -84,6 +84,36 @@ suggestion completion, and trace export are post-turn work and must run after
 that boundary. Background work must be best-effort and must never make a
 successful assistant reply fail.
 
+**Preparation vs model time.** Before the first model token, the turn assembles
+context (embedding, knowledge, memory, tools, caller profile). The `generate`
+run-step checkpoint carries a `prep` object with step timings (`authMs`,
+`employeeMs`, `quotaMs`, `historyMs`, `writesMs`, `embedMs`, `retrieveMs`,
+`memoryMs`, `toolsMs`, `callerMs`, `gateMs`), `warm` (`memory` | `db` |
+`cold`), top tool promotion scores, and top knowledge similarity /
+`keywordHit`. Playground `usage.elapsedMs` ends when the answer is written, not
+after optional suggestion chips. Target: preparation p50 ≤ 1.5 s cold; warm
+≤ 0.5 s without RAG/memory, ≤ 1.0 s with them (embedding + recall still run per
+message).
+
+**Warm sessions** keep resolved identity/thread/participant ids and the thread
+summary ready while a person or API caller stays in a thread (`thread_sessions`
++ per-isolate cache, validated by `tenant_config_epoch`). Warm-up calls
+(`agent-chat` `mode: warm`, `POST /converse/warm`) touch the database only —
+never a model or embedding API. Caller directory profiles stay per user
+(tenant + email), not per thread.
+
+**Relevance floors.** Knowledge hits below cosine 0.3 are dropped unless
+`keyword_hit` is true (keyword-only RPC rows report similarity 0). Tool
+promotion uses `score > 0` until baseline scores in `prep.topToolScores` justify
+raising `TOOL_PROMOTE_MIN_SCORE`.
+
+**Config epoch.** `tenant_config_epoch` bumps on real config edits (employees,
+channels, MCP policies/tools/servers, platform prompts, insight catalogue,
+model catalog). MCP rediscovery timestamp-only writes do not bump. Isolate
+caches for policies, servers, catalogues, prompts, and reasoning options are
+validated against the epoch; `mcp_principal_tokens` and recent
+`mcp_tool_calls` are never cached.
+
 Every run records `queue_ms`, `first_token_ms` from request receipt to the first text delta where streaming is available,
 `first_hop_ms` for tool turns, `post_ms`, input/output token counts, and
 `cached_input_tokens` / `reasoning_tokens`. Each `run_steps` checkpoint records

@@ -309,6 +309,7 @@ App DB project `mihslqjjclbrqelnjjpb`. Auth: `Authorization: Bearer mxde_…` (c
 | Path | Method | Purpose |
 |------|--------|---------|
 | `/converse` | POST | Stateful turn (default) or `stateless: true` one-shot (no memory / knowledge / persistence); stateful assist attaches preceding `operatorReplies` to the visitor turn |
+| `/converse/warm` | POST | Database-only thread warm-up: `{ user: { externalId, … }, threadId? }` — resolves identity/thread/participants and refreshes the warm session; **no model call**; returns **204** |
 | `/converse` | GET | Thread history for `externalId` + optional `threadId` |
 | `/converse/transcribe` | POST | Audio → transcript + language detection; optional `reply: true` runs a stateful turn |
 | `/converse/suggest` | POST | Up to 3 broker-voice draft replies over a caller-owned transcript |
