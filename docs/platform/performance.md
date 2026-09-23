@@ -85,16 +85,32 @@ that boundary. Background work must be best-effort and must never make a
 successful assistant reply fail.
 
 Every run records `queue_ms`, `first_token_ms` from request receipt to the first text delta where streaming is available,
-`first_hop_ms` for tool turns, `post_ms`, and input/output token counts. Each
-`run_steps` checkpoint records a real duration; each tool hop is recorded with
-its hop number and result byte count. Compare p50/p95 over a rolling seven-day
-window, and report no-tool and tool turns separately before changing model or
-prompt defaults.
+`first_hop_ms` for tool turns, `post_ms`, input/output token counts, and
+`cached_input_tokens` / `reasoning_tokens`. Each `run_steps` checkpoint records
+a real duration; each tool hop records its hop number, result byte count, and
+`model_ms` / `exec_ms` so model time is not mixed with tool execution. Compare
+p50/p95 over a rolling seven-day window, and report no-tool and tool turns
+separately before changing model or prompt defaults.
 
-Prompt assembly keeps stable job, policy, channel, and tool-guidance blocks
-before volatile runtime, caller, memory, and retrieval blocks. History is
-trimmed before the latest user message is dropped; memory and cumulative tool
-results have explicit ceilings and report truncation. This follows the same
+A large catalogue does not all go into the model call. The turn pre-selects
+tools before the loop: up to 5 tools already used in the conversation, plus
+the 6–8 whose descriptions are closest to the user message (the same query
+embedding as knowledge search), capped at 12 eager tools. The rest stay
+deferred behind `tool_search`, which returns input schemas so a hit can be
+invoked without a separate describe hop. The guardrail is a drop in discovery
+hops per reply.
+
+Prompt assembly keeps a cacheable prefix: job, policy, channel, and
+tool-guidance in the system prompt, then older history in order. Volatile
+runtime, caller, memory, and retrieval sit on the latest user message, and
+the trailing channel contract stays last. Tool definitions are emitted in
+deterministic name order so they remain inside that prefix. On multi-hop
+turns, cached input tokens should be at least 60% of input tokens. History
+is trimmed before the latest user message is dropped; memory and cumulative
+tool results have explicit ceilings and report truncation.
+
+Insight blocks are built after the answer is written, on the platform chat
+model, and do not sit inside the tool loop. This follows the same
 instrument-before/after discipline and `EdgeRuntime.waitUntil` stale-while-
 revalidate boundary used by the read paths below.
 
