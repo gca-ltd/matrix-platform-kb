@@ -98,8 +98,11 @@ message).
 **Warm sessions** keep resolved identity/thread/participant ids and the thread
 summary ready while a person or API caller stays in a thread (`thread_sessions`
 + per-isolate cache, validated by `tenant_config_epoch`). Warm-up calls
-(`agent-chat` `mode: warm`, `POST /converse/warm`) touch the database only —
-never a model or embedding API. Caller directory profiles stay per user
+(`agent-chat` `mode: warm`, `POST /converse/warm`) are read-only. They refresh
+the session only when that thread already exists, and they never create an
+identity or a conversation, never route to another employee, and never call a
+model or an embedding API. An unknown sender or a missing Playground thread is
+a no-op and still returns 204. Caller directory profiles stay per user
 (tenant + email), not per thread.
 
 **Relevance floors.** Knowledge hits below cosine 0.3 are dropped unless
