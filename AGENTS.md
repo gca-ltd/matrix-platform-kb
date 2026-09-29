@@ -105,6 +105,7 @@ scripts/
 | If you need to… | Read this |
 |---|---|
 | Build a new Matrix App (start here) | `docs/platform/app-template.md` |
+| Build or call an MCP server or client | `docs/platform/mcp/README.md` (ADR-059) |
 | Platform / ecosystem / app catalog | `docs/platform/index.md`, `docs/platform/ecosystem-architecture.md`, `docs/platform/app-catalog.md` |
 | Strategy, design philosophy, architecture | `docs/vision/digital-strategy-2026-2028.md`, `docs/vision/core-beliefs.md`, `docs/architecture/overview.md` |
 | Look up any RESO DD 2.0 resource / field / lookup | `docs/data-models/reso-dd-kb/USAGE.md` |

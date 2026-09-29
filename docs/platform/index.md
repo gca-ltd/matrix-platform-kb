@@ -70,8 +70,9 @@ See [app-template.md](app-template.md) for full technical details.
 | [mls-datamart.md](mls-datamart.md) | MLS 2.0 data pipeline: sources, Databricks ETL, Supabase CDL sync |
 | [ecosystem-architecture.md](ecosystem-architecture.md) | Full platform architecture: channels, apps, data layer, AI/ML |
 | [app-catalog.md](app-catalog.md) | All apps in the platform: purpose, users, RESO resources consumed |
-| [matrix-mcp-server.md](matrix-mcp-server.md) | MCP servers: Qobrix CRM reference stack (ADR-039) + legacy property `matrix-mcp` |
-| [mcp-client.md](mcp-client.md) | Digital Employees MCP client contract (ADR-040) |
+| [mcp/README.md](mcp/README.md) | Matrix MCP Profile (normative): auth types, routes, copy, tools, flows, conformance |
+| [matrix-mcp-server.md](matrix-mcp-server.md) | Inventory of Matrix tool servers; contract is the MCP profile |
+| [mcp-client.md](mcp-client.md) | Pointer: Digital Employees implements the client half of the MCP profile |
 | [teams-channel.md](teams-channel.md) | Teams bot channel: inbound routing, reply formats, Adaptive Card rendering contract (schema 1.5, Insight blocks, chart tokens, size budgets) |
 | [testing-strategy.md](testing-strategy.md) | Testing: unit (Vitest), integration, E2E (Playwright), contract testing |
 | [api-contracts.md](api-contracts.md) | Edge Function API surface, OpenAPI reference, per-app dependencies |

@@ -23,7 +23,8 @@ What Sharp Matrix is, the three-platform architecture (Supabase + Databricks + L
 | [platform/mls-datamart.md](platform/mls-datamart.md) | MLS 2.0 data pipeline: Databricks ETL, CDC, Supabase CDL sync, phased migration |
 | [platform/ecosystem-architecture.md](platform/ecosystem-architecture.md) | Full ecosystem: channels, apps, data & analytics, AI/ML, external services |
 | [platform/app-catalog.md](platform/app-catalog.md) | All platform apps and components (11 live, 7 in progress, 6 planned) with delivery status |
-| [platform/matrix-mcp-server.md](platform/matrix-mcp-server.md) | Matrix MCP server (MLS/property): AI-agent access layer over CDL — endpoint, 5 tools, JWT auth, integration guide |
+| [platform/mcp/README.md](platform/mcp/README.md) | Matrix MCP Profile: server, authorization server, and client contract (MCP 2025-11-25) |
+| [platform/matrix-mcp-server.md](platform/matrix-mcp-server.md) | Pointer to the MCP profile and the inventory of Matrix tool servers |
 | [platform/security-model.md](platform/security-model.md) | Security model: 5-level scope, 23 roles, JWT claims, RLS patterns A-E |
 | [platform/security-audit-runbook.md](platform/security-audit-runbook.md) | Weekly infosec audit: Advisors + Matrix SQL + project inventory |
 | [platform/operations.md](platform/operations.md) | Operations: CI/CD, deployment, monitoring, logging, audit trail, DR/backup |

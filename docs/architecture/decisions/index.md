@@ -54,11 +54,13 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-046](ADR-046.md) | Qobrix broker → SSO identity as a persisted map; only exact-email and confirmed matches own a deal | Accepted |
 | [ADR-047](ADR-047.md) | Qobrix copy ownership preserved; manager-approved claims on mismatch | Accepted |
 | [ADR-048](ADR-048.md) | Agent-configured chart rendering and image-output conventions | Accepted |
-| [ADR-049](ADR-049.md) | HU listings MCP on Supabase Edge Function (Mode B) | Accepted |
+| [ADR-049](ADR-049.md) | HU listings MCP on Supabase Edge Function (api_key) | Accepted |
 | [ADR-050](ADR-050.md) | Retire Qobrix service account — MSA thin client under caller tokens | Accepted |
 | [ADR-051](ADR-051.md) | Live Qobrix read for CRM lists — supersede ADR-050 D1 read half | Accepted |
 | [ADR-052](ADR-052.md) | Two-source virtual dataset — Qobrix + App DB merge contract | Accepted |
 | [ADR-053](ADR-053.md) | In-app build-status surface — repo Markdown, structure-agnostic renderer, `alwaysVisible` nav | Accepted |
 | [ADR-054](ADR-054.md) | Pipeline board visibility prefs — `saved_here_only` + Won/Lost column toggle | Accepted |
 | [ADR-055](ADR-055.md) | Immutable github-watcher releases + atomic symlink publish + classified timeouts | Accepted |
-| [ADR-058](ADR-058.md) | MSA MCP: one server, URL-mode connect link plus MCP OAuth, user's own SSO tokens | Accepted |
+| [ADR-056](ADR-056.md) | Tenant-bound cross-broker shortlist visibility (narrow SECURITY DEFINER, no service-harvested PII cache) | Accepted |
+| [ADR-058](ADR-058.md) | MSA MCP: one server, user's own SSO tokens (signed-header path superseded by ADR-059) | Accepted |
+| [ADR-059](ADR-059.md) | Matrix MCP Profile: auth types only (`none`, `api_key`, `oauth_user`, `oauth_service`); custom auth headers retired | Accepted |

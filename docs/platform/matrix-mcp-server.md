@@ -1,31 +1,22 @@
 # Matrix MCP servers
 
-> **Platform reference (2026-08-21):** the production MCP stack is
-> [`qobrix-crm-mcp`](https://github.com/gca-ltd/qobrix-crm-mcp) +
-> [`qobrix-crm-mcp-oauth`](https://github.com/gca-ltd/qobrix-crm-mcp-oauth).
-> See [ADR-039](../architecture/decisions/ADR-039.md). Digital Employees' client
-> contract is [ADR-040](../architecture/decisions/ADR-040.md) /
-> [mcp-client.md](mcp-client.md).
+The contract is the [Matrix MCP Profile](mcp/README.md) ([ADR-059](../architecture/decisions/ADR-059.md)). This page is the inventory. The client pointer is [mcp-client.md](mcp-client.md).
 
-## Reference: Qobrix CRM MCP
+## Qobrix CRM MCP
+
+Reference server with a separate authorization server.
 
 | Property | Value |
 |---|---|
-| Resource Server | `gca-ltd/qobrix-crm-mcp` (Apache-2.0) |
-| Authorization Server | `gca-ltd/qobrix-crm-oauth` (proprietary) |
-| Live Mode D URL | `https://intranet.sharpsir.group/qobrix-crm/mcp` |
-| AS issuer (intranet) | `https://intranet.sharpsir.group/qobrix-crm/mcp-oauth` |
-| Transport | Streamable HTTP (JSON-RPC) |
-| Tools | 64 read-only CRM + analytics tools |
-| Auth modes | A stdio · B headers · C server-managed OAuth · D remote Bearer (Claude/Dust) |
+| Resource server | `gca-ltd/qobrix-crm-mcp` (Apache-2.0) |
+| Authorization server | `gca-ltd/qobrix-crm-mcp-oauth` (proprietary) |
+| URL | `https://intranet.sharpsir.group/qobrix-crm/mcp` |
+| Issuer | `https://intranet.sharpsir.group/qobrix-crm/mcp-oauth` |
+| Transport | Streamable HTTP |
+| Tools | 64 read-only CRM and analytics tools |
+| Auth | `api_key` and `oauth_user` on HTTP. stdio uses the process credential (`none` from the caller's point of view) |
 
-### Mode summary
-
-- **B** — trusted callers send `X-Api-User` / `X-Api-Key` per request.
-- **C** — northbound clients send no bearer; tools return a `/connect` URL; MCP holds per-user sessions.
-- **D** — unauthenticated `/mcp` returns `401` + `WWW-Authenticate: Bearer resource_metadata=…`; client completes OAuth against the AS; subsequent calls carry `Authorization: Bearer`.
-
-Protected Resource Metadata is published at path-aware well-known URLs (RFC 9728). Tokens are opaque and audience-bound; the RS introspects with a shared secret. Revoking the vaulted Qobrix API key makes introspection return `credentials_revoked` → RS 401 → clients must re-authorize with a **real** URL.
+Unauthenticated HTTP returns `401` with `WWW-Authenticate: Bearer resource_metadata=…`. The client finishes User OAuth 2.1 against the authorization server. Tokens are opaque and audience-bound. The resource server introspects with a shared secret and never forwards the bearer token to Qobrix.
 
 Full install/user guides live in the two repos' `docs/`.
 
@@ -80,7 +71,7 @@ stripped or warned.
 ### Digital Employees integration
 
 Register the hosted server in Digital Employees with `auth_mode: api_key`
-(the UI label is **API key headers (service)**). Configure one header:
+(the label is **API key**). Configure one header:
 `Authorization: Bearer <CHARTS_API_TOKEN>`. Do not use the OAuth modes: this
 utility does not publish OAuth metadata and has no per-user credential flow.
 Discovery returns the render exhibit tools plus the design and font tools;
@@ -116,7 +107,7 @@ it must adopt ADR-039's OAuth Resource Server contract before that expansion.
 > Accepted pattern in [ADR-049](../architecture/decisions/ADR-049.md).
 > Backend lives in the Storefront repo `gca-ltd/matrix-storefront-2.0-hungary` (`supabase/functions/`, runbook `docs/mcp/README.md`) on project `bpaxqtxaysolzaeguwvg`.
 
-Two Mode B Edge Function MCP servers co-located with HU website data:
+Two Edge Function tool servers co-located with HU website data. Auth type: `api_key`.
 
 | Server | Endpoint | Auth |
 |--------|----------|------|
@@ -142,7 +133,7 @@ Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-sear
 |---|---|
 | Repo | `gca-ltd/matrix-sa-mcp` |
 | URL | `https://intranet.sharpsir.group/msa/mcp` |
-| Auth | URL-mode connect link (Digital Employees) and MCP OAuth (desktop clients), one process |
+| Auth | `oauth_user` (built-in authorization server). Digital Employees uses `identityProbe` on `msa_whoami` |
 | Data | MSA App DB as the signed-in user. No service role. |
 
-See ADR-058. Prefer the names **URL-mode authorization** and **MCP OAuth authorization** over the internal Qobrix Mode A–D labels when describing this server. The app repo owns `mcp/contract.json`; the MCP vendors a copy and a nightly job fails when the two diverge.
+See [ADR-059](../architecture/decisions/ADR-059.md). ADR-058's signed-header path is superseded. The app repo owns `mcp/contract.json`; the MCP vendors a copy and a nightly job fails when the two diverge.
