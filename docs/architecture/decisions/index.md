@@ -61,3 +61,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-053](ADR-053.md) | In-app build-status surface — repo Markdown, structure-agnostic renderer, `alwaysVisible` nav | Accepted |
 | [ADR-054](ADR-054.md) | Pipeline board visibility prefs — `saved_here_only` + Won/Lost column toggle | Accepted |
 | [ADR-055](ADR-055.md) | Immutable github-watcher releases + atomic symlink publish + classified timeouts | Accepted |
+| [ADR-058](ADR-058.md) | MSA MCP: one server, URL-mode connect link plus MCP OAuth, user's own SSO tokens | Accepted |

@@ -792,7 +792,7 @@ which keeps this change "same security level, faster + simpler."
 carries the **harvester's** visibility, not the caller's. It may only be served to
 viewers whose scope already entitles them to everything (`global`, `org_admin`,
 `system_admin`). Restricted viewers (`self`, `team`) must read the authoritative
-source **as themselves**.
+source **as themselves**. An MCP server on this path (ADR-058, MSA) holds no service-role key, keys its cache by user, and reads only RLS-protected tables — never `SECURITY DEFINER` functions or edge functions. The app's MCP contract records those policies so a later schema change cannot silently widen the read.
 
 This applies to any read path where the upstream system owns the ACL — a mirror of
 a third-party CRM, a denormalised cache, a materialised view, or a pre-joined

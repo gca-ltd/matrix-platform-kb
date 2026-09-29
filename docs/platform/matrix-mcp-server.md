@@ -135,3 +135,14 @@ Read tools: `hu_search_properties`, `hu_get_property`, `hu_find_similar`, `hu_li
 Write tools: `hu_capture_lead`, `hu_request_viewing` (Digital Employees policy = Require approval).
 
 Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-search.mjs`.
+
+## MSA MCP
+
+| Property | Value |
+|---|---|
+| Repo | `gca-ltd/matrix-sa-mcp` |
+| URL | `https://intranet.sharpsir.group/msa/mcp` |
+| Auth | URL-mode connect link (Digital Employees) and MCP OAuth (desktop clients), one process |
+| Data | MSA App DB as the signed-in user. No service role. |
+
+See ADR-058. Prefer the names **URL-mode authorization** and **MCP OAuth authorization** over the internal Qobrix Mode A–D labels when describing this server. The app repo owns `mcp/contract.json`; the MCP vendors a copy and a nightly job fails when the two diverge.

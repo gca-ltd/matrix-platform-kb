@@ -16,7 +16,7 @@ explicit **principal** with governance (Allow / Ask / Deny, rate limits, audit).
 |-------------|----------------|-------|
 | `none` | — | Public / open servers |
 | `api_key` | Mode B | Arbitrary header set; secrets encrypted or env `secret_ref` |
-| `server_managed` | Mode C | No client credential; relay server's connect URL verbatim |
+| `server_managed` | URL-mode authorization | Signed `X-Chat-*` identity; relay the server's connect URL in private chats only |
 | `oauth_user` | Mode D | Per-principal OAuth 2.1 + PKCE; PRM discovery (Qobrix production path) |
 | `oauth_service` | — | Client-credentials |
 
@@ -62,11 +62,9 @@ JSON result. If it does not match `mcp_oauth_states.expected_email`, the grant
 is deleted and the user sees "Wrong account". Qobrix uses
 `qobrix_whoami` → `profile.user.username`.
 
-### `server_managed` (Mode C servers)
+### `server_managed` (URL-mode authorization)
 
-The MCP server returns its own connect URL inside the tool result text. The client
-relays that text **verbatim** to the model. No platform `AUTH_REQUIRED:` prefix
-and no chat sign-in UI.
+The client sends a signed chat identity (`X-Chat-Platform`, `X-Chat-User-Id`, `X-Chat-Email`, `iat`, `exp`, HMAC). The MCP server returns its own connect URL inside the tool result (`structuredContent.auth_required`). A private chat relays that text unchanged. A group thread replaces it with a request to continue in private. The client does not store a token for this mode.
 
 ### Chart rendering utility
 
