@@ -92,7 +92,7 @@ Agent working rules should teach: prices are EUR; default `transaction=sale`;
 prefer `slug` + returned `url`; read `applied_filters` / `relaxed` / `total_matching`
 from every search; never invent listings; only call lead tools after explicit consent.
 
-Operator checklist: `/home/bitnami/supabase/docs/digital-employees-setup.md`.
+Operator checklist: `docs/mcp/digital-employees-setup.md` in `gca-ltd/matrix-storefront-2.0-hungary`.
 
 ### System prompt
 

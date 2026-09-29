@@ -114,7 +114,7 @@ it must adopt ADR-039's OAuth Resource Server contract before that expansion.
 ## HU Property Listings MCP (public catalogue)
 
 > Accepted pattern in [ADR-049](../architecture/decisions/ADR-049.md).
-> Backend lives in `/home/bitnami/supabase` on project `bpaxqtxaysolzaeguwvg`.
+> Backend lives in the Storefront repo `gca-ltd/matrix-storefront-2.0-hungary` (`supabase/functions/`, runbook `docs/mcp/README.md`) on project `bpaxqtxaysolzaeguwvg`.
 
 Two Mode B Edge Function MCP servers co-located with HU website data:
 
