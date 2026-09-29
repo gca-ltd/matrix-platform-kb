@@ -153,6 +153,21 @@ Lovable Source `ibqheiuakfjoznqzrpfe` (see [references/index.md](../references/i
 1. **Security Advisors** via MCP `get_advisors` (`type: security`) or Management API / CLI.
 2. If skip-unchanged says skip → record “unchanged vs YYYY-MM-DD” and stop.
 3. **Matrix SQL** (read-only) — MCP `execute_sql` or SQL editor.
+   On the Management API the pooled connection ignores
+   `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY` for the *current*
+   transaction (`SHOW transaction_read_only` stayed `off` on 2026-09-29).
+   Wrap each call:
+
+   ```sql
+   SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY;
+   BEGIN READ ONLY;
+   -- one SELECT or SHOW
+   COMMIT;
+   ```
+
+   `SHOW transaction_read_only` then returns `on`. Do not switch to a dedicated
+   read-only role: `information_schema.role_table_grants` would list only that
+   role's grants and the anon/authenticated check would look clean.
 4. **Storage** — list buckets; flag public buckets that allow listing.
 5. **Edge Functions** — list; confirm `verify_jwt=false` only where in-code SSO verify exists.
 6. Record ERROR / WARN; compare to [security-model.md](security-model.md) backlog.
@@ -274,6 +289,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | 2026-09-01 | [security-audits/2026-09-01.md](security-audits/2026-09-01.md) — 22 projects + remediations; [RU](security-audits/2026-09-01-ru.md) |
 | 2026-09-15 | [security-audits/2026-09-15.md](security-audits/2026-09-15.md) — 23 projects scan-only; HU S18; [RU](security-audits/2026-09-15-ru.md) |
 | 2026-09-16 | [security-audits/2026-09-16.md](security-audits/2026-09-16.md) — new standing contour baseline + HU S18/S16; [RU](security-audits/2026-09-16-ru.md) |
+| 2026-09-29 | [security-audits/2026-09-29.md](security-audits/2026-09-29.md) — skip-unchanged; read-only; S20/S21; [RU](security-audits/2026-09-29-ru.md) |
 
 ## Related
 
