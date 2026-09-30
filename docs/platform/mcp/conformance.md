@@ -52,5 +52,8 @@ Filled by the verify pass. Until then every row is "not run".
 |---|---|---|---|
 | `qobrix-crm/mcp` | 2026-09-30 | 6 pass, 2 skipped (need token) | Anonymous probe. Session follow-up and protocol-version need a bearer token. |
 | `msa/mcp` | 2026-09-30 | 6 pass, 2 skipped (need token) | Anonymous probe. Session follow-up and protocol-version need a bearer token. |
+| `matrix-dsf-mcp` (HU `bpaxqtxaysolzaeguwvg`) | 2026-09-30 | 8 pass, 1 fail (PRM) | Token run. Auth `api_key`: protected resource metadata N/A. Origin 403, protocol 400, titles/annotations, 8 headings, GET 405, stateless. |
+| `matrix-dsf-properties-mcp` (HU) | 2026-09-30 | 8 pass, 1 fail (PRM) | Same as site. 7 tools. |
+| `matrix-dsf-leads-mcp` (HU) | 2026-09-30 | 8 pass, 1 fail (PRM) | Same as site. 3 tools. Terminology guardrail clean on Storefront. |
 | DeepWiki / Linear / GitHub / legacy SSE | 2026-09-29 | not run | Needs a signed-in Digital Employees session. |
 | Claude / Cursor | 2026-09-29 | not run | Needs an operator browser login. |

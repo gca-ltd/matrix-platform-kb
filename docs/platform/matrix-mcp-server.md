@@ -102,30 +102,46 @@ it must adopt ADR-039's OAuth Resource Server contract before that expansion.
 
 ---
 
-## HU Property Listings MCP (public catalogue)
+## Matrix DSF MCP (Digital Storefront)
 
 > Accepted pattern in [ADR-049](../architecture/decisions/ADR-049.md).
-> Backend lives in the Storefront repo `gca-ltd/matrix-storefront-2.0-hungary` (`supabase/functions/`, runbook `docs/mcp/README.md`) on project `bpaxqtxaysolzaeguwvg`.
+> Backend lives in the Storefront repo `gca-ltd/matrix-storefront-2.0-hungary` (`supabase/functions/`, runbook `docs/mcp/README.md`).
 
-Two Edge Function tool servers co-located with HU website data. Auth type: `api_key`.
+Three Edge Function tool servers co-located with Storefront data. Auth type: `api_key` (`Authorization: Bearer`, RFC 6750). `serverInfo.name` equals the function name. The Supabase project id identifies the country instance; function names carry no country code.
 
-| Server | Endpoint | Auth |
-|--------|----------|------|
-| `hu-properties-mcp` (read) | `…/functions/v1/hu-properties-mcp` | `HU_PROPERTIES_MCP_TOKEN` |
-| `hu-leads-mcp` (write) | `…/functions/v1/hu-leads-mcp` | `HU_LEADS_MCP_TOKEN` |
+| Instance | Project ref |
+|----------|-------------|
+| Hungary | `bpaxqtxaysolzaeguwvg` |
+
+| Server | Endpoint | Env token (fallback) | Role |
+|--------|----------|----------------------|------|
+| `matrix-dsf-mcp` | `…/functions/v1/matrix-dsf-mcp` | `DSF_MCP_TOKEN` (`app_settings.mcp_token` wins) | Serge public site, read-only |
+| `matrix-dsf-properties-mcp` | `…/functions/v1/matrix-dsf-properties-mcp` | `DSF_PROPERTIES_MCP_TOKEN` | Digital Employees catalogue |
+| `matrix-dsf-leads-mcp` | `…/functions/v1/matrix-dsf-leads-mcp` | `DSF_LEADS_MCP_TOKEN` | Digital Employees lead writes |
+
+Indexer: `matrix-dsf-indexer` (cron `matrix-dsf-indexer-queue`).
 
 | Property | Value |
 |---|---|
-| Transport | Streamable HTTP (JSON-RPC 2.0) |
+| Transport | Streamable HTTP (JSON-RPC 2.0), protocol negotiate `2025-11-25` then `2025-06-18` |
 | Embeddings | Qwen3-Embedding-8B via HF Inference Providers (1024-dim); DashScope fallback |
 | Retrieval | Hybrid HNSW + `simple`/`unaccent` FTS RRF; EUR-normalized hard filters; served slice `is_visible` + For Sale/For Rent |
 | Addressing | Public `slug` URLs; `property_key` is Listing ID only |
 | Write path | `lead_intents` table + MSA-HU adapter stub |
+| Identity probe | `{ tool: "whoami", emailPath: "email" }` |
 
-Read tools: `hu_search_properties`, `hu_get_property`, `hu_find_similar`, `hu_list_facets`, `hu_search_developments`, `hu_get_agent`.  
-Write tools: `hu_capture_lead`, `hu_request_viewing` (Digital Employees policy = Require approval).
+`matrix-dsf-mcp` tools: `search_site`, `search_properties`, `get_property`, `find_similar_properties`, `get_development`, `list_agents`, `get_agent`, `list_blog_posts`, `get_blog_post`, `list_events`, `get_page`, `whoami`.
 
-Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-search.mjs`.
+`matrix-dsf-properties-mcp` tools: `search_properties`, `get_property`, `find_similar_properties`, `list_property_facets`, `search_developments`, `get_agent`, `whoami`.
+
+`matrix-dsf-leads-mcp` tools: `create_lead`, `create_viewing_request`, `whoami` (create tools Require approval in Digital Employees).
+
+### Divergences from the default Matrix MCP hosting profile
+
+1. **Hosting** is Supabase Edge (ADR-049) rather than loopback behind Apache.
+2. **Tool names have no product prefix** — the server name already scopes them. Identity is `whoami` (not `<prefix>_whoami`).
+
+Operator guide: repo `docs/mcp/digital-employees-setup.md`. Eval: `scripts/mcp/eval-search.mjs`. Conformance: `npm run mcp:conformance`.
 
 ## MSA MCP
 
