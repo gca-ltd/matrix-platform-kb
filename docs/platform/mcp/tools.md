@@ -35,6 +35,8 @@ Every tool sets:
 
 ## Results
 
+`structuredContent` MUST be a JSON object. A bare array is invalid and the server's own SDK rejects the call before it is sent. A list that is not already `{ "data", "pagination" }` is `{ "items": [], "count" }`.
+
 Success for a list is `{ "data": [], "pagination": { "count", "has_next_page" } }`.
 
 | Condition | Body |

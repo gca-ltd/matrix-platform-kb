@@ -90,7 +90,9 @@ A call whose effective policy is `ask` is stored as `mcp_tool_calls.status=pendi
 
 ## 12. Session lost and circuit open
 
-HTTP 404 with `Mcp-Session-Id` makes the client `initialize` again. Five consecutive transport failures open the circuit for five minutes. The user sees `mcp.chat.circuitOpen`.
+HTTP 404 with `Mcp-Session-Id` makes the client `initialize` again. That retry does not count as a failure.
+
+Five consecutive availability failures open the circuit for five minutes. The user sees `mcp.chat.circuitOpen`. These count: a transport error, HTTP 5xx, a timeout, and a network failure from fetch. These do not: a JSON-RPC error, a tool result with `isError: true` (the server answered), HTTP 401, and HTTP 403.
 
 ## 13. External client (Claude, Cursor, Dust)
 
