@@ -15,6 +15,7 @@ Every consent, success, and error page a Matrix MCP server or authorization serv
 | Buttons | Allow / Authorize is `btn-primary`. Deny is `btn-outline`. |
 | Languages | `lang` is `en`, `ru`, or `hu`. A server reads `Accept-Language`: any `ru`, then any `hu`, otherwise `en`. A client page walks `navigator.languages` with the same rule. Consent sentences are the `mcpServer.consent.*` keys. |
 | Consent notice | A consent page shows who is asking and where the browser returns through `consentNoticeHtml({ clientLine, clientName, server, returnLine, warning })`. The shell centres that block. The client name is bold. A loopback redirect adds an amber warning under the return line. The page does not style this block itself. |
+| Message line | A result or error page (connected, expired, sign-in failed) puts its one sentence in `<p class="message">`. The shell centres it under the title. |
 | Footer | `© {year} Sharp Sotheby's International Realty`. The year is in `<span data-year>`. A committed page passes a fixed `year` and lets the browser set the current year. |
 
 `body` is HTML the caller has already escaped. `actions` are `{ label, url, method, variant }` rendered as forms. A page that posts one form with both buttons (the Qobrix credential form) puts those buttons in `body` and leaves `actions` empty. The button classes are the same.

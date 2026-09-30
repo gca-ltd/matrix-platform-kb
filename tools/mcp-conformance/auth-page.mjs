@@ -77,6 +77,7 @@ const CSS = `
       font-size: 0.95rem; line-height: 1.45;
     }
     .body p { margin: 0; color: var(--foreground); }
+    .body p.message { text-align: center; }
     .hint { margin: 0; color: var(--muted-foreground); font-size: 0.875rem; line-height: 1.45; }
     .alert {
       display: flex; gap: 0.5rem; align-items: flex-start;
