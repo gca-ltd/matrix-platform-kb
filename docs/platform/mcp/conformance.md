@@ -50,7 +50,7 @@ Filled by the verify pass. Until then every row is "not run".
 
 | Server | Date | Probe | Notes |
 |---|---|---|---|
-| `qobrix-crm/mcp` | 2026-09-29 | 6/8 anonymous | 401 challenge, origin 403, GET 405, PRM, AS metadata (S256 + CIMD), foreign redirect `invalid_redirect_uri`. Session follow-up and protocol-version need a bearer token; not run. |
-| `msa/mcp` | 2026-09-29 | 6/8 anonymous | Same anonymous checks, including GET 405. Session follow-up and protocol-version need a bearer token; not run. |
+| `qobrix-crm/mcp` | 2026-09-30 | 6 pass, 2 skipped (need token) | Anonymous probe. Session follow-up and protocol-version need a bearer token. |
+| `msa/mcp` | 2026-09-30 | 6 pass, 2 skipped (need token) | Anonymous probe. Session follow-up and protocol-version need a bearer token. |
 | DeepWiki / Linear / GitHub / legacy SSE | 2026-09-29 | not run | Needs a signed-in Digital Employees session. |
 | Claude / Cursor | 2026-09-29 | not run | Needs an operator browser login. |

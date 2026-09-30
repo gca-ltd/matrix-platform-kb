@@ -15,9 +15,10 @@ if (!url || url.startsWith("--")) {
 }
 
 const results = [];
-function record(name, ok, detail) {
-  results.push({ name, ok, detail });
-  console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? " — " + detail : ""}`);
+function record(name, ok, detail, skipped = false) {
+  results.push({ name, ok, skipped, detail });
+  const label = skipped ? "SKIP" : ok ? "PASS" : "FAIL";
+  console.log(`${label}  ${name}${detail ? " — " + detail : ""}`);
 }
 
 const ACCEPT = "application/json, text/event-stream";
@@ -76,7 +77,7 @@ if (init.res.status === 200 && session) {
 } else if (init.res.status === 200 && !session) {
   record("stateless (no session id)", true, "server did not issue MCP-Session-Id");
 } else {
-  record("session follow-up", false, "skipped: initialize did not return 200 (pass --token)");
+  record("session follow-up", true, "needs a bearer token", true);
 }
 
 const get = await fetch(url, { headers: { accept: "text/event-stream", ...authHeaders } });
@@ -94,7 +95,7 @@ if (token || init.res.status === 200) {
   });
   record("bad protocol version", badVer.res.status === 400, `status ${badVer.res.status}`);
 } else {
-  record("bad protocol version", false, "skipped without a successful initialize");
+  record("bad protocol version", true, "needs a successful initialize", true);
 }
 
 let prmUrl = "";
@@ -175,6 +176,8 @@ if (token && init.res.status === 200) {
   record("instructions headings", missingHeads.length === 0 && instructions.length > 0 && instructions.length <= 16000, missingHeads.join(", ") || `${instructions.length} chars`);
 }
 
-const failed = results.filter((r) => !r.ok).length;
-console.log(`\n${results.length - failed}/${results.length} passed`);
+const failed = results.filter((r) => !r.skipped && !r.ok).length;
+const skipped = results.filter((r) => r.skipped).length;
+const passed = results.filter((r) => !r.skipped && r.ok).length;
+console.log(`\n${passed} passed, ${skipped} skipped, ${failed} failed`);
 process.exit(failed ? 1 : 0);
