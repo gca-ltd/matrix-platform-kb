@@ -20,8 +20,12 @@ Every consent, success, and error page a Matrix MCP server or authorization serv
 
 Each server copies `auth-page.mjs` and `sharp-sir-logo.svg` into its own `tools/mcp-conformance/` and loads them at runtime. The copies stay identical to this repo. A server does not ship a second card design.
 
-Qobrix field labels on the credential form (endpoint, username, password, one-time code) stay English. The consent sentences and the connected and error pages follow `Accept-Language`.
+`tools/mcp-conformance/first-party-clients.json` lists `{ redirect_uri, name }` for Matrix clients. Servers copy it. When the consent `redirect_uri` matches an entry exactly, the page says the person returns to that name (`mcpServer.consent.returnToClient`). Any other client still shows the redirect host, and a loopback redirect still shows the loopback warning.
+
+The Qobrix credential form uses `mcpServer.qobrix.*` in the page language, including the field labels. Product names (Qobrix CRM, Sharp Matrix, Digital Employees) stay as names.
+
+An MCP client's landing page, the page the browser opens after the code exchange, is part of the same sign-in flow and uses this shell. It is a static page, not a route inside the signed-in app, so it does not start an application login.
 
 ## MUST
 
-Every browser page an MCP server or authorization server shows uses this shell.
+Every browser page in an MCP sign-in flow uses this shell. That includes consent, success, error, and the client's landing page.

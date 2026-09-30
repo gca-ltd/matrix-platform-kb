@@ -12,6 +12,7 @@ date: 2026-08-17
 
 ## Unreleased — 2026-09-30
 
+- A Matrix client's consent page says you return to that app, not to the address that exchanges the code. The Qobrix sign-in form follows the browser language. The client's landing page uses the same sign-in card and does not start an application login.
 - `structuredContent` must be a JSON object. A list is `{ items, count }` when it is not already `{ data, pagination }`. The circuit opens only on transport failures, HTTP 5xx, timeouts, and network errors.
 - MCP consent, success, and error pages share one sign-in card (`docs/platform/mcp/auth-pages.md`). A browser Origin is not an app base URL. Tools discovered after a server is assigned take the annotation default; Deny applies only to an unassigned server.
 - The conformance probe skips a consent URL that returns 404 and accepts `--consent-url` when consent is on a separate authorization server. Qobrix credential field labels stay English; the consent sentences follow the browser language.
