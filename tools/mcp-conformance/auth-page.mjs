@@ -78,6 +78,7 @@ const CSS = `
     }
     .body p { margin: 0; color: var(--foreground); }
     .body p.message { text-align: center; }
+    [hidden] { display: none !important; }
     .hint { margin: 0; color: var(--muted-foreground); font-size: 0.875rem; line-height: 1.45; }
     .alert {
       display: flex; gap: 0.5rem; align-items: flex-start;
@@ -153,8 +154,19 @@ export function consentNoticeHtml(opts) {
 }
 
 /**
- * @param {{ lang?: string, title: string, body: string, year?: number, actions?: Array<{ label: string, url: string, method?: string, variant?: "primary" | "outline" }> }} opts
+ * Browsers only let a script close a tab that a script opened, so a refused
+ * close swaps the button for the `blocked` line.
+ */
+function closeButtonHtml(close) {
+  return `<button class="btn btn-outline" type="button" data-close-window>${escapeAttr(close.label)}</button>`
+    + `<p class="message hint" data-close-blocked hidden>${escapeAttr(close.blocked)}</p>`
+    + `<script>(function(){var b=document.querySelector("[data-close-window]");if(!b)return;b.addEventListener("click",function(){window.close();setTimeout(function(){if(window.closed)return;b.hidden=true;var m=document.querySelector("[data-close-blocked]");if(m)m.hidden=false;},300);});})();</script>`;
+}
+
+/**
+ * @param {{ lang?: string, title: string, body: string, year?: number, actions?: Array<{ label: string, url: string, method?: string, variant?: "primary" | "outline" }>, close?: { label: string, blocked: string } }} opts
  * `body` is HTML the caller has already escaped. `actions` become Allow/Deny forms.
+ * `close` adds a close-tab button (result pages only).
  * Pass `year` when the HTML is committed; the browser can replace `[data-year]`.
  */
 export function renderAuthPage(opts) {
@@ -163,7 +175,7 @@ export function renderAuthPage(opts) {
     const variant = action.variant === "outline" ? "btn-outline" : "btn-primary";
     const method = (action.method || "post").toLowerCase() === "get" ? "get" : "post";
     return `<form method="${method}" action="${escapeAttr(action.url)}"><button class="btn ${variant}" type="submit">${escapeAttr(action.label)}</button></form>`;
-  }).join("");
+  }).join("") + (opts.close ? closeButtonHtml(opts.close) : "");
   const year = opts.year || new Date().getFullYear();
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(lang)}">
