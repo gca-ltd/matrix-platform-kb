@@ -10,6 +10,10 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-09-30
+
+- MCP consent, success, and error pages share one sign-in card (`docs/platform/mcp/auth-pages.md`). A browser Origin is not an app base URL. Tools discovered after a server is assigned take the annotation default; Deny applies only to an unassigned server.
+
 ## Unreleased — 2026-08-30
 
 - **Sharp SIR Charts exhibit library + radial fix:** part-to-whole charts paint

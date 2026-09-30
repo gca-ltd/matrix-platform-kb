@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Read-only Matrix MCP profile probe.
- * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--register <as-metadata-url>]
+ * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--register <as-metadata-url>] [--app-base <url>]
  *
  * Dynamic registration is attempted only to confirm a foreign redirect is
  * rejected. A successful registration is reported as a failure of the check.
@@ -9,6 +9,8 @@
 const url = process.argv[2];
 const tokenFlag = process.argv.indexOf("--token");
 const token = tokenFlag >= 0 ? process.argv[tokenFlag + 1] : "";
+const appBaseFlag = process.argv.indexOf("--app-base");
+const appBase = appBaseFlag >= 0 ? process.argv[appBaseFlag + 1] : "";
 if (!url || url.startsWith("--")) {
   console.error("usage: node probe.mjs <mcp-url> [--token <bearer>]");
   process.exit(2);
@@ -174,6 +176,32 @@ if (token && init.res.status === 200) {
   } catch { instructions = ""; }
   const missingHeads = headings.filter((h) => !instructions.includes(h));
   record("instructions headings", missingHeads.length === 0 && instructions.length > 0 && instructions.length <= 16000, missingHeads.join(", ") || `${instructions.length} chars`);
+}
+
+const consentUrl = new URL("consent", url.endsWith("/") ? url : `${url}/`);
+consentUrl.searchParams.set("e", "invalid");
+try {
+  const consent = await fetch(consentUrl);
+  const html = await consent.text();
+  record(
+    "auth page shell",
+    html.includes('data-matrix-auth-page="1"'),
+    `${consent.status} ${consentUrl.pathname}`,
+  );
+} catch (err) {
+  record("auth page shell", false, err.message);
+}
+
+if (appBase) {
+  const landing = new URL("oauth/mcp-callback", appBase.endsWith("/") ? appBase : `${appBase}/`);
+  try {
+    const head = await fetch(landing, { method: "HEAD" });
+    record("sign-in landing", head.status === 200, `${head.status} ${landing.pathname}`);
+  } catch (err) {
+    record("sign-in landing", false, err.message);
+  }
+} else {
+  record("sign-in landing", true, "pass --app-base to check the landing URL", true);
 }
 
 const failed = results.filter((r) => !r.skipped && !r.ok).length;

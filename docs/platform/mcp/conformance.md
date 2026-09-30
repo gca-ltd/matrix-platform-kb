@@ -24,6 +24,8 @@ The probe is read-only. It checks:
 | Every tool | `title` and `annotations.readOnlyHint` |
 | Dynamic registration with a foreign redirect | `invalid_redirect_uri` |
 | Agent guidance | Headings, sentence-1 length, description length, described parameters, discovery tools, `tools/list` size |
+| Auth page | `GET <mcp-url>/consent?e=invalid` HTML contains `data-matrix-auth-page="1"` |
+| Sign-in landing | `HEAD {appBaseUrl}/oauth/mcp-callback` returns 200 (`--app-base`) |
 
 Where the official `@modelcontextprotocol/conformance` package covers the same check, run it and record that result next to the probe. The package is optional; this probe is the one CI can run without a browser login.
 

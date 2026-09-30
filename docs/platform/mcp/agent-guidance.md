@@ -49,6 +49,14 @@ Report tools should set `outputSchema` and `structuredContent`.
 
 At discovery, persist `result.instructions` on `mcp_servers.server_instructions` and `instructions_hash`.
 
+The client tells the model the state of each assigned server, and the model does not invent another:
+
+| State | What the model is told |
+|---|---|
+| Needs sign-in | A sign-in tool is present. The prompt names the service and says to call that tool. |
+| Connected, with tools | The catalogue line names the server and how many tools are enabled. |
+| Connected, no tools | `{{server}} is connected, but no tools are enabled. Ask an administrator to enable them on the Tools page.` |
+
 For each tool server enabled on the employee, the system prompt contains:
 
 ```text

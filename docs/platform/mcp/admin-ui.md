@@ -1,6 +1,6 @@
 # MCP admin screens
 
-Rules for layout and copy. Apps keep their own components. Strings come from [mcp-strings.json](mcp-strings.json).
+Rules for layout and copy. Apps keep their own components. Strings come from [mcp-strings.json](mcp-strings.json). Browser consent, success, and error pages use [auth-pages.md](auth-pages.md).
 
 ## Client: Tools page
 

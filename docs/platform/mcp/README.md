@@ -26,6 +26,7 @@ Related: [ADR-059](../../architecture/decisions/ADR-059.md). This profile supers
 | [agent-guidance.md](agent-guidance.md) | How servers explain tools and how clients deliver that to the model |
 | [flows.md](flows.md) | The 14 flows |
 | [admin-ui.md](admin-ui.md) | Client Tools page and server MCP tab |
+| [auth-pages.md](auth-pages.md) | Consent, success, and error pages |
 | [conformance.md](conformance.md) | Probe, evals, results |
 
 ## Server profile
@@ -72,6 +73,7 @@ Transport is Streamable HTTP (MCP 2025-11-25).
 | Access tokens live at most 1 hour (`ACCESS_TTL_SEC`, default 3600). | MUST |
 | `/revoke` invalidates the access token and its refresh token. | MUST |
 | Before the user is sent to the upstream login, a consent page shows the client name and the redirect host, and warns when the redirect is loopback-only. Approval is remembered per user and `client_id`. Deny redirects with `error=access_denied`. | MUST |
+| Every browser page an MCP server or authorization server shows uses the shared auth-page shell in [auth-pages.md](auth-pages.md). | MUST |
 | `/register` and `/token` are rate-limited per client IP. | MUST |
 | Registration order advertised to clients: pre-registered client, then CIMD, then dynamic registration. | MUST |
 
@@ -122,7 +124,7 @@ An empty allowlist denies every non-loopback redirect. A prefix such as `cursor:
 1. Confirm Streamable HTTP and one of `none`, `api_key`, `oauth_user`, `oauth_service`.
 2. Run `node tools/mcp-conformance/probe.mjs <url>`.
 3. Register it on the Tools page. Set Agent usage notes when the server sends no `instructions`.
-4. Discover tools. Set Allow / Ask / Deny. Default is Deny.
+4. Discover tools. On a server assigned to an employee, each new tool is Allow when `readOnlyHint` is true and `destructiveHint` is not true, otherwise Ask. An existing choice is kept. Deny is the default only for a server that is not assigned.
 5. For `oauth_user`, confirm the first chat sends the sign-in link only in a private chat, then `<prefix>_whoami` matches the expected email.
 
 **A third-party client into a Matrix server**

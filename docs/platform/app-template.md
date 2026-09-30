@@ -684,6 +684,8 @@ The hook:
 
 **Resolve the path from Vite, not `getBasePath()`.** Use `import.meta.env.BASE_URL` (the value github-watcher patches into `vite.config.ts` `base`). Several templates still hardcode `const BASE_PATH = '/matrix-apps-template'` in `matrix-sso.ts`; polling that URL 404s and the toast never fires. `BASE_URL` is `''` on root-mounted / Lovable preview builds and `/itsm` (etc.) under the watcher.
 
+A server-built link into a SPA uses `appBaseUrl` (origin plus the base path), joined relatively. A browser `Origin` header has no path. Using it as the base drops the intranet subpath and the link 404s.
+
 No extra dependency: every Matrix SPA already mounts `<Sonner />` in `App.tsx`. Keep the hook free of `matrix-sso` so Lovable regenerating `App.tsx` does not pull SSO into the poller.
 
 #### Adoption status (as of 2026-08-18)

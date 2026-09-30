@@ -69,4 +69,4 @@ Digital Employees uses exactly:
 
 `https://mihslqjjclbrqelnjjpb.supabase.co/functions/v1/mcp-oauth/callback`
 
-The landing page inside the app is `{appOrigin}/oauth/mcp-callback`. `tools-oauth` is legacy and is removed once no `mcp_oauth_clients` row references it.
+The landing page inside the app is `{appBaseUrl}/oauth/mcp-callback`. `appBaseUrl` is the browser origin plus the SPA base path (`https://intranet.sharpsir.group/digital-employees`). Join the path relatively (`oauth/mcp-callback` against a base that ends in `/`). A browser `Origin` header has no path and is never a base URL. `tools-oauth` is legacy and is removed once no `mcp_oauth_clients` row references it.

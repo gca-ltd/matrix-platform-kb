@@ -36,6 +36,8 @@ sequenceDiagram
 
 `discovery_status`: `ok`, `needs_sign_in`, or `failed`.
 
+When the server is assigned to an employee, each newly discovered tool gets Allow if `readOnlyHint` is true and `destructiveHint` is not true, otherwise Ask. An existing row is not overwritten. Deny applies only to a server that is not assigned.
+
 ## 3. First use in chat
 
 Private chat uses `mcp.chat.signInPrivate` and includes the one-time URL. A group chat uses `mcp.chat.signInGroup` and never includes the URL.
@@ -56,7 +58,7 @@ sequenceDiagram
   end
 ```
 
-The page shows `mcpServer.consent.client`, `redirectHost`, and `loopbackWarning` when the host is loopback.
+The page shows `mcpServer.consent.client`, `redirectHost`, and `loopbackWarning` when the host is loopback. It uses the shared card in [auth-pages.md](auth-pages.md).
 
 ## 5. Identity binding
 
@@ -96,4 +98,4 @@ The client discovers the resource, registers (CIMD, else dynamic registration) w
 
 ## 14. External server into Digital Employees
 
-Admin registers the URL and an auth type, runs discovery, sets policies (default Deny), and fills Agent usage notes when the server sends no `instructions`.
+Admin registers the URL and an auth type, runs discovery, and fills Agent usage notes when the server sends no `instructions`. After the server is assigned, new tools take the annotation default (Allow when read-only, otherwise Ask). Deny is the default only while the server is not assigned.
