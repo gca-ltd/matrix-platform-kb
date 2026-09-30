@@ -108,6 +108,25 @@ const CSS = `
       text-align: center;
     }
     .footer p { margin: 0; font-size: 0.7rem; color: var(--muted-foreground); }
+    .notice {
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem 0.9rem;
+      text-align: center;
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+    .notice p { margin: 0; }
+    .notice .notice-return { color: var(--muted-foreground); margin-top: 0.35rem; }
+    .notice .notice-warn {
+      margin-top: 0.5rem;
+      color: hsl(32 80% 30%);
+      background: hsl(43 90% 95%);
+      border: 1px solid hsl(43 70% 80%);
+      border-radius: var(--radius);
+      padding: 0.45rem 0.6rem;
+    }
 `;
 
 function escapeAttr(value) {
@@ -117,8 +136,25 @@ function escapeAttr(value) {
 }
 
 /**
- * @param {{ lang?: string, title: string, body: string, actions?: Array<{ label: string, url: string, method?: string, variant?: "primary" | "outline" }> }} opts
+ * One centred consent block. The shell owns the markup and the CSS.
+ * `clientLine` is the `{{client}}` / `{{server}}` template. Names are escaped here.
+ * @param {{ clientLine: string, clientName: string, server?: string, returnLine?: string, warning?: string }} opts
+ */
+export function consentNoticeHtml(opts) {
+  const client = escapeAttr(opts.clientName || "");
+  const server = escapeAttr(opts.server || "");
+  const line = escapeAttr(opts.clientLine || "")
+    .replace(/\{\{client\}\}/g, `<strong>${client}</strong>`)
+    .replace(/\{\{server\}\}/g, server);
+  const back = opts.returnLine ? `<p class="notice-return">${escapeAttr(opts.returnLine)}</p>` : "";
+  const warning = opts.warning ? `<p class="notice-warn">${escapeAttr(opts.warning)}</p>` : "";
+  return `<div class="notice"><p>${line}</p>${back}${warning}</div>`;
+}
+
+/**
+ * @param {{ lang?: string, title: string, body: string, year?: number, actions?: Array<{ label: string, url: string, method?: string, variant?: "primary" | "outline" }> }} opts
  * `body` is HTML the caller has already escaped. `actions` become Allow/Deny forms.
+ * Pass `year` when the HTML is committed; the browser can replace `[data-year]`.
  */
 export function renderAuthPage(opts) {
   const lang = opts.lang || "en";
@@ -127,7 +163,7 @@ export function renderAuthPage(opts) {
     const method = (action.method || "post").toLowerCase() === "get" ? "get" : "post";
     return `<form method="${method}" action="${escapeAttr(action.url)}"><button class="btn ${variant}" type="submit">${escapeAttr(action.label)}</button></form>`;
   }).join("");
-  const year = new Date().getFullYear();
+  const year = opts.year || new Date().getFullYear();
   return `<!DOCTYPE html>
 <html lang="${escapeAttr(lang)}">
 <head>
@@ -153,7 +189,7 @@ export function renderAuthPage(opts) {
         ${opts.body || ""}
         ${actions ? `<div class="actions">${actions}</div>` : ""}
       </div>
-      <div class="footer"><p>© ${year} Sharp Sotheby's International Realty</p></div>
+      <div class="footer"><p>© <span data-year>${year}</span> Sharp Sotheby's International Realty</p></div>
     </main>
   </div>
 </body>

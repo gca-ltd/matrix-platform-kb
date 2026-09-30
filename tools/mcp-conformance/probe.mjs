@@ -201,10 +201,15 @@ try {
 }
 
 if (appBase) {
-  const landing = new URL("oauth/mcp-callback", appBase.endsWith("/") ? appBase : `${appBase}/`);
+  const landing = new URL("oauth/mcp-callback.html?ok=1", appBase.endsWith("/") ? appBase : `${appBase}/`);
   try {
-    const head = await fetch(landing, { method: "HEAD" });
-    record("sign-in landing", head.status === 200, `${head.status} ${landing.pathname}`);
+    const page = await fetch(landing);
+    const html = await page.text();
+    record(
+      "sign-in landing",
+      page.status === 200 && html.includes('data-matrix-auth-page="1"'),
+      `${page.status} ${landing.pathname}`,
+    );
   } catch (err) {
     record("sign-in landing", false, err.message);
   }
