@@ -13,7 +13,7 @@
 
 `identityProbe` is always `{ "tool": "<prefix>_whoami", "emailPath": "email" }`.
 
-`<prefix>_sign_in` and `<prefix>_sign_out` are retired. Sign-in is User OAuth 2.1, not a tool.
+`<prefix>_sign_in` and `<prefix>_sign_out` are retired. Sign-in is User OAuth 2.1, not a tool. A chat client may expose its own `<slug>__connect` tool (C-19); that tool is not a server tool and is not named `<prefix>_sign_in`.
 
 ## Annotations
 
@@ -45,7 +45,7 @@ Success for a list is `{ "data": [], "pagination": { "count", "has_next_page" } 
 | Hard cap | `status: "result_too_large"`, `_refine_required: { assistant_instruction, suggested_narrowing }`, `isError: true` |
 | Tool failure | `isError: true` and `next_step` (one line telling the model what to call or ask) |
 
-Auth failure is HTTP 401 or 403 on the MCP request. It is not a Markdown link inside a tool result.
+Auth failure is HTTP 401 or 403 on the MCP request. A server does not put a Markdown link inside a tool result (T-11). The chat client turns the 401 into the `<slug>__connect` tool result.
 
 ## Output schema
 

@@ -30,7 +30,7 @@ Health body:
 }
 ```
 
-`version` is the server package version. `auth.scopes` lists what the server enforces.
+`version` is the server package version, read from `package.json`. `auth.scopes` lists what the server enforces. The field is `drift` (not `contractDrift`). `auth` is omitted when the scenario is `none` or `api_key`.
 
 ## Built-in authorization server
 

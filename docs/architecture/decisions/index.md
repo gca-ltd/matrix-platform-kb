@@ -44,9 +44,9 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-036](ADR-036.md) | Qobrix-vanilla-inside: internal naming traces to the Qobrix OpenAPI spec, deviations are `x_` extensions (dictionary + registry), UI terminology is an app-local i18n label layer (`qobrix.*`/`x.*`/`app.*`) in the app's own DB | Accepted |
 | [ADR-037](ADR-037.md) | Interactive term definitions: Qobrix → RESO → custom priority, Definitions mode + click-through term sidebar (label + definition governance) | Accepted |
 | [ADR-038](ADR-038.md) | ITSM is ES256-only (SSO bearer + MCP issuer) | Obsolete — see ADR-039 |
-| [ADR-039](ADR-039.md) | MCP reference architecture: the Qobrix stack (modes A–D, RS/AS split, introspection + vault) | Accepted |
-| [ADR-040](ADR-040.md) | Digital Employees MCP client contract (five auth modes, principal model, encrypted tokens) | Accepted |
-| [ADR-041](ADR-041.md) | Single-path Qobrix MCP (auto routing on `/mcp`); vanilla chat baseline | Accepted |
+| [ADR-039](ADR-039.md) | MCP reference architecture: the Qobrix stack (RS/AS split, introspection + vault). Auth taxonomy superseded in part by ADR-059 | Accepted |
+| [ADR-040](ADR-040.md) | Digital Employees MCP client contract (principal model, encrypted tokens). Auth modes superseded in part by ADR-059 | Accepted |
+| [ADR-041](ADR-041.md) | Single-path Qobrix MCP (one endpoint, header selects the auth type). Signed-header row superseded in part by ADR-059 | Accepted |
 | [ADR-042](ADR-042.md) | Per-client_id SSO localStorage namespacing for co-hosted Matrix SPAs | Accepted |
 | [ADR-043](ADR-043.md) | Person-keyed MCP grants and OAuth consent binding (Digital Employees) | Accepted |
 | [ADR-044](ADR-044.md) | Qobrix Opportunity surface partition (Leads vs Pipeline) + copy-on-write | Accepted (D3c/D3d → ADR-050) |
@@ -62,5 +62,5 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-054](ADR-054.md) | Pipeline board visibility prefs — `saved_here_only` + Won/Lost column toggle | Accepted |
 | [ADR-055](ADR-055.md) | Immutable github-watcher releases + atomic symlink publish + classified timeouts | Accepted |
 | [ADR-056](ADR-056.md) | Tenant-bound cross-broker shortlist visibility (narrow SECURITY DEFINER, no service-harvested PII cache) | Accepted |
-| [ADR-058](ADR-058.md) | MSA MCP: one server, user's own SSO tokens (signed-header path superseded by ADR-059) | Accepted |
+| [ADR-058](ADR-058.md) | MSA MCP: one server, user's own SSO tokens. Signed-header path superseded in part by ADR-059 | Accepted |
 | [ADR-059](ADR-059.md) | Matrix MCP Profile: auth types only (`none`, `api_key`, `oauth_user`, `oauth_service`); custom auth headers retired | Accepted |

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Read-only Matrix MCP profile probe.
- * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--register <as-metadata-url>] [--app-base <url>] [--consent-url <url>]
+ * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--scenario none|api_key|oauth_user|oauth_service] [--app-base <url>] [--consent-url <url>]
  *
  * Dynamic registration is attempted only to confirm a foreign redirect is
  * rejected. A successful registration is reported as a failure of the check.
@@ -13,6 +13,9 @@ const appBaseFlag = process.argv.indexOf("--app-base");
 const appBase = appBaseFlag >= 0 ? process.argv[appBaseFlag + 1] : "";
 const consentFlag = process.argv.indexOf("--consent-url");
 const consentOverride = consentFlag >= 0 ? process.argv[consentFlag + 1] : "";
+const scenarioFlag = process.argv.indexOf("--scenario");
+const scenario = scenarioFlag >= 0 ? process.argv[scenarioFlag + 1] : "oauth_user";
+const oauthScenario = scenario === "oauth_user" || scenario === "oauth_service";
 if (!url || url.startsWith("--")) {
   console.error("usage: node probe.mjs <mcp-url> [--token <bearer>]");
   process.exit(2);
@@ -56,12 +59,17 @@ const authHeaders = token ? { authorization: `Bearer ${token}` } : {};
 
 const init = await post(url, initBody, authHeaders);
 const challenge = wwwAuth(init.res);
-if (!token) {
+if (scenario === "none") {
+  record("RS-1 public has no challenge", init.res.status === 200, `status ${init.res.status}`);
+} else if (scenario === "api_key" && !token) {
+  const hasMeta = /resource_metadata=/.test(challenge);
+  record("RS-7 api_key 401 without metadata", init.res.status === 401 && !hasMeta, `status ${init.res.status} ${challenge.slice(0, 120)}`);
+} else if (!token && oauthScenario) {
   const hasMeta = /resource_metadata="([^"]+)"/.test(challenge);
   const hasScope = /(?:^|[,\s])scope="/.test(challenge) || /scope=/.test(challenge);
-  record("401 challenge", init.res.status === 401 && hasMeta && hasScope, `status ${init.res.status} ${challenge.slice(0, 180)}`);
+  record("RS-2 401 challenge", init.res.status === 401 && hasMeta && hasScope, `status ${init.res.status} ${challenge.slice(0, 180)}`);
 } else {
-  record("initialize with token", init.res.status === 200, `status ${init.res.status} ${init.text.slice(0, 160)}`);
+  record("T-1 initialize", init.res.status === 200, `status ${init.res.status} ${init.text.slice(0, 160)}`);
 }
 
 const session = init.res.headers.get("mcp-session-id");
@@ -71,25 +79,25 @@ if (init.res.status === 200 && session) {
     "mcp-session-id": session,
     "mcp-protocol-version": "2025-11-25",
   });
-  record("session follow-up", follow.res.status === 200, `status ${follow.res.status}`);
+  record("T-2 session follow-up", follow.res.status === 200, `status ${follow.res.status}`);
   const unknown = await post(url, { jsonrpc: "2.0", id: 3, method: "tools/list", params: {} }, {
     ...authHeaders,
     "mcp-session-id": "00000000-0000-4000-8000-000000000000",
     "mcp-protocol-version": "2025-11-25",
   });
-  record("unknown session", unknown.res.status === 404, `status ${unknown.res.status}`);
+  record("T-2 unknown session", unknown.res.status === 404, `status ${unknown.res.status}`);
 } else if (init.res.status === 200 && !session) {
-  record("stateless (no session id)", true, "server did not issue MCP-Session-Id");
+  record("T-2 stateless", true, "server did not issue MCP-Session-Id");
 } else {
-  record("session follow-up", true, "needs a bearer token", true);
+  record("T-2 session follow-up", true, "needs a bearer token", true);
 }
 
 const get = await fetch(url, { headers: { accept: "text/event-stream", ...authHeaders } });
 const getType = get.headers.get("content-type") || "";
-record("GET sse or 405", get.status === 405 || getType.includes("text/event-stream"), `status ${get.status} ${getType}`);
+record("T-1 GET sse or 405", get.status === 405 || getType.includes("text/event-stream"), `status ${get.status} ${getType}`);
 
 const origin = await post(url, initBody, { ...authHeaders, origin: "https://evil.example" });
-record("bad origin", origin.res.status === 403, `status ${origin.res.status}`);
+record("T-3 bad origin", origin.res.status === 403, `status ${origin.res.status}`);
 
 if (token || init.res.status === 200) {
   const badVer = await post(url, { jsonrpc: "2.0", id: 4, method: "tools/list", params: {} }, {
@@ -97,9 +105,19 @@ if (token || init.res.status === 200) {
     "mcp-protocol-version": "1999-01-01",
     ...(session ? { "mcp-session-id": session } : {}),
   });
-  record("bad protocol version", badVer.res.status === 400, `status ${badVer.res.status}`);
+  record("T-4 bad protocol version", badVer.res.status === 400, `status ${badVer.res.status}`);
 } else {
-  record("bad protocol version", true, "needs a successful initialize", true);
+  record("T-4 bad protocol version", true, "needs a successful initialize", true);
+}
+
+try {
+  const healthRes = await fetch(url.replace(/\/$/, "") + "/health");
+  const health = await healthRes.json();
+  const shape = healthRes.ok && health.ok === true && typeof health.name === "string" && typeof health.version === "string"
+    && Array.isArray(health.protocolVersions) && Object.prototype.hasOwnProperty.call(health, "drift");
+  record("routes health", shape, `status ${healthRes.status}`);
+} catch (err) {
+  record("routes health", false, String(err.message || err));
 }
 
 let prmUrl = "";
@@ -112,12 +130,16 @@ else {
 let asMetaUrl = "";
 try {
   const prmRes = await fetch(prmUrl);
-  const prm = await prmRes.json();
-  const ok = prmRes.ok && typeof prm.resource === "string" && Array.isArray(prm.authorization_servers) && Array.isArray(prm.scopes_supported);
-  record("protected resource metadata", ok, prmUrl);
-  asMetaUrl = prm.authorization_servers?.[0];
+  if (scenario === "none" || scenario === "api_key") {
+    record("RS-1 no protected resource metadata", !prmRes.ok, `status ${prmRes.status}`);
+  } else {
+    const prm = await prmRes.json();
+    const ok = prmRes.ok && typeof prm.resource === "string" && Array.isArray(prm.authorization_servers) && Array.isArray(prm.scopes_supported);
+    record("RS-1 protected resource metadata", ok, prmUrl);
+    asMetaUrl = prm.authorization_servers?.[0];
+  }
 } catch (err) {
-  record("protected resource metadata", false, String(err.message || err));
+  record("RS-1 protected resource metadata", scenario === "none" || scenario === "api_key", String(err.message || err));
 }
 
 if (asMetaUrl) {
@@ -137,7 +159,8 @@ if (asMetaUrl) {
   }
   const s256 = Array.isArray(as?.code_challenge_methods_supported) && as.code_challenge_methods_supported.includes("S256");
   const cimd = as?.client_id_metadata_document_supported === true;
-  record("authorization server metadata", Boolean(as) && s256 && cimd, used || "not found");
+  const serviceOk = scenario !== "oauth_service" || (Array.isArray(as?.grant_types_supported) && as.grant_types_supported.includes("client_credentials"));
+  record("AS-1 authorization server metadata", Boolean(as) && s256 && cimd && serviceOk, used || "not found");
   if (as?.registration_endpoint) {
     const reg = await fetch(as.registration_endpoint, {
       method: "POST",
@@ -151,7 +174,7 @@ if (asMetaUrl) {
       }),
     });
     const body = await reg.json().catch(() => ({}));
-    record("foreign redirect rejected", reg.status === 400 && body.error === "invalid_redirect_uri", `${reg.status} ${body.error || ""}`);
+    record("AS-3 foreign redirect rejected", reg.status === 400 && body.error === "invalid_redirect_uri", `${reg.status} ${body.error || ""}`);
   }
 }
 
@@ -166,8 +189,10 @@ if (token && init.res.status === 200) {
     const parsed = JSON.parse(list.text.replace(/^data:\s*/m, "").split("\n")[0].startsWith("{") ? list.text : (list.text.match(/\{[\s\S]*\}/) || ["{}"])[0]);
     tools = parsed.result?.tools || parsed.tools || [];
   } catch { tools = []; }
-  const missing = tools.filter((t) => !t.title || !t.annotations || typeof t.annotations.readOnlyHint !== "boolean");
-  record("tool annotations", tools.length > 0 && missing.length === 0, `${tools.length} tools, ${missing.length} missing title/readOnlyHint`);
+  const missing = tools.filter((t) => !t.title || !t.annotations || typeof t.annotations.readOnlyHint !== "boolean" || typeof t.annotations.destructiveHint !== "boolean");
+  const retired = tools.filter((t) => /_sign_in$|_sign_out$/.test(t.name || ""));
+  record("T-6 tool annotations", tools.length > 0 && missing.length === 0, `${tools.length} tools, ${missing.length} missing title/readOnlyHint/destructiveHint`);
+  record("T-11 no sign_in tool", retired.length === 0, retired.map((t) => t.name).join(", ") || "none");
   const bytes = Buffer.byteLength(list.text);
   record("tools/list size", bytes <= 60_000, `${bytes} bytes (SHOULD <= 60000)`);
   const headings = ["Purpose and data boundaries", "Workflows", "Data model and IDs", "Query language", "Pagination and payload defaults", "Output caps and refine protocol", "Identity", "Known quirks"];
@@ -177,7 +202,7 @@ if (token && init.res.status === 200) {
     instructions = initJson.result?.instructions || "";
   } catch { instructions = ""; }
   const missingHeads = headings.filter((h) => !instructions.includes(h));
-  record("instructions headings", missingHeads.length === 0 && instructions.length > 0 && instructions.length <= 16000, missingHeads.join(", ") || `${instructions.length} chars`);
+  record("T-10 instructions headings", missingHeads.length === 0 && instructions.length > 0 && instructions.length <= 16000, missingHeads.join(", ") || `${instructions.length} chars`);
 }
 
 const consentUrl = consentOverride
@@ -190,11 +215,17 @@ try {
   if (!consentOverride && consent.status === 404) {
     record("auth page shell", true, "404 — pass --consent-url when consent is on another host", true);
   } else {
-    record(
-      "auth page shell",
-      html.includes('data-matrix-auth-page="1"'),
-      `${consent.status} ${consentUrl.pathname}`,
-    );
+    const card = html.includes('data-matrix-auth-page="1"');
+    record("AS-11 auth page shell", card, `${consent.status} ${consentUrl.pathname}`);
+    if (consent.status === 400) {
+      const ru = await fetch(consentUrl, { headers: { "accept-language": "ru" } });
+      const ruHtml = await ru.text();
+      record(
+        "AS-11 problem page",
+        ruHtml.includes('data-matrix-auth-page="1"') && ruHtml.includes("data-close-window") && /<html lang="ru"/.test(ruHtml),
+        "card, close tab, lang=ru",
+      );
+    }
   }
 } catch (err) {
   record("auth page shell", false, err.message);

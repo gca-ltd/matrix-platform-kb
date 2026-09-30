@@ -38,6 +38,7 @@ This is the only place these strings are allowed. ADR-059 records why they were 
 | Modes A–D | The four auth types |
 | `server_managed` | Removed. User OAuth 2.1 replaces it. |
 | Server-managed sign-in | User OAuth 2.1 |
-| URL-mode authorization | Removed with the signed-header path |
+| URL-mode authorization | Removed with the signed-header path. Not the same as URL mode elicitation (MCP 2025-11-25), which a server may use for upstream credentials and never for its own sign-in (T-11) |
+| `<prefix>_sign_in`, `<prefix>_sign_out` | Removed. User OAuth 2.1 replaces them. A chat client's `<slug>__connect` tool is not one of these |
 | `oauth-claude` | `oauth_user` |
 | dual mode / auto mode | The server accepts `api_key` and `oauth_user` on one endpoint; the `Authorization` header selects the type |

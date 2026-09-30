@@ -39,7 +39,7 @@ A server with more than 10 entities, or with its own query language, exposes `<p
 
 ### Results
 
-`{ data, pagination }` for lists. `_truncated.hint` on a soft cap. `result_too_large` carries `_refine_required.assistant_instruction` and `suggested_narrowing`. Failures set `isError: true` and a one-line `next_step`. Auth failures are HTTP 401 or 403, not a link in the tool text.
+`{ data, pagination }` for lists. `_truncated.hint` on a soft cap. `result_too_large` carries `_refine_required.assistant_instruction` and `suggested_narrowing`. Failures set `isError: true` and a one-line `next_step`. A server reports auth failure as HTTP 401 or 403, not as a link in the tool text (T-11).
 
 `tools/list` should stay under 60 KB. The probe reports the size.
 
@@ -53,7 +53,7 @@ The client tells the model the state of each assigned server, and the model does
 
 | State | What the model is told |
 |---|---|
-| Needs sign-in | A sign-in tool is present. The prompt names the service and says to call that tool. |
+| Needs sign-in | The client's own `<slug>__connect` tool is present (C-19). The prompt names the service and says to call that tool. The tool result is the authorize URL in a private chat, and a sentence with no URL in a group chat. |
 | Connected, with tools | The catalogue line names the server and how many tools are enabled. |
 | Connected, no tools | `{{server}} is connected, but no tools are enabled. Ask an administrator to enable them on the Tools page.` |
 

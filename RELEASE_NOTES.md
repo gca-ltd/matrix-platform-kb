@@ -12,6 +12,7 @@ date: 2026-08-17
 
 ## Unreleased — 2026-09-30
 
+- The MCP profile is now four scenarios (Public, API key, User, Server), each with a checklist page. Every rule has an id, and the probe checks a scenario by name. Sign-in pages follow one written design: three page types, one card, a close-tab button on result pages, and no plain-text errors.
 - Every consent page shows who is asking and where you return in one centred notice. Reopening a sign-in link that already worked says you are signed in. The landing page follows the same language list as the consent page, and the conformance probe checks that landing card.
 - A Matrix client's consent page says you return to that app, not to the address that exchanges the code. The Qobrix sign-in form follows the browser language. The client's landing page uses the same sign-in card and does not start an application login.
 - `structuredContent` must be a JSON object. A list is `{ items, count }` when it is not already `{ data, pagination }`. The circuit opens only on transport failures, HTTP 5xx, timeouts, and network errors.
