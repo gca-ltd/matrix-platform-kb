@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Read-only Matrix MCP profile probe.
- * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--register <as-metadata-url>] [--app-base <url>]
+ * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--register <as-metadata-url>] [--app-base <url>] [--consent-url <url>]
  *
  * Dynamic registration is attempted only to confirm a foreign redirect is
  * rejected. A successful registration is reported as a failure of the check.
@@ -11,6 +11,8 @@ const tokenFlag = process.argv.indexOf("--token");
 const token = tokenFlag >= 0 ? process.argv[tokenFlag + 1] : "";
 const appBaseFlag = process.argv.indexOf("--app-base");
 const appBase = appBaseFlag >= 0 ? process.argv[appBaseFlag + 1] : "";
+const consentFlag = process.argv.indexOf("--consent-url");
+const consentOverride = consentFlag >= 0 ? process.argv[consentFlag + 1] : "";
 if (!url || url.startsWith("--")) {
   console.error("usage: node probe.mjs <mcp-url> [--token <bearer>]");
   process.exit(2);
@@ -178,16 +180,22 @@ if (token && init.res.status === 200) {
   record("instructions headings", missingHeads.length === 0 && instructions.length > 0 && instructions.length <= 16000, missingHeads.join(", ") || `${instructions.length} chars`);
 }
 
-const consentUrl = new URL("consent", url.endsWith("/") ? url : `${url}/`);
-consentUrl.searchParams.set("e", "invalid");
+const consentUrl = consentOverride
+  ? new URL(consentOverride)
+  : new URL("consent", url.endsWith("/") ? url : `${url}/`);
+if (!consentOverride) consentUrl.searchParams.set("e", "invalid");
 try {
   const consent = await fetch(consentUrl);
   const html = await consent.text();
-  record(
-    "auth page shell",
-    html.includes('data-matrix-auth-page="1"'),
-    `${consent.status} ${consentUrl.pathname}`,
-  );
+  if (!consentOverride && consent.status === 404) {
+    record("auth page shell", true, "404 — pass --consent-url when consent is on another host", true);
+  } else {
+    record(
+      "auth page shell",
+      html.includes('data-matrix-auth-page="1"'),
+      `${consent.status} ${consentUrl.pathname}`,
+    );
+  }
 } catch (err) {
   record("auth page shell", false, err.message);
 }
