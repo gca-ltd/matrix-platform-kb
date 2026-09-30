@@ -115,8 +115,7 @@ Three Edge Function tool servers co-located with Storefront data. Auth type: `ap
 
 | Server | Endpoint | Env token (fallback) | Role |
 |--------|----------|----------------------|------|
-| `matrix-dsf-mcp` | `…/functions/v1/matrix-dsf-mcp` | `DSF_MCP_TOKEN` (`app_settings.mcp_token` wins) | Serge public site, read-only |
-| `matrix-dsf-properties-mcp` | `…/functions/v1/matrix-dsf-properties-mcp` | `DSF_PROPERTIES_MCP_TOKEN` | Digital Employees catalogue |
+| `matrix-dsf-mcp` | `…/functions/v1/matrix-dsf-mcp` | `mcp_token` (Serge) and `mcp_token_de` (Digital Employees) | Public catalogue, read-only |
 | `matrix-dsf-leads-mcp` | `…/functions/v1/matrix-dsf-leads-mcp` | `DSF_LEADS_MCP_TOKEN` | Digital Employees lead writes |
 
 Indexer: `matrix-dsf-indexer` (cron `matrix-dsf-indexer-queue`).
@@ -130,9 +129,7 @@ Indexer: `matrix-dsf-indexer` (cron `matrix-dsf-indexer-queue`).
 | Write path | `lead_intents` table + MSA-HU adapter stub |
 | Identity probe | `{ tool: "whoami", emailPath: "email" }` |
 
-`matrix-dsf-mcp` tools: `search_site`, `search_properties`, `get_property`, `find_similar_properties`, `get_development`, `list_agents`, `get_agent`, `list_blog_posts`, `get_blog_post`, `list_events`, `get_page`, `whoami`.
-
-`matrix-dsf-properties-mcp` tools: `search_properties`, `get_property`, `find_similar_properties`, `list_property_facets`, `search_developments`, `get_agent`, `whoami`.
+`matrix-dsf-mcp` tools: `search_site`, `search_properties`, `get_property`, `find_similar_properties`, `get_development`, `list_property_facets`, `search_developments`, `list_agents`, `get_agent`, `list_blog_posts`, `get_blog_post`, `list_events`, `get_page`, `whoami`.
 
 `matrix-dsf-leads-mcp` tools: `create_lead`, `create_viewing_request`, `whoami` (create tools Require approval in Digital Employees).
 
