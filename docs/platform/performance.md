@@ -144,19 +144,14 @@ map is only the fallback when that RPC returns null. Discovery and turns
 fill missing embeddings after the response, and skip rows whose text hash
 is unchanged.
 
-**Think while choosing tools** (`employees.tool_step_thinking`, default off)
-controls hidden thinking only on replies that offer tools. Reasoning effort
-is unchanged. With the switch off, a DeepSeek tool step sends
-`thinking: { type: "disabled" }` and no `reasoning_effort` (the two together
-are rejected). Other reasoning models send `reasoning_effort: "none"`. With
-the switch on, or when the reply offers no tools, the employee's effort is
-sent as camelCase `reasoningEffort`. DeepSeek maps `low` to `low` and
-`medium` or `high` to `high`, with `thinking: { type: "enabled" }`. `auto`
-sends no effort. A model that cannot reason sends nothing. A tool-carrying
-request still replays every earlier turn's `reasoning_content`. The choice
-is stored on the resume checkpoint so a handover does not flip it. The
-closing answer of a tool-using reply is written in a tool step, so with the
-switch off that answer also has no hidden thinking.
+The chat reply follows Reasoning effort on its own. `none` sends thinking
+off. `low`, `medium`, and `high` send thinking on at that level (`medium`
+maps to `high` on DeepSeek). `auto` sends nothing. The effort is camelCase
+`reasoningEffort`. **Think while choosing tools**
+(`employees.tool_step_thinking`, default off) is a separate switch for tool
+choice. It does not turn the reply's reasoning off. A tool-carrying request
+still replays every earlier turn's `reasoning_content`. The tool-choice
+switch is stored on the resume checkpoint so a handover does not flip it.
 
 The deferred catalogue tells the model to call independent lookups in the
 same step. `parallel_tool_calls` is left at the provider default. Each tool
