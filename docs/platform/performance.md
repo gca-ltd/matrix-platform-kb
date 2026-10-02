@@ -144,21 +144,25 @@ map is only the fallback when that RPC returns null. Discovery and turns
 fill missing embeddings after the response, and skip rows whose text hash
 is unchanged.
 
-The chat reply follows Reasoning effort on its own. `none` sends thinking
-off. `low`, `medium`, and `high` send thinking on at that level (`medium`
-maps to `high` on DeepSeek). `auto` sends nothing. The effort is camelCase
-`reasoningEffort`. **Think while choosing tools**
-(`employees.tool_step_thinking`, default off) is a separate switch for tool
-choice. It does not turn the reply's reasoning off. A tool-carrying request
-still replays every earlier turn's `reasoning_content`. The tool-choice
-switch is stored on the resume checkpoint so a handover does not flip it.
+The chat reply follows Reasoning effort. `auto` sends nothing. Any other
+level is sent for every model; the request shape comes from that model's
+catalog entry (`model_catalog.capabilities`), not from the model name.
+`reasoning_style` `effort` (the default, including a model that is not in
+the catalog) sends camelCase `reasoningEffort` at the chosen level.
+`thinking_toggle` sends `thinking` enabled with the level, or disabled for
+`none` and no effort. `reasoning_levels` maps a level before it is sent
+(for example medium to high); a level that is not in the map passes through.
+`reasoning_replay` is what makes a tool-carrying request send earlier turns'
+`reasoning_content` back. A model that is not in the catalog still gets the
+effort, and a 400 that names reasoning, effort, or thinking is retried once
+without those fields. There is no model-name branch on this path.
 
 The deferred catalogue tells the model to call independent lookups in the
 same step. `parallel_tool_calls` is left at the provider default. Each tool
 hop records `output_tokens` and `reasoning_tokens` next to `model_ms` and
 `exec_ms`. Tool-turn latency is model time per hop. Preparation stays inside
-the budgets above; the number to watch on a tool turn is `model_ms` per hop,
-with reasoning tokens on those hops expected to fall while the switch is off.
+the budgets above; the number to watch on a tool turn is `model_ms` per hop.
+`none` is the level that records no reasoning tokens.
 
 `prep.quotaMs` is the duration of the quota check itself. After the answer
 is written, the conversation timestamp, run settle, usage, and respond
