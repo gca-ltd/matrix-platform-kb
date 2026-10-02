@@ -68,7 +68,7 @@ Transport is Streamable HTTP (MCP 2025-11-25).
 | RS-1 | Protected Resource Metadata (RFC 9728) at `/.well-known/oauth-protected-resource/<app>/mcp`, with `resource`, `authorization_servers`, `scopes_supported`, `bearer_methods_supported: ["header"]`. | MUST |
 | RS-2 | Unauthenticated requests get **401** and `WWW-Authenticate: Bearer resource_metadata="…", scope="<required>"`. | MUST |
 | RS-3 | A present but invalid token gets **401** with `error="invalid_token"`. A token with no `resource` is invalid. | MUST |
-| RS-4 | A token that lacks the scope for the operation gets **403** with `error="insufficient_scope"` and the scopes required. | MUST |
+| RS-4 | A token that lacks the scope for the operation gets **403** with `error="insufficient_scope"`, the scopes required, and `resource_metadata` on `WWW-Authenticate`. | MUST |
 | RS-5 | The token's audience / `resource` is this server (RFC 8707). Other tokens are rejected. | MUST |
 | RS-6 | The token presented by the MCP client is never forwarded to an upstream API. Upstream credentials are a separate token. | MUST |
 | RS-7 | Access tokens travel only in the `Authorization` header. A token in the query string is rejected. | MUST |
@@ -122,8 +122,8 @@ The profile follows MCP 2025-11-25. These rows are deliberate differences, each 
 
 | Choice | Spec | Profile |
 |---|---|---|
-| Dynamic client registration | MAY (2025-11-25 Authorization) | MUST (AS-3), so a new client can register without an operator |
-| `cursor://anysphere.cursor-mcp/oauth/callback` | Redirects must be HTTPS or localhost (OAuth 2.1) | Kept, exact match only, under the native-app exception in RFC 8252 §7.1. Reviewed at each minor release |
+| Dynamic client registration | MAY in 2025-11-25. Deprecated in 2026-07-28 in favour of Client ID Metadata Documents | MUST (AS-3). Cursor and Claude still register this way. CIMD stays available (AS-2, C-11) |
+| `cursor://anysphere.cursor-mcp/oauth/callback` | Redirects must be HTTPS or localhost (OAuth 2.1), in both 2025-11-25 and 2026-07-28 | Kept, exact match only, under the native-app exception in RFC 8252 §7.1. Cursor desktop sends it in the same registration as its HTTPS callback and `http://localhost:8787/callback`; rejecting one URI rejects the registration. Reviewed at each minor release |
 | Client credentials | Optional extension, draft, in `modelcontextprotocol/ext-auth` (`specification/draft/oauth-client-credentials.mdx`) | Adopted for `oauth_service`. The extension's metadata bullet requires `private_key_jwt` or `client_secret_basic`. Its own example sends `client_secret` in the body, which is `client_secret_post`. Matrix lists `client_secret_post` (AS-1) and sends `resource` on the token request |
 | URL mode elicitation | New in 2025-11-25, for upstream credentials | Allowed only for that (T-11). The retired "URL-mode authorization" (a server-minted connect link inside a tool result) stays retired |
 
@@ -143,6 +143,16 @@ One list, shared by every Matrix authorization server. Entries are **exact URIs*
 | Legacy, outside the spec, exact match only, review at each minor release | `cursor://anysphere.cursor-mcp/oauth/callback` |
 
 An empty allowlist denies every non-loopback redirect. A prefix such as `cursor://` is not an entry.
+
+`tools/mcp-conformance/redirect-allowlist.json` is the machine-readable copy of this table. Authorization servers load it when `REDIRECT_ALLOWLIST` is unset. Each server keeps a byte-identical copy, and `check-auth-pages.mjs` fails when a copy drifts. Loopback is not in the file: the rule allows it on any port.
+
+## Spec status
+
+The profile pins protocol **`2025-11-25`**, with fallback **`2025-06-18`**. Do not advertise `2026-07-28`.
+
+`2026-07-28` is the current MCP revision and is not a compatible extension of `2025-11-25`. It removes the `initialize` handshake and `Mcp-Session-Id`, and it requires `server/discover` on every server. Cursor, Claude, and Digital Employees still speak the handshake. Advertising `2026-07-28` from a handshake server would make those clients fail version negotiation.
+
+The gaps against `2026-07-28` are listed in [conformance.md](conformance.md#2026-07-28-gap-register). Closing them is a separate migration. This pin is the reason, not an omission.
 
 ## Onboarding
 

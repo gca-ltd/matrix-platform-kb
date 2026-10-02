@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 /**
- * Read-only Matrix MCP profile probe.
+ * Matrix MCP profile probe.
  * Usage: node probe.mjs <mcp-url> [--token <bearer>] [--scenario none|api_key|oauth_user|oauth_service] [--app-base <url>] [--consent-url <url>]
  *
- * Dynamic registration is attempted only to confirm a foreign redirect is
- * rejected. A successful registration is reported as a failure of the check.
+ * Dynamic registration is used twice. A foreign redirect must be rejected.
+ * Cursor's redirect set and Claude's callback, taken from redirect-allowlist.json,
+ * must be accepted. Those two registrations create a client named matrix-mcp-probe.
  */
+import { readFileSync } from "node:fs";
 const url = process.argv[2];
 const tokenFlag = process.argv.indexOf("--token");
 const token = tokenFlag >= 0 ? process.argv[tokenFlag + 1] : "";
@@ -175,6 +177,34 @@ if (asMetaUrl) {
     });
     const body = await reg.json().catch(() => ({}));
     record("AS-3 foreign redirect rejected", reg.status === 400 && body.error === "invalid_redirect_uri", `${reg.status} ${body.error || ""}`);
+
+    const allowlist = JSON.parse(readFileSync(new URL("./redirect-allowlist.json", import.meta.url), "utf8"));
+    const cursorHttps = allowlist.find((row) => row.client === "Cursor")?.redirect_uri;
+    const cursorDesktop = allowlist.find((row) => row.client === "Cursor desktop")?.redirect_uri;
+    const claude = allowlist.find((row) => row.client === "Claude")?.redirect_uri;
+    async function register(uris) {
+      const res = await fetch(as.registration_endpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          client_name: "matrix-mcp-probe",
+          redirect_uris: uris,
+          grant_types: ["authorization_code", "refresh_token"],
+          response_types: ["code"],
+          token_endpoint_auth_method: "none",
+        }),
+      });
+      const registered = await res.json().catch(() => ({}));
+      return { status: res.status, error: registered.error || "" };
+    }
+    const cursor = await register([cursorDesktop, cursorHttps, "http://localhost:8787/callback"].filter(Boolean));
+    const claudeReg = await register([claude].filter(Boolean));
+    const canonicalOk = Boolean(cursorHttps && cursorDesktop && claude) && cursor.status === 201 && claudeReg.status === 201;
+    record(
+      "AS-3 canonical redirects accepted",
+      canonicalOk,
+      `cursor ${cursor.status} ${cursor.error}; claude ${claudeReg.status} ${claudeReg.error}`,
+    );
   }
 }
 

@@ -11,7 +11,7 @@ Prefix `<APP>_MCP_`. `<APP>` is the short product key (`MSA`, `QOBRIX`). A separ
 | `HOST` | Bind address | `127.0.0.1` |
 | `PORT` | Bind port | per app |
 | `ALLOWED_ORIGINS` | Comma-separated browser `Origin` allowlist | `https://intranet.sharpsir.group` |
-| `REDIRECT_ALLOWLIST` | Comma-separated **exact** redirect URIs. See [README.md](README.md#redirect-allowlist). Loopback is always allowed on any port | the canonical list |
+| `REDIRECT_ALLOWLIST` | Comma-separated **exact** redirect URIs. See [README.md](README.md#redirect-allowlist). Loopback is always allowed on any port. Unset loads `tools/mcp-conformance/redirect-allowlist.json`. Set means exactly those URIs. Set to empty means loopback only | the canonical list |
 | `ACCESS_TTL_SEC` | Access-token lifetime | `3600` |
 | `REFRESH_TTL_SEC` | Refresh-token lifetime | `2592000` |
 | `RATE_LIMIT_PER_MIN` | Per-IP and per-token request budget | `300` |
@@ -22,11 +22,11 @@ Prefix `<APP>_MCP_`. `<APP>` is the short product key (`MSA`, `QOBRIX`). A separ
 | `DATA_DIR` | SQLite (or equivalent) directory | required |
 | `INTROSPECTION_SECRET` | Shared secret when the authorization server is a separate process | required in that layout |
 
-Previous names are read for one minor release and log a warning at boot. A separate authorization server uses the same `<APP>_MCP_` prefix as its resource server. Qobrix reads the old `QOBRIX_OAUTH_*` names and warns: `QOBRIX_OAUTH_ACCESS_TTL` → `QOBRIX_MCP_ACCESS_TTL_SEC`, `QOBRIX_OAUTH_RATE_LIMIT` → `QOBRIX_MCP_RATE_LIMIT_PER_MIN`, `QOBRIX_OAUTH_INTROSPECTION_SECRET` → `QOBRIX_MCP_INTROSPECTION_SECRET`. `QOBRIX_MCP_AUTO_MODE` and `MSA_MCP_IDENTITY_SECRET` are removed and are not read.
+Previous names are read for one minor release and log a warning at boot. A separate authorization server uses the same `<APP>_MCP_` prefix as its resource server. Qobrix reads the old `QOBRIX_OAUTH_*` names and warns: `QOBRIX_OAUTH_ACCESS_TTL` → `QOBRIX_MCP_ACCESS_TTL_SEC`, `QOBRIX_OAUTH_RATE_LIMIT` → `QOBRIX_MCP_RATE_LIMIT_PER_MIN`, `QOBRIX_OAUTH_INTROSPECTION_SECRET` → `QOBRIX_MCP_INTROSPECTION_SECRET`, `QOBRIX_OAUTH_REFRESH_TTL` → `QOBRIX_MCP_REFRESH_TTL_SEC`, `QOBRIX_OAUTH_INTROSPECT_RATE_LIMIT` → `QOBRIX_MCP_INTROSPECT_RATE_LIMIT_PER_MIN`, `QOBRIX_OAUTH_REDIRECT_ALLOWLIST` → `QOBRIX_MCP_REDIRECT_ALLOWLIST`. `QOBRIX_MCP_AUTO_MODE` and `MSA_MCP_IDENTITY_SECRET` are removed and are not read.
 
 `QOBRIX_MCP_AUTH` is a comma list of `none`, `api_key`, `oauth_user`. HTTP defaults to `api_key,oauth_user`. The old values `env`, `headers`, `oauth`, `oauth-claude` map to those types and warn at boot.
 
-An empty `REDIRECT_ALLOWLIST` denies every non-loopback redirect.
+An unset `REDIRECT_ALLOWLIST` loads the canonical list. A variable that is set is used exactly, plus loopback. A variable set to empty denies every non-loopback redirect.
 
 ## Client registry
 

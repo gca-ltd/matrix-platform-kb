@@ -12,7 +12,7 @@ node tools/mcp-conformance/probe.mjs https://intranet.sharpsir.group/qobrix-crm/
 
 Qobrix consent is served by the authorization server. `/qobrix-crm/mcp/consent` is 404, so the probe skips that check unless `--consent-url` points at a rendered login page. An unknown login id returns the card.
 
-The probe is read-only. It checks:
+The probe does not call tools. Dynamic registration is the exception: a foreign redirect must be rejected, and Cursor's redirect set plus Claude's callback (from `redirect-allowlist.json`) must be accepted. Those two registrations create a client named `matrix-mcp-probe`. It checks:
 
 | Check | Expectation |
 |---|---|
@@ -26,6 +26,7 @@ The probe is read-only. It checks:
 | Authorization server metadata | `code_challenge_methods_supported` includes `S256`, `client_id_metadata_document_supported` |
 | Every tool | `title` and `annotations.readOnlyHint` |
 | Dynamic registration with a foreign redirect | `invalid_redirect_uri` |
+| Dynamic registration of Cursor's three redirect URIs, then Claude's callback | 201 for both (`AS-3 canonical redirects accepted`). A deny-all server fails this check |
 | Agent guidance | Headings, sentence-1 length, description length, described parameters, discovery tools, `tools/list` size |
 | Auth page | `GET <mcp-url>/consent?e=invalid` HTML contains `data-matrix-auth-page="1"`. A 404 is SKIP. Pass `--consent-url` when consent is served by a separate authorization server. |
 | Sign-in landing | `GET {appBaseUrl}/oauth/mcp-callback.html?ok=1` returns 200 and contains `data-matrix-auth-page="1"` (`--app-base`). The old path redirects to this page. |
@@ -87,7 +88,23 @@ These servers are outside this change. A follow-up plan tracks them.
 
 | Server | Date | Probe | Notes |
 |---|---|---|---|
-| `qobrix-crm/mcp` | 2026-09-30 | 9 pass, 3 skipped, 0 failed (`--scenario oauth_user`) | Health, metadata, foreign redirect, and the Russian problem card passed. Session follow-up and protocol version need a bearer token. |
+| `qobrix-crm/mcp` | 2026-09-30 | 9 pass, 3 skipped, 0 failed (`--scenario oauth_user`) | Health, metadata, foreign redirect, and the Russian problem card passed. Session follow-up and protocol version need a bearer token. The AS-3 foreign-redirect pass did not notice that every canonical redirect was also rejected. Cursor could not register from 2026-09-30 until the 2026-10-02 fix. |
+| `qobrix-crm/mcp` | 2026-10-02 | 8 pass, 4 skipped, 0 failed (`--scenario oauth_user`) | Foreign redirect rejected and canonical redirects accepted (Cursor 201, Claude 201). |
+| `msa/mcp` | 2026-10-02 | 10 pass, 3 skipped, 0 failed (`--scenario oauth_user`) | Same AS-3 pair, after the allowlist moved to `redirect-allowlist.json`. Consent card passed. |
 | `msa/mcp` | 2026-09-30 | 9 pass, 3 skipped, 0 failed (`--scenario oauth_user`) | Same anonymous checks, including the consent card at `/msa/mcp/consent`. |
 | DeepWiki / Linear / GitHub / legacy SSE | 2026-09-29 | not run | Needs a signed-in Digital Employees session. |
 | Claude / Cursor | 2026-09-29 | not run | Needs an operator browser login. |
+
+## 2026-07-28 gap register
+
+The profile stays on `2025-11-25`. See [README.md](README.md#spec-status). This table is the backlog for a separate migration. It carries forward ADR-039 D4 and the 2026-10-02 review of the [2026-07-28 changelog](https://modelcontextprotocol.io/specification/2026-07-28/changelog). `open` means the server still speaks `2025-11-25` for that row.
+
+| Gap | Qobrix | MSA | Digital Employees | Status |
+|---|---|---|---|---|
+| Stateless transport: no `initialize`, no `Mcp-Session-Id`, `server/discover` required | Handshake server | Handshake server | Handshake client | open |
+| `Mcp-Method` and `Mcp-Name` on POST | Not required | Not required | Not sent | open |
+| `resultType` on results; `ttlMs` and `cacheScope` on list results | Absent | Absent | Absent | open |
+| Dynamic registration deprecated in favour of Client ID Metadata Documents | AS-3 still requires registration | Same | C-11 still falls back to registration | open. Profile choice, see README |
+| RFC 9207 `iss` on the authorization response, and `authorization_response_iss_parameter_supported` | Not emitted | Not emitted | Does not require `iss` | open |
+| Client `application_type` at dynamic registration (SEP-837) | SDK 1.29 strips unknown metadata, so the field is dropped | Same SDK line | Not sent | open |
+| Client credentials keyed by authorization-server issuer (SEP-2352) | Not recorded | Not recorded | Not recorded | open |

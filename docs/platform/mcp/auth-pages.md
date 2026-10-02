@@ -70,7 +70,7 @@ Pages add no CSS for `.notice`, `.message`, `.btn`, or `.alert`. The only CSS a 
 
 `tools/mcp-conformance/auth-page.mjs` exports `renderAuthPage({ lang, title, body, year, actions, close })` and `consentNoticeHtml(...)`.
 
-Each server copies `auth-page.mjs`, `sharp-sir-logo.svg`, and `first-party-clients.json` into its own `tools/mcp-conformance/` and loads them at runtime. A client that renders a landing page also copies `mcp-strings.json`. The copies stay byte-identical to this repo. `node tools/mcp-conformance/check-auth-pages.mjs <repo>` fails when they differ, when `src/` sends a plain-text browser body, or when a page restyles a shared block.
+Each server copies `auth-page.mjs`, `sharp-sir-logo.svg`, `first-party-clients.json`, and `redirect-allowlist.json` into its own `tools/mcp-conformance/` and loads them at runtime. A client that renders a landing page also copies `mcp-strings.json`. The copies stay byte-identical to this repo. `node tools/mcp-conformance/check-auth-pages.mjs <repo>` fails when they differ, when `src/` sends a plain-text browser body, or when a page restyles a shared block. `redirect-allowlist.json` is the canonical redirect list from [README.md](README.md#redirect-allowlist). An authorization server loads its copy when `REDIRECT_ALLOWLIST` is unset.
 
 `first-party-clients.json` lists `{ redirect_uri, name }` for Matrix clients. When the consent `redirect_uri` matches an entry exactly, the notice says the person returns to that name (`mcpServer.consent.returnToClient`). Any other client shows the redirect host. A loopback redirect still shows the loopback warning. Every client sees the notice.
 
