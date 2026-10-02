@@ -147,6 +147,10 @@ is unchanged.
 The chat reply follows Reasoning effort. `auto` sends nothing. Any other
 level is sent for every model; the request shape comes from that model's
 catalog entry (`model_catalog.capabilities`), not from the model name.
+The entry is the workspace row for that model, or the built-in row
+(`tenant_id` null) when the workspace has none. Unknown means neither
+exists. Vision uses the same entry: the model is handed the image only
+when that entry says it can see one.
 `reasoning_style` `effort` (the default, including a model that is not in
 the catalog) sends camelCase `reasoningEffort` at the chosen level.
 `thinking_toggle` sends `thinking` enabled with the level, or disabled for
