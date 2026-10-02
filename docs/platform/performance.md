@@ -134,6 +134,41 @@ retrieval itself is off. The rest stay deferred behind `tool_search`, which
 returns input schemas so a hit can be invoked without a separate describe hop.
 The guardrail is a drop in discovery hops per reply.
 
+Tool descriptions are embedded with `openai/text-embedding-3-small` (1536
+dimensions), the same model as knowledge, and stored on `mcp_tools` with a
+text hash. Ranking runs in SQL (`rank_employee_tools`, service role only).
+The RPC returns neighbours; the turn still drops any tool the employee is
+not allowed to call. Writes of `embedding` and `embedding_text_hash` do not
+bump `tenant_config_epoch`. A cold isolate ranks from SQL. The in-memory
+map is only the fallback when that RPC returns null. Discovery and turns
+fill missing embeddings after the response, and skip rows whose text hash
+is unchanged.
+
+**Think while choosing tools** (`employees.tool_step_thinking`, default off)
+controls hidden thinking only on replies that offer tools. Reasoning effort
+is unchanged. With the switch off, a DeepSeek tool step sends
+`thinking: { type: "disabled" }` and no `reasoning_effort` (the two together
+are rejected). Other reasoning models send `reasoning_effort: "none"`. With
+the switch on, or when the reply offers no tools, the employee's effort is
+sent as camelCase `reasoningEffort`. DeepSeek maps `low` to `low` and
+`medium` or `high` to `high`, with `thinking: { type: "enabled" }`. `auto`
+sends no effort. A model that cannot reason sends nothing. A tool-carrying
+request still replays every earlier turn's `reasoning_content`. The choice
+is stored on the resume checkpoint so a handover does not flip it. The
+closing answer of a tool-using reply is written in a tool step, so with the
+switch off that answer also has no hidden thinking.
+
+The deferred catalogue tells the model to call independent lookups in the
+same step. `parallel_tool_calls` is left at the provider default. Each tool
+hop records `output_tokens` and `reasoning_tokens` next to `model_ms` and
+`exec_ms`. Tool-turn latency is model time per hop. Preparation stays inside
+the budgets above; the number to watch on a tool turn is `model_ms` per hop,
+with reasoning tokens on those hops expected to fall while the switch is off.
+
+`prep.quotaMs` is the duration of the quota check itself. After the answer
+is written, the conversation timestamp, run settle, usage, and respond
+checkpoint run together. The thread lock is released after those finish.
+
 Prompt assembly keeps a cacheable prefix: job, policy, channel, the stable
 deferred-catalogue description, and tool-guidance in the system prompt, then
 older history in order. Volatile runtime, caller, memory, retrieval, and the
