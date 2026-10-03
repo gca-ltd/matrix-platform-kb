@@ -162,10 +162,16 @@ the catalog) sends camelCase `reasoningEffort` at the chosen level.
 (`adaptive` for Claude's compatible endpoint) and `enabled` otherwise.
 `reasoning_levels` maps a level before it is sent
 (for example medium to high); a level that is not in the map passes through.
+A model that cannot switch thinking off maps `none` to its lowest accepted
+level (`reasoning_levels.none`), so tool steps and Reasoning effort None send
+that level.
 `reasoning_replay` is what makes a tool-carrying request send earlier turns'
 `reasoning_content` back. A model that is not in the catalog still gets the
 effort, and a 400 that names reasoning, effort, or thinking is retried once
-without those fields. There is no model-name branch on this path.
+without those fields. A 400 that names neither reasoning nor temperature is
+logged as `provider_bad_request` (the response text, plus the request shape:
+reasoning effort, whether token usage was requested, the tool count, and the
+tool choice) and is not retried. There is no model-name branch on this path.
 
 Tool selection and the written reply are separate steps on the employee
 turn (Playground and channel replies) whenever that employee has tools.
