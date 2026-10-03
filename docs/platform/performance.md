@@ -167,6 +167,24 @@ the catalog) sends camelCase `reasoningEffort` at the chosen level.
 effort, and a 400 that names reasoning, effort, or thinking is retried once
 without those fields. There is no model-name branch on this path.
 
+Tool selection and the written reply are separate steps when the employee
+has tools and Reasoning effort is Low, Medium, or High. **Think while
+choosing tools** is off unless that employee turns it on. Off means each
+tool step sends the catalog's thinking-off shape: `thinking` disabled for a
+toggle model, `reasoningEffort: none` for an effort model, or that model's
+lowest mapped level when its `reasoning_levels` has no `none`. The model
+ends the tool phase by calling an internal `answer_ready` tool, which the
+user never sees, or the loop forces the answer on the last allowed step.
+The answer step offers no tools and uses Reasoning effort. Because that
+request carries no tools, a thinking-toggle model's rule about replaying
+reasoning on a tool request does not apply; earlier tool calls in the
+history still get `reasoning_content` placeholders when `reasoning_replay`
+is set. A reply with no tools, effort None or Auto, the switch on, or a
+model whose catalog says it does not reason stays a single phase. The phase
+is fixed when the reply starts and is stored on the handover checkpoint, so
+a worker that continues the turn uses the same split. `answer_ready` is
+left out of the tools line, the step count, run steps, and the transcript.
+
 `temperature: false` drops temperature, top_p and the penalty fields before
 the request is sent. A 400 that names temperature or top_p is retried once
 without them. Anything else still sends the employee's temperature.
