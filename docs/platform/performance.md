@@ -168,22 +168,28 @@ effort, and a 400 that names reasoning, effort, or thinking is retried once
 without those fields. There is no model-name branch on this path.
 
 Tool selection and the written reply are separate steps on the employee
-turn (Playground and channel replies) when that employee has tools and
-Reasoning effort is Low, Medium, or High. Crews and the stateless API turn
-keep a single phase. **Think while choosing tools** is off unless that
-employee turns it on. Off means each tool step sends the catalog's
-thinking-off shape: `thinking` disabled for a toggle model, `reasoningEffort:
-none` for an effort model, or that model's lowest mapped level when its
-`reasoning_levels` has no `none`. The model ends the tool phase by calling
-an internal `answer_ready` tool, which the user never sees, or the loop
-forces the answer on the last allowed step. The answer step offers no tools
-and uses Reasoning effort. DeepSeek's published guide says `reasoning_content`
+turn (Playground and channel replies) whenever that employee has tools.
+Crews and the stateless API turn keep a single phase. Each step is its own
+model call, and the two steps send different thinking options. **Think while
+choosing tools** sets the tool steps: off (the default) sends the catalog's
+thinking-off shape (`thinking` disabled, `reasoningEffort: none`, or the
+lowest mapped level), and on sends the same Reasoning effort as the answer.
+Reasoning effort sets the answer step, including None and Auto. The model
+ends the tool phase by calling an internal `answer_ready` tool, which the
+user never sees, or the loop forces the answer on the last allowed step.
+The same answer step is also forced when the last three tool steps made the
+same call with the same arguments, so a repeated lookup answers instead of
+looping. The answer step offers no tools. An employee's max output tokens
+is lowered to the model's maximum completion tokens from the catalog feed
+(`capabilities.feed.max_output`, refreshed by `pricing-sync`) before the
+request is sent. A provider error of the form `max_tokens: X > Y` retries
+that request once at Y. DeepSeek's published guide says `reasoning_content`
 is ignored when a request has no tools, but a no-tools answer that follows a
 tool call is rejected unless those earlier turns still send it, so the
 placeholders stay when `reasoning_replay` is set. That answer request can
-still return no reasoning tokens. A reply with no tools offered, effort None
-or Auto, the switch on, or a model whose catalog says it does not reason
-stays a single phase. The phase is fixed when the reply starts and is stored
+still return no reasoning tokens. A reply with no tools offered, or a model
+whose catalog says it does not reason, stays a single phase. The phase is
+fixed when the reply starts and is stored
 on the handover checkpoint, so a worker that continues the turn uses the same
 split. `answer_ready` is left out of the tools line, the step count, run
 steps, and the transcript. Its model time is stored as `answerReadyMs` on the
