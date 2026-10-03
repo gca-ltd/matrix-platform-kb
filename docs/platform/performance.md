@@ -149,17 +149,30 @@ level is sent for every model; the request shape comes from that model's
 catalog entry (`model_catalog.capabilities`), not from the model name.
 The entry is the workspace row for that model, or the built-in row
 (`tenant_id` null) when the workspace has none. Unknown means neither
-exists. Vision uses the same entry: the model is handed the image only
-when that entry says it can see one.
+exists. Inside an entry, a key set on the row wins over `capabilities.feed`,
+and a missing key uses the feed. The feed is the OpenRouter model list
+(input types and supported parameters), written daily by `pricing-sync` and
+by Refresh prices, and it never overwrites those hand-set keys.
 `reasoning_style` `effort` (the default, including a model that is not in
 the catalog) sends camelCase `reasoningEffort` at the chosen level.
-`thinking_toggle` sends `thinking` enabled with the level, or disabled for
-`none` and no effort. `reasoning_levels` maps a level before it is sent
+`thinking_toggle` sends `thinking` on with the level, or disabled for
+`none` and no effort. On uses `thinking_on` when the row sets it
+(`adaptive` for Claude's compatible endpoint) and `enabled` otherwise.
+`reasoning_levels` maps a level before it is sent
 (for example medium to high); a level that is not in the map passes through.
 `reasoning_replay` is what makes a tool-carrying request send earlier turns'
 `reasoning_content` back. A model that is not in the catalog still gets the
 effort, and a 400 that names reasoning, effort, or thinking is retried once
 without those fields. There is no model-name branch on this path.
+
+`temperature: false` drops temperature, top_p and the penalty fields before
+the request is sent. A 400 that names temperature or top_p is retried once
+without them. Anything else still sends the employee's temperature.
+Vision and documents use the same entry, for Playground and channel turns
+alike. The model is handed the image only when the entry says it can see
+one, and a PDF only when `documents` is true. When `documents` is absent it
+follows vision. Otherwise the file is described first and the model sees
+the text.
 
 The deferred catalogue tells the model to call independent lookups in the
 same step. `parallel_tool_calls` is left at the provider default. Each tool
