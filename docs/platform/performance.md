@@ -153,6 +153,8 @@ exists. Inside an entry, a key set on the row wins over `capabilities.feed`,
 and a missing key uses the feed. The feed is the OpenRouter model list
 (input types and supported parameters), written daily by `pricing-sync` and
 by Refresh prices, and it never overwrites those hand-set keys.
+The feed is rewritten only when a value changes, so a sync with no changes
+leaves the config epoch alone.
 `reasoning_style` `effort` (the default, including a model that is not in
 the catalog) sends camelCase `reasoningEffort` at the chosen level.
 `thinking_toggle` sends `thinking` on with the level, or disabled for
