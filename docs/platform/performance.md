@@ -167,23 +167,27 @@ the catalog) sends camelCase `reasoningEffort` at the chosen level.
 effort, and a 400 that names reasoning, effort, or thinking is retried once
 without those fields. There is no model-name branch on this path.
 
-Tool selection and the written reply are separate steps when the employee
-has tools and Reasoning effort is Low, Medium, or High. **Think while
-choosing tools** is off unless that employee turns it on. Off means each
-tool step sends the catalog's thinking-off shape: `thinking` disabled for a
-toggle model, `reasoningEffort: none` for an effort model, or that model's
-lowest mapped level when its `reasoning_levels` has no `none`. The model
-ends the tool phase by calling an internal `answer_ready` tool, which the
-user never sees, or the loop forces the answer on the last allowed step.
-The answer step offers no tools and uses Reasoning effort. Because that
-request carries no tools, a thinking-toggle model's rule about replaying
-reasoning on a tool request does not apply; earlier tool calls in the
-history still get `reasoning_content` placeholders when `reasoning_replay`
-is set. A reply with no tools, effort None or Auto, the switch on, or a
-model whose catalog says it does not reason stays a single phase. The phase
-is fixed when the reply starts and is stored on the handover checkpoint, so
-a worker that continues the turn uses the same split. `answer_ready` is
-left out of the tools line, the step count, run steps, and the transcript.
+Tool selection and the written reply are separate steps on the employee
+turn (Playground and channel replies) when that employee has tools and
+Reasoning effort is Low, Medium, or High. Crews and the stateless API turn
+keep a single phase. **Think while choosing tools** is off unless that
+employee turns it on. Off means each tool step sends the catalog's
+thinking-off shape: `thinking` disabled for a toggle model, `reasoningEffort:
+none` for an effort model, or that model's lowest mapped level when its
+`reasoning_levels` has no `none`. The model ends the tool phase by calling
+an internal `answer_ready` tool, which the user never sees, or the loop
+forces the answer on the last allowed step. The answer step offers no tools
+and uses Reasoning effort. DeepSeek's published guide says `reasoning_content`
+is ignored when a request has no tools, but a no-tools answer that follows a
+tool call is rejected unless those earlier turns still send it, so the
+placeholders stay when `reasoning_replay` is set. That answer request can
+still return no reasoning tokens. A reply with no tools offered, effort None
+or Auto, the switch on, or a model whose catalog says it does not reason
+stays a single phase. The phase is fixed when the reply starts and is stored
+on the handover checkpoint, so a worker that continues the turn uses the same
+split. `answer_ready` is left out of the tools line, the step count, run
+steps, and the transcript. Its model time is stored as `answerReadyMs` on the
+generate checkpoint and is not counted as a tool hop.
 
 `temperature: false` drops temperature, top_p and the penalty fields before
 the request is sent. A 400 that names temperature or top_p is retried once
