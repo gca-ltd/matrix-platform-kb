@@ -174,7 +174,17 @@ model call, and the two steps send different thinking options. **Think while
 choosing tools** sets the tool steps: off (the default) sends the catalog's
 thinking-off shape (`thinking` disabled, `reasoningEffort: none`, or the
 lowest mapped level), and on sends the same Reasoning effort as the answer.
-Reasoning effort sets the answer step, including None and Auto. The model
+Reasoning effort sets the answer step, including None and Auto. A provider
+whose base URL host is `api.anthropic.com` uses the native Messages API.
+Its answer sends thinking on with `display: summarized` and the Reasoning
+effort as `effort`. Auto sends the summarized display and leaves the effort
+at the provider default. Tool steps with Think while choosing tools off send
+thinking disabled. When the catalog says `thinking_scope` is `turn` and
+those two option sets differ, the answer step starts a new turn: the request
+appends a short assistant line and a short user line from the platform
+prompts, so a thinking change is not dropped as a mid-turn toggle. Compatible
+providers keep the previous wire shape, and every compatible stream asks for
+token usage. The model
 ends the tool phase by calling an internal `answer_ready` tool, which the
 user never sees, or the loop forces the answer on the last allowed step.
 The same answer step is also forced when the last three tool steps made the
