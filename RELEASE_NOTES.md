@@ -10,6 +10,10 @@ date: 2026-08-17
 **Version trail:** GitHub Releases/tags `vX.Y.Z` + this file + [`VERSION`](VERSION).
 **Agent rules:** [`AGENTS.md`](AGENTS.md) § Release notes & versioning.
 
+## Unreleased — 2026-10-05
+
+- The Acme individual-contributor role is named Broker at Acme, so a page-access check does not treat it as Sharp SIR Broker. The user-guide screenshots use a re-seedable Acme demo dataset at `matrix-sales-automation/scripts/seed/acme-demo/`, owned by Anna Ioannou.
+
 ## Unreleased — 2026-09-30
 
 - The MCP profile is now four scenarios (Public, API key, User, Server), each with a checklist page. Every rule has an id, and the probe checks a scenario by name. Sign-in pages follow one written design: three page types, one card, a close-tab button on result pages, and no plain-text errors.

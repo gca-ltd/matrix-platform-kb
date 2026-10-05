@@ -243,7 +243,7 @@ JOIN public.sso_user_groups g ON g.id = m.group_id
 WHERE lower(u.email) = 'person@example.com';
 ```
 
-There is no `sso_users` table. Two roles often share a display name (Sharp SIR "Broker" and Acme "Broker"). The uuid in query 1 is the one the app checks.
+There is no `sso_users` table. Acme's individual-contributor role is named "Broker at Acme" (`ac000003`, `20261005170000`); Sharp SIR's is "Broker" (`1852b335`). The uuid in query 1 is the one the app checks.
 
 ### Which change to make
 
