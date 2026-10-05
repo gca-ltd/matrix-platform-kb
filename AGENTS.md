@@ -137,6 +137,7 @@ scripts/
 | Listing form fields, Portal, Marketing, Personalization specs | `docs/product-specs/sir-listing-forms.md`, `docs/product-specs/client-portal.md`, `docs/product-specs/marketing-platform.md`, `docs/product-specs/personalization.md` |
 | Qobrix API reference | `docs/references/qobrix-api-summary.md` |
 | New app can't auth (401/400/403) | `docs/platform/new-app-auth-troubleshooting.md` |
+| User blocked after sign-in / "Page Not Available" / role access | `docs/platform/new-app-auth-troubleshooting.md` § 6 first, then `docs/platform/security-model.md` § Tenant Switching and § `sso_role_configurations` |
 
 ## For Zoe AI Assistant (1st & 2nd Line Support)
 

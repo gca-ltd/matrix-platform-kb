@@ -198,6 +198,66 @@ Either:
 
 ---
 
+## 6. Signed in, but the app or a page is blocked
+
+Login succeeded. The screen is one of three, and they are different problems.
+
+| Screen | Meaning | Where it is decided |
+|--------|---------|---------------------|
+| "… isn't available to this role" | This role's `apps_allowed` does not include the app's client id, and the token's `allowed_apps` list is non-empty | `isAppAllowed` in `src/lib/appAccess.ts`, checked first in `ProtectedRoute` |
+| "Page Not Available — not included in the permissions for {role}" | The grant read succeeded and this page key is absent | `useRoleConfig` → `canAccessPage`, after a successful load |
+| "Couldn't verify your permissions" | The grant read failed or the token was missing. This is **not** a denial | `useRoleConfig` error path. See [ADR-045](../architecture/decisions/ADR-045.md) |
+
+An empty `allowed_apps` claim opens the app (silence is not a denial). A populated list that omits this client id closes it.
+
+### Read the live rows before changing anything
+
+SSO project `xgubaguglsnokjyudgvc`. Replace the email, and use the role uuid from the first query in the second. `sso_role_configurations.role_id` is text; cast the uuid.
+
+```sql
+-- 1. Which roles this person can switch to, and which tenant each role belongs to
+SELECT r.id AS role_id, r.role_name, r.scope, r.tenant_id, a.is_primary
+FROM auth.users u
+JOIN public.sso_user_role_assignments a ON a.user_id = u.id
+JOIN public.sso_roles r ON r.id = a.role_id
+WHERE lower(u.email) = 'person@example.com'
+ORDER BY r.role_name;
+
+-- 2. The grant for that role, this app, and the tenant they are currently in
+SELECT c.pages, c.actions
+FROM public.sso_role_configurations c
+WHERE c.role_id = '<role-uuid>'
+  AND c.app_id = '<client-id>'
+  AND c.tenant_id = '<tenant-uuid>';
+
+-- 3. Whether the role is allowed to open the app at all
+SELECT 'Dk4cIY3~VvwYYgFIU.2gCdAfewWb34AZ' = ANY(apps_allowed) AS msa_allowed, apps_allowed
+FROM public.sso_roles
+WHERE id = '<role-uuid>';
+
+-- 4. Teams. A broker with no membership stamps owner_team_id NULL, and managers never see those rows
+SELECT g.group_name, g.tenant_id, m.is_home_team
+FROM auth.users u
+JOIN public.sso_user_group_memberships m ON m.user_id = u.id
+JOIN public.sso_user_groups g ON g.id = m.group_id
+WHERE lower(u.email) = 'person@example.com';
+```
+
+There is no `sso_users` table. Two roles often share a display name (Sharp SIR "Broker" and Acme "Broker"). The uuid in query 1 is the one the app checks.
+
+### Which change to make
+
+| What the queries show | Do this |
+|-----------------------|---------|
+| `apps_allowed` does not contain the client id | Add the client id to that role's `apps_allowed`. The tile and `isAppAllowed` both read it. A new value is in the JWT, so the person signs in again. |
+| No grant row, and the role's `tenant_id` **is** the tenant they are in | Insert `sso_role_configurations` for `(role_id, app_id, tenant_id)` with the current page keys. A reload is enough: pages are read live, not from the JWT. |
+| No grant row, and the role belongs to a **different** tenant than the one on screen | They switched organization (`switch-tenant`) and kept a home-tenant role. Assign **this tenant's** role. Do not copy the home grant across: Acme's `20260709160000` deletes non-Acme role ids from the Acme tenant. New roles appear only after sign-out and sign-in. |
+| The screen is "Couldn't verify your permissions" | The read failed. Retry or sign in again. Do not add a grant to "fix" a load error. [ADR-045](../architecture/decisions/ADR-045.md). |
+
+MSA page keys (since 2026-09-16) are per page: `my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`, `listings`, `leads`, `profile`. A stored `home` does not open Pipeline or Listings. See [security-model.md](security-model.md) § `sso_role_configurations`.
+
+---
+
 ## Quick Diagnostic Flowchart
 
 ```
@@ -213,7 +273,12 @@ App calls oauth-authorize → what HTTP status?
 │
 ├─ 302 → Working correctly (redirects to SSO login)
 │
-└─ 500 → Server error; check Supabase Edge Function logs
+├─ 500 → Server error; check Supabase Edge Function logs
+│
+└─ 200, signed in, but blocked inside the app → Section 6
+   ├─ "isn't available to this role" → apps_allowed / allowed_apps
+   ├─ "Page Not Available"           → sso_role_configurations for (role, app, tenant)
+   └─ "Couldn't verify your permissions" → load failed (ADR-045), not a missing grant
 ```
 
 ---
@@ -226,5 +291,8 @@ App calls oauth-authorize → what HTTP status?
 | `supabase/functions/oauth-token/index.ts` | Token exchange endpoint |
 | `supabase/migrations/001_sso_schema.sql` | `sso_applications` table definition |
 | `src/lib/matrix-sso.ts` (in each app) | Client-side OAuth configuration (`CLIENT_ID`, `BASE_PATH`) |
+| `src/components/ProtectedRoute.tsx` | The three blocked-in-app screens |
+| `src/lib/appAccess.ts` | `isAppAllowed` — client id vs `allowed_apps` |
+| `src/hooks/useRoleConfig.ts` | Loads `sso_role_configurations` for the active tenant; `NO_ACCESS` when a non-admin role has no row |
 
 > **Source repo**: `/home/bitnami/matrix-platform-foundation`

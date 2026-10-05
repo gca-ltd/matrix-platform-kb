@@ -32,6 +32,8 @@ This is analogous to role switching (`switch-role`) but operates on the organiza
 
 Both produce a fresh JWT with new tokens. The frontend clears all cached data on tenant switch to prevent cross-tenant data leaks.
 
+**Consequence for page access.** Page grants are looked up as `(active role, app, switched tenant)` in `sso_role_configurations`. A role that belongs to the home tenant normally has **no row** on the switched tenant, so a `self` or `team` scope sees "Page Not Available" even when that same role works at home. `system_admin`, `org_admin`, and `global` fall back to full access when the row is missing. To test as another tenant's user, assign **that tenant's role** (Acme Broker is `ac000003-…`, not Sharp SIR Broker `1852b335-…`). Do not copy a home-tenant grant onto the other tenant: Acme's `20260709160000` deletes non-Acme role ids from the Acme tenant on purpose. Roles are baked into the JWT (`available_roles`), so a new assignment appears only after sign-out and sign-in. Two roles can share a display name ("Broker"); the uuid is what the grant lookup uses.
+
 **Tenant roster + branding reads (post-login):** After the 2026-07-07 anon lockdown (C8/C9), apps must load the active-tenant roster (`TenantSwitcher`) and per-tenant branding (`useTenantBranding`, `OrgAdminPanel`) via the **authenticated** SSO client (`ssoAuthedClient` / `ssoClient` with `postgrestAccessToken`), not the anon key. The SSO project verifies the ES256 JWT via its GoTrue standby key; RLS policy `"Users can view own tenant"` (`has_rw_global_permission() OR id = get_my_tenant_id()`) covers system_admin roster reads and own-tenant branding. Pre-login branding is intentionally unavailable (apps fall back to defaults).
 
 ### One Sharp production tenant (all countries)
@@ -476,21 +478,34 @@ CASE (SELECT get_active_scope())
 END
 ```
 
-## `role_configurations` Table
+## `sso_role_configurations` (SSO, canonical)
 
-Each app has this table in its App DB instance. It maps SSO roles to app-specific page and action access.
+One table on the SSO project (`xgubaguglsnokjyudgvc`), shared by every Matrix app. It maps an SSO role to the pages and actions that role may use **in one app, in one tenant**. Apps read it with the signed-in SSO token (`useRoleConfig`); they do not keep a copy in the App DB.
+
+`public.role_configurations` is a compatibility view over this table. Write migrations against `sso_role_configurations`.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | uuid PK | Auto-generated |
-| `role_id` | text | SSO role UUID from `sso_roles.id` |
-| `pages` | text[] | Array of page keys (e.g., `['home', 'listings', 'contacts']`) |
-| `actions` | text[] | Array of action keys (e.g., `['create', 'edit', 'delete']`) |
-| `tenant_id` | uuid | Multi-tenant support |
+| `role_id` | **text** | SSO role UUID stored as text. `sso_roles.id` is uuid — join with `role_id = sso_roles.id::text` |
+| `app_id` | text | OAuth `client_id` (`hrms`, `itsm`, or a client id such as `Dk4cIY3~…`) |
+| `pages` | text[] | Page keys, or `{'*'}` |
+| `actions` | text[] | Action keys, or `{'*'}` |
+| `tenant_id` | uuid | The organization this grant applies to |
+| `created_at` / `updated_at` | timestamptz | |
+
+Unique on `(role_id, app_id, tenant_id)`. Upsert with `ON CONFLICT (role_id, app_id, tenant_id)`.
 
 **Wildcard**: `pages: ['*']` or `actions: ['*']` grants full access.
 
-**Auto-bootstrap**: If the table is empty and the user has admin scope, the app auto-inserts the current role with `['*']` for both pages and actions. Once any config exists, strict mode applies.
+**No row is not "still loading".** After a successful read:
+
+- `system_admin`, `org_admin`, and `global` with no row for the active role fall back to `['*']` / `['*']`.
+- Every other scope (`self`, `team`) falls through to `NO_ACCESS`: empty pages, and `ProtectedRoute` shows "Page Not Available".
+
+A failed or pending read is a different screen ("Couldn't verify your permissions"). See [ADR-045](../architecture/decisions/ADR-045.md) and [new-app-auth-troubleshooting.md](new-app-auth-troubleshooting.md) § 6.
+
+**Retired coarse keys.** Grants stored before 2026-09-16 may still say `home` or `management`. MSA expands those on read (`LEGACY_PAGE_KEY_COVERAGE` in `src/config/pages.ts`) and does not treat the coarse key itself as a page. `home` covers `my-day`, `calendar`, `email`, `follow-ups`, `offers`, `contacts`. It does **not** cover `pipeline` or `listings`. `management` covers `dashboard`, `agents`, `reports`, `lead-campaigns`. New grants should store the granular keys.
 
 ## Platform-Standard Page Keys
 
@@ -569,7 +584,22 @@ App DB project: `ycbwgnihbrqammkgngum`. Config store: SSO `sso_role_configuratio
 | Call Centre / Lead Qualifier | team | home, profile | create, edit |
 | Broker / Senior Broker | self | home, profile | create, edit |
 
-**Section-level page keys (2026-07-09).** The sidebar is split into sections so
+This table is **Qobrix RLS** (`yeBljGGV…`). Matrix Sales Automation (`Dk4cIY3~…`, the same product at `/msa/`) stopped using these coarse keys on 2026-09-16. Its sidebar checks one key per page:
+
+| Page key | Sidebar |
+|----------|---------|
+| `my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`, `listings` | Agent View |
+| `leads`, `lead-campaigns` | Marketing View |
+| `dashboard`, `approvals`, `invoices`, `analytics`, `agents`, `reports` | Management View |
+| `profile` | Preferences |
+| `trash`, `settings` | Administration |
+| `build-status`, `sales-methodology` | About — always visible, not gated |
+
+A stored `home` still opens the Agent View pages listed under the retired-key note above, except Pipeline and Listings, which need their own keys. Sharp SIR sales roles on MSA hold `['*']` (see below), so the split does not change what they see.
+
+**Acme Broker / Senior Broker differ by app.** On Qobrix RLS they stay `home, profile` / `create, edit` (the row above). On MSA they hold the granular daily set from `20261005160000`: `my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`, `listings`, `leads`, `profile`, with `create` / `edit`. Management, campaigns, and Administration stay off.
+
+**Section-level page keys (2026-07-09, Qobrix RLS).** The sidebar is split into sections so
 managers and individual contributors can be gated separately:
 
 | Page key | Sidebar section / items |
@@ -581,11 +611,7 @@ managers and individual contributors can be gated separately:
 | `ad-employees` | Employees |
 | `design-showcase`, `settings`, `profile` | template / admin / account |
 
-Both Qobrix apps share this taxonomy (RLS `yeBljGGVpyC96RljEDov8n-td2I52cgX`,
-v1.0 `Dk4cIY3~VvwYYgFIU.2gCdAfewWb34AZ`). Only team-managing roles receive
-`management`; ICs keep Agent Workspace only. Listings catalog visibility is L2
-(RLS), not L1 — see [ADR-036](../architecture/decisions/ADR-036.md).
-Migration: `20260709170000_qobrix_section_page_keys.sql`.
+This coarse taxonomy is what **Qobrix RLS** still stores (`yeBljGGVpyC96RljEDov8n-td2I52cgX`). MSA (`Dk4cIY3~VvwYYgFIU.2gCdAfewWb34AZ`) reads the granular keys in the table above; a leftover `home` / `management` grant is expanded, not matched as a page. Only team-managing roles receive `management`; ICs keep Agent Workspace only. Listings catalog visibility is L2 (RLS), not L1 — see [ADR-036](../architecture/decisions/ADR-036.md). Migration: `20260709170000_qobrix_section_page_keys.sql`.
 
 **Sharp SIR production (v1.0 / MSA staging).** Acme UAT keeps the stricter Area Manager
 page list above. Sharp SIR sales roles match Broker on MSA
@@ -607,7 +633,10 @@ with no row is `NO_ACCESS`, which is the "Page Not Available" wall.
 `apps_allowed` and grants the current granular broker pages
 (`my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`,
 `listings`, `leads`, `profile`) with `create` / `edit`. Management, campaigns,
-and Administration stay off.
+and Administration stay off. To try that grant, the signed-in account must hold
+the Acme Broker role itself. Switching the organization to Acme while the active
+role is still Sharp SIR Broker finds no row — that is the wall, not a missing
+MSA deploy.
 
 **Team membership is required for management visibility (MSA / Qobrix).** Granting
 a role + `apps_allowed` is not enough. JWT `team_ids` is built from
@@ -675,21 +704,21 @@ Ticket visibility is L2: self sees own tickets; team sees own/assigned + `reques
 ### Add a New Role
 
 1. Insert into `sso_roles` via SSO Console or `admin-roles` Edge Function
-2. Assign to users via `user_role_assignments`
-3. Configure page/action access in each app's `role_configurations` table
+2. Assign to users via `sso_user_role_assignments` (`user_role_assignments` is a view of it)
+3. Configure page/action access in SSO `sso_role_configurations` for that role, app, and tenant
 
 ### Add a New Page Key
 
 1. Add the page key to the app's `RoleConfigPanel.tsx` → `PAGE_GROUPS` array
 2. Add matching `pageKey` to sidebar items in `AppSidebar.tsx`
 3. Add `requiredPage` to the route's `ProtectedRoute` wrapper
-4. Configure which roles see this page in `role_configurations`
+4. Configure which roles see this page in SSO `sso_role_configurations`
 
 ### Add a New Action Key
 
 1. Add the action key to the app's `RoleConfigPanel.tsx` → `ALL_ACTIONS` array
 2. Use `canPerformAction('action-key')` in component logic
-3. Configure which roles can perform this action in `role_configurations`
+3. Configure which roles can perform this action in SSO `sso_role_configurations`
 
 ## Delegated minting for chat agents (ADR-032)
 
@@ -1006,3 +1035,28 @@ WHERE table_schema='public' AND privilege_type='TRUNCATE'
 | App catalog with per-app RESO resource access | [app-catalog.md](app-catalog.md) |
 | Full ecosystem architecture | [ecosystem-architecture.md](ecosystem-architecture.md) |
 | Compliance and data protection | [compliance.md](compliance.md) |
+| Signed in, but a page or the app is blocked | [new-app-auth-troubleshooting.md](new-app-auth-troubleshooting.md) § 6 |
+
+### SSO tables an agent should query
+
+Live project `xgubaguglsnokjyudgvc`. Write the base table. The short name is a compatibility view.
+
+| Need | Base table | Do not treat as the store |
+|------|------------|---------------------------|
+| Page and action grants | `sso_role_configurations` | `role_configurations` (view) |
+| Who holds a role | `sso_user_role_assignments` | `user_role_assignments` (view) |
+| Teams | `sso_user_groups`, `sso_user_group_memberships` (`is_home_team` marks the home team — leave it unless the task is to change home team) | — |
+| The person | `auth.users` (email). There is no `sso_users` | — |
+
+`sso_role_configurations.role_id` is **text**. `sso_roles.id` and `sso_user_role_assignments.role_id` are **uuid**. Join with `::text` or the query fails with `operator does not exist: text = uuid`.
+
+**Applying an SSO migration.** `supabase db push` from this host will also try every local file the ledger does not list, including unrelated drafts. Apply the one file through the management query endpoint, then record it:
+
+```bash
+export SUPABASE_ACCESS_TOKEN=$(cat ~/.supabase/access-token)
+# POST the migration SQL to
+# https://api.supabase.com/v1/projects/xgubaguglsnokjyudgvc/database/query
+# body: {"query":"<sql>"}
+```
+
+Then insert `supabase_migrations.schema_migrations` (`version`, `name`, `statements`) for that version, SELECT the rows you meant to change, and commit the file under `matrix-platform-foundation/supabase/sso/migrations/`. The live database is the source of truth if the file and the ledger disagree.

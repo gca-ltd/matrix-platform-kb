@@ -258,7 +258,7 @@ lookup with no signature check — KB gap H4, closed).
 
 **Token verification order**: Same as `switch-role` (ES256 → app HS256 → SSO HS256 → opaque lookup).
 
-**Side effects**: Persists `tenant_id` to `user_metadata`. JWT `organization`, `uoi`, and `org_name` claims reflect the new tenant. Role/scope/CRUD remain unchanged.
+**Side effects**: Persists `tenant_id` to `user_metadata`. JWT `organization`, `uoi`, and `org_name` claims reflect the new tenant. Role/scope/CRUD remain unchanged. Page grants do not travel with the role: the app looks up `(active role, app, new tenant)`, so a home-tenant role on the switched tenant has no pages unless its scope falls back to full access. See [security-model.md](security-model.md) § Tenant Switching, "Consequence for page access".
 
 **Relationship to `switch-role`**: Role switching changes *what you can do* (scope + CRUD). Tenant switching changes *which organization's data you see* (cross-tenant context for platform admins).
 
