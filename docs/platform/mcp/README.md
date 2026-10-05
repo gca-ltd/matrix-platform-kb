@@ -116,6 +116,8 @@ Transport is Streamable HTTP (MCP 2025-11-25).
 | C-18 | Persist `initialize.instructions` and inject them as [agent-guidance.md](agent-guidance.md) describes. | MUST |
 | C-19 | For `oauth_user`, a chat client exposes a synthetic `<slug>__connect` tool. Its result is the one-time authorize URL in a private chat, and a "use a private chat" sentence in a group chat. It is not a remote `*_sign_in` tool. | MUST |
 
+Digital Employees finds a tool in steps: rank the server, then its tools, then load a schema, then call. Only tools above the relevance floor are loaded (see [performance.md](../performance.md) and [ADR-060](../../architecture/decisions/ADR-060.md)). A search hit is callable on the next step. JSON results accept an optional `fields` list of dotted paths. A tool stays disabled until an Allow or Ask policy enables it (`mcp_tool_defaults`, `mcp_tool_policies`).
+
 ## Profile choices beyond the spec
 
 The profile follows MCP 2025-11-25. These rows are deliberate differences, each named so a review can see them.

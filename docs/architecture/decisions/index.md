@@ -64,3 +64,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-056](ADR-056.md) | Tenant-bound cross-broker shortlist visibility (narrow SECURITY DEFINER, no service-harvested PII cache) | Accepted |
 | [ADR-058](ADR-058.md) | MSA MCP: one server, user's own SSO tokens. Signed-header path superseded in part by ADR-059 | Accepted |
 | [ADR-059](ADR-059.md) | Matrix MCP Profile: auth types only (`none`, `api_key`, `oauth_user`, `oauth_service`); custom auth headers retired | Accepted |
+| [ADR-060](ADR-060.md) | Progressive tool discovery in Digital Employees: server, then tools, then a direct call | Accepted |

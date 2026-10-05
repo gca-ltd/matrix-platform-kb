@@ -107,8 +107,12 @@ a no-op and still returns 204. Caller directory profiles stay per user
 
 **Relevance floors.** Knowledge hits below cosine 0.3 are dropped unless
 `keyword_hit` is true (keyword-only RPC rows report similarity 0). Tool
-promotion uses `score > 0` until baseline scores in `prep.topToolScores` justify
-raising `TOOL_PROMOTE_MIN_SCORE`.
+promotion loads a description when its score is at least 0.25
+(`TOOL_PROMOTE_MIN_SCORE`). That floor comes from `prep.topToolScores` on
+3–5 Oct 2026: useful tools clustered around 0.34–0.52, and the tail that
+always filled the 12 slots sat at 0.14–0.18. Promotion also stops at the
+first gap of 0.12 (`TOOL_SCORE_GAP`). Tools already used in the conversation
+still load.
 
 **Config epoch.** `tenant_config_epoch` bumps on real config edits (employees,
 channels, MCP policies/tools/servers, platform prompts, insight catalogue,
@@ -125,24 +129,39 @@ a real duration; each tool hop records its hop number, result byte count, and
 p50/p95 over a rolling seven-day window, and report no-tool and tool turns
 separately before changing model or prompt defaults.
 
-A large catalogue does not all go into the model call. The turn pre-selects
-tools before the loop: up to 5 tools already used in the conversation, plus
-the 6–8 whose descriptions are closest to the user message, capped at 12
-eager tools. The query embedding for that ranking is computed whenever
-knowledge, memory, or a deferred catalogue may be used, including when
-retrieval itself is off. The rest stay deferred behind `tool_search`, which
-returns input schemas so a hit can be invoked without a separate describe hop.
-The guardrail is a drop in discovery hops per reply.
+A large catalogue does not all go into the model call. The turn ranks server
+cards first (`rank_employee_servers`), then ranks tools only inside the
+servers that clear the floor. It loads up to 5 tools already used in the
+conversation, plus the closest tools that clear the floor and the score gap,
+capped at 12. The ranking text is the latest user message, the head of the
+previous reply, and the names of recently used tools. That embedding is
+computed whenever knowledge, memory, or a deferred catalogue may be used,
+including when retrieval itself is off. Until server cards exist, every
+allowed server is ranked, which is the previous behaviour.
 
-Tool descriptions are embedded with `openai/text-embedding-3-small` (1536
-dimensions), the same model as knowledge, and stored on `mcp_tools` with a
-text hash. Ranking runs in SQL (`rank_employee_tools`, service role only).
-The RPC returns neighbours; the turn still drops any tool the employee is
-not allowed to call. Writes of `embedding` and `embedding_text_hash` do not
-bump `tenant_config_epoch`. A cold isolate ranks from SQL. The in-memory
-map is only the fallback when that RPC returns null. Discovery and turns
-fill missing embeddings after the response, and skip rows whose text hash
-is unchanged.
+Compatible providers register every allowed tool and send only the loaded
+set (`activeTools`). A `tool_search` hit is appended to that set for the
+next step, so the model calls it directly. The native Messages API sends
+every definition, marks the ones that are not loaded with `defer_loading`,
+and expands `tool_reference` blocks from search without rewriting the cached
+prefix. `tool_invoke` remains the fallback. JSON results accept an optional
+`fields` list of dotted paths; a trimmed result says so.
+
+`prep` records `selectionRecall` (executed MCP tools that were pre-loaded,
+divided by all executed MCP tools), `discoveryHops`, and `schemaChars`.
+Compare those, plus `cached_input_tokens` and `first_hop_ms`, before
+changing the floor. See ADR-060.
+
+Tool and server cards are embedded with `openai/text-embedding-3-small`
+(1536 dimensions), the same model as knowledge, and stored on `mcp_tools`
+and `mcp_servers` with a text hash. A server card is the name, instructions,
+usage notes, and tool names. Ranking runs in SQL (`rank_employee_tools`,
+`rank_employee_servers`, service role only). The RPC returns neighbours; the
+turn still drops any tool the employee is not allowed to call. Writes of
+`embedding` and `embedding_text_hash` do not bump `tenant_config_epoch`.
+A cold isolate ranks from SQL. The in-memory map is only the fallback when
+that RPC returns null. Discovery and turns fill missing embeddings after
+the response, and skip rows whose text hash is unchanged.
 
 The chat reply follows Reasoning effort. `auto` sends nothing. Any other
 level is sent for every model; the request shape comes from that model's
