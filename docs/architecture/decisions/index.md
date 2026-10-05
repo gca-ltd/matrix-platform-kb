@@ -58,7 +58,7 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-050](ADR-050.md) | Retire Qobrix service account — MSA thin client under caller tokens | Accepted |
 | [ADR-051](ADR-051.md) | Live Qobrix read for CRM lists — supersede ADR-050 D1 read half | Accepted |
 | [ADR-052](ADR-052.md) | Two-source virtual dataset — Qobrix + App DB merge contract | Accepted |
-| [ADR-053](ADR-053.md) | In-app build-status surface — repo Markdown, structure-agnostic renderer, `alwaysVisible` nav | Accepted |
+| [ADR-053](ADR-053.md) | In-app build-status surface — repo Markdown, structure-agnostic renderer, `alwaysVisible` nav. D1 and D2 superseded for MSA (2026-10-05); D3 stands as an Outline link | Accepted |
 | [ADR-054](ADR-054.md) | Pipeline board visibility prefs — `saved_here_only` + Won/Lost column toggle | Accepted |
 | [ADR-055](ADR-055.md) | Immutable github-watcher releases + atomic symlink publish + classified timeouts | Accepted |
 | [ADR-056](ADR-056.md) | Tenant-bound cross-broker shortlist visibility (narrow SECURITY DEFINER, no service-harvested PII cache) | Accepted |
