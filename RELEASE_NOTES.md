@@ -13,7 +13,7 @@ date: 2026-08-17
 ## Unreleased — 2026-10-05
 
 - The Acme individual-contributor role is named Broker at Acme, so a page-access check does not treat it as Sharp SIR Broker. The user-guide screenshots use a re-seedable Acme demo dataset at `matrix-sales-automation/scripts/seed/acme-demo/`, owned by Anna Ioannou.
-- MSA Build status and Sales methodology now live in the Outline user guide. ADR-053 keeps the always-visible About menu; the in-app Markdown viewer is retired for MSA, and those menu items open Outline.
+- MSA What's new and Sales methodology now live in the Outline user guide. The About menu item is named What's new and opens that page; the old Build status record is folded into it. ADR-053 keeps the always-visible About menu, and the in-app Markdown viewer stays retired for MSA.
 
 ## Unreleased — 2026-09-30
 
