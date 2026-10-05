@@ -599,6 +599,16 @@ wildcard originally from `20260803120000_sir_area_manager_qobrix_v10_wildcard.sq
 Team-scope roles without a config row get `NO_ACCESS` in `useRoleConfig` — the
 wildcard grant is required for those roles to pass `ProtectedRoute`.
 
+**Acme UAT Broker / Senior Broker on MSA** (`ac000003`, `ac000004`, tenant
+`025a9ba8-2b99-42a1-b6aa-cc573cbef1b5`). `20260709160000` deleted their MSA
+rows because those roles were entitled only to Qobrix RLS; a self-scoped role
+with no row is `NO_ACCESS`, which is the "Page Not Available" wall.
+`20261005160000_acme_broker_msa_access.sql` puts the client id back on
+`apps_allowed` and grants the current granular broker pages
+(`my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`,
+`listings`, `leads`, `profile`) with `create` / `edit`. Management, campaigns,
+and Administration stay off.
+
 **Team membership is required for management visibility (MSA / Qobrix).** Granting
 a role + `apps_allowed` is not enough. JWT `team_ids` is built from
 `sso_user_group_memberships` by `oauth-token` / `oauth-userinfo`. New MSA rows are
