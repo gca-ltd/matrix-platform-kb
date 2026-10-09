@@ -30,6 +30,8 @@
 | 11b | Observability & Monitoring | **Nyx Monitoring** | Infrastructure | CORE Team (ops / leadership) |
 
 > **Matrix MLS** (`gca-ltd/matrix-mls`, clone `/home/bitnami/matrix-mls-staging-main`) is the Lovable-managed CDL admin SPA that drives `mls-sync` / `mls-sync-orchestrator` / `listings-search`. It's the operator UI for the 5-stage ingestion pipeline + the 8 RESO resource toggles + the source-of-record / lifecycle taxonomy + the data-stewardship `locked_fields` surface. See [`cdl-schema.md`](../data-models/cdl-schema.md). Staging path: `https://intranet.sharpsir.group/mls-staging-main/` (github-watcher on push to `main`). `sharpsir-group/matrix-atlas-mls` was renamed to `matrix-atlas-mls-superseded` and archived; `https://intranet.sharpsir.group/mls/` still serves that last build and is no longer deployed.
+>
+> **Listing attributes use Qobrix names, not RESO names.** `listings`, `developments` and `development_units` on app DB `wckwfbbqiupvallmhqbu` store every Qobrix Property and Project field, including `custom_*`, under the Qobrix field name. This diverges from [`app-template.md`](app-template.md) and [`reso-canonical-schema.md`](../data-models/reso-canonical-schema.md), on purpose, so the columns match MSA's Qobrix-compatible tables while Qobrix is still the Cyprus source. CDL `properties` is unchanged and stays RESO. The Qobrix-to-column and Qobrix-to-RESO map is `matrix-mls` `docs/qobrix/field-map.md`.
 
 ### In Progress
 
