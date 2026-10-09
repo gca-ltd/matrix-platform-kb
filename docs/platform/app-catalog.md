@@ -6,7 +6,7 @@
 > **Development model**: Most Matrix business apps are **Lovable-managed projects** — changes flow through structured Lovable prompts, not direct code edits. SSO/CDL Edge Functions and database migrations are managed directly. See [app-template.md — Lovable-Managed Apps](app-template.md#lovable-managed-apps--development--maintenance-model) for details.
 >
 > **Exceptions (Cursor-managed, not Lovable-linked):**
-> - `matrix-mls` (app DB `wckwfbbqiupvallmhqbu`) — detached from Lovable after the CDL cutover (ADR-013/014). Changes go through Cursor + git directly.
+> - `sharpsir-group/matrix-mls` at `/home/bitnami/matrix-mls` (app DB `wckwfbbqiupvallmhqbu`) — detached from Lovable after the CDL cutover (ADR-013/014). Changes go through Cursor + git directly. This is not `gca-ltd/matrix-mls`.
 > - `matrix-cdl-studio` — **read-only CDL schema inspector** (retired as a CDL *write* surface per ADR-012/013; see `matrix-cdl-studio/RETIREMENT.md` if present). Auto-deployed by `github-watcher` on push to `main` (config key `sharpsir-group/matrix-cdl-studio`, secret env `WEBHOOK_SECRET_CDL_STUDIO`, Apache path `/cdl-studio/`). Production URL: `https://intranet.sharpsir.group/cdl-studio/`. OAuth client `pfyRzrbf1jkSVcPBW9E0uvWk2E80AH_5` — ensure redirect URI `https://intranet.sharpsir.group/cdl-studio/auth/callback` is registered (migration `20260622230000`). **RESO DD audit:** the Data Model Studio applies the platform **4-tier governance model** (canonical RESO · `x_` extension · project-flavour · infrastructure) from [`reso-crm-opportunity-lifecycle-model.md`](../data-models/reso-crm-opportunity-lifecycle-model.md) §4. Tier 1 tables are scored on **column fidelity** (present cols vs assigned RESO resource) and **resource coverage** (materialized vs full canonical field set from `reso_field_descriptions` / `reso-dd-kb`). Tier 3 tables (`referral`, `document`, `showing_participation`) and Tier 4 infra (`mls_*`, `field_mappings`, …) are labelled explicitly — not penalized as RESO drift. Corpus source: CDL `reso_field_descriptions` (seeded from [`reso-dd-kb`](../data-models/reso-dd-kb/USAGE.md)). See also [`cdl-schema.md`](../data-models/cdl-schema.md#cdl-studio-reso-dd-audit).
 
 ## Delivery Status Summary
@@ -26,10 +26,10 @@
 | 9 | AI Assistant for Web Channel | **AI Web Assistant** | AI Service | Website visitors |
 | 10 | AI Assistant for Internal Support | **Zoe AI Assistant** | AI Service | All internal users (multi-role) |
 | 11 | AI Assistant for Blog Generation | **AI Blog Generator** | AI Service | Marketing, Content Managers |
-| 11a | MLS Data Studio (CDL admin) | **Matrix Atlas (`matrix-atlas-mls`)** | App (CDL admin, served at `/mls`) | Data ops, system_admin / org_admin |
+| 11a | MLS Data Studio (CDL admin) | **Matrix MLS (`gca-ltd/matrix-mls`)** | App (CDL admin, staging at `/mls-staging-main`) | Data ops, system_admin / org_admin |
 | 11b | Observability & Monitoring | **Nyx Monitoring** | Infrastructure | CORE Team (ops / leadership) |
 
-> **Atlas** is the Lovable-managed CDL admin SPA that drives `mls-sync` / `mls-sync-orchestrator` / `listings-search`. It's the operator UI for the 5-stage ingestion pipeline + the 8 RESO resource toggles + the source-of-record / lifecycle taxonomy + the data-stewardship `locked_fields` surface. See [`cdl-schema.md`](../data-models/cdl-schema.md) and the matrix-atlas-mls repo. Production path: `https://intranet.sharpsir.group/mls/`.
+> **Matrix MLS** (`gca-ltd/matrix-mls`, clone `/home/bitnami/matrix-mls-staging-main`) is the Lovable-managed CDL admin SPA that drives `mls-sync` / `mls-sync-orchestrator` / `listings-search`. It's the operator UI for the 5-stage ingestion pipeline + the 8 RESO resource toggles + the source-of-record / lifecycle taxonomy + the data-stewardship `locked_fields` surface. See [`cdl-schema.md`](../data-models/cdl-schema.md). Staging path: `https://intranet.sharpsir.group/mls-staging-main/` (github-watcher on push to `main`). `sharpsir-group/matrix-atlas-mls` was renamed to `matrix-atlas-mls-superseded` and archived; `https://intranet.sharpsir.group/mls/` still serves that last build and is no longer deployed.
 
 ### In Progress
 

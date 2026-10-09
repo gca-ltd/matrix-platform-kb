@@ -16,7 +16,7 @@ Authorized agents: you **may** read and use this knowledge base solely to assist
 
 ## Platform Identity
 
-**Sharp Matrix** is the **technology platform** powering **Sharp SIR** (Sharp Sotheby's International Realty), a luxury real estate brokerage and SIR-network affiliate currently operating in **Cyprus**, **Hungary**, and **Kazakhstan** (more markets planned). Four module families share the CDL: **CRM** (`matrix-pipeline`, `matrix-comms`, `matrix-client-connect`), **FM** (financial-entries, commissions, deal closings), **HR** (`matrix-hrms`), **MLS** (`matrix-atlas-mls`, `matrix-mls-2-0`, `matrix-cy-website`).
+**Sharp Matrix** is the **technology platform** powering **Sharp SIR** (Sharp Sotheby's International Realty), a luxury real estate brokerage and SIR-network affiliate currently operating in **Cyprus**, **Hungary**, and **Kazakhstan** (more markets planned). Four module families share the CDL: **CRM** (`matrix-pipeline`, `matrix-comms`, `matrix-client-connect`), **FM** (financial-entries, commissions, deal closings), **HR** (`matrix-hrms`), **MLS** (`gca-ltd/matrix-mls`, formerly `matrix-atlas-mls`, plus `matrix-mls-2-0`, `matrix-cy-website`).
 
 **Built with**: Lovable + Supabase (CDL / system of record) + Databricks (DWH / ETL).
 **Practical data model**: RESO DD 2.0 in storage (snake_case canonical names); Dash names projected via `v_dash_*` views.
@@ -153,7 +153,7 @@ Start at `docs/zoe-ai-assistant-kb/index.md`. For end-user questions, navigate t
 | `/home/bitnami/matrix-itsm` | React/TS | ITSM (Domain-Specific) — [`gca-ltd/matrix-itsm`](https://github.com/gca-ltd/matrix-itsm) |
 | `/home/bitnami/matrix-fm` | React/TS | Financial Management (Domain-Specific) |
 | `/home/bitnami/matrix-mls` | React/TS | MLS Listing Management (CDL-Connected) — Cursor-managed, see ADR-013 |
-| `/home/bitnami/matrix-atlas-mls` | React/TS | Atlas — MLS Sync admin & Listings Search (CDL-Connected) |
+| `/home/bitnami/matrix-mls-staging-main` | React/TS | Matrix MLS (`gca-ltd/matrix-mls`) — MLS Sync admin & Listings Search, intranet `/mls-staging-main/`. `sharpsir-group/matrix-atlas-mls` is archived as `matrix-atlas-mls-superseded`; `/home/bitnami/matrix-atlas-mls` is history only |
 | `/home/bitnami/mls_2_0` | Python/FastAPI | MLS 2.0 pipeline: Databricks ETL + RESO Web API |
 | `raw/vision/Sharp-Sothebys-International-Realty.pdf` | PDF | 28-slide digital strategy 2026-2028 |
 | `raw/vision/Sarp SIR Platform-2026-02-18-125014.mmd` | Mermaid | Platform ecosystem architecture diagram |
