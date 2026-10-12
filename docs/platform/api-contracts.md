@@ -338,7 +338,7 @@ fallback.
 
 The public contract for other apps remains `converse` (`mxde_` keys) and the MCP servers. The Playground is a different surface: the signed-in person's own inbox, training, approvals, and insights. Those exist only on the SSO-authenticated edge functions (`agent-chat`, `runs-api`, `employees-api`, `platform-api`, `evals-api`, `agent-media`, `agent-render`, `agent-voice-stream`). A host that needs that surface vendors `src/features/de-playground` (see [ADR-061](../architecture/decisions/ADR-061.md)) and sends the user's Matrix SSO JWT. It does not call PostgREST from the page.
 
-Matrix Sales Automation is the first host (`/playground` on `/msa-staging-cdto/`). The menu and the page require the `playground` page key and the Digital Employees client in `allowed_apps`. Training is shown only to admin scopes. Both checks are in the host UI until the edge functions enforce them.
+Matrix Sales Automation is the first host (`/playground` on `/msa-staging-cdto/`). The menu and the page require the `playground` page key. Administrators (`global`, `org_admin`, `system_admin`) pass the application check; everyone else needs the Digital Employees client in `allowed_apps`. Training is shown only to those admin scopes. Both checks are in the host UI until the edge functions enforce them.
 
 The realtime topic `runs:<tenantId>` is a public broadcast of refresh pings. It does not carry messages.
 
