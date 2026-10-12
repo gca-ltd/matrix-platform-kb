@@ -216,6 +216,14 @@ Auto-lock is implemented by `cdl-listing-lifecycle` calling `cdl_lock_field()` o
 
 Phase-1 lands the **schema columns + seed source + audit table** so existing listings keep working unchanged (lifecycle_state mirrors status), and so the lifecycle EF can be added later as a pure write-path addition without a destructive migration. The state-machine enforcement, transition UI, and cron jobs are deferred to the `cdl-listing-lifecycle` follow-up plan.
 
+### Matching search source of record
+
+Matching (Sales Automation) searches by tab, so a broker is never shown two sources as one list.
+
+- **Property and Project.** Qobrix (`legacy-internal`, sunsetting as a write system but still the catalogue being searched) decides which rows match, in what order, and what the total is. When this application already holds a copy of that Qobrix id (`external_qobrix_id`), the copy is shown in the same slot. The copy does not add a row and does not remove one. That is a deliberate divergence from ADR-052's twin-drop rule, which still applies to Contacts: there, a copy that fails the filter removes the row. Here the catalogue has already filtered, and the copy is display only. The copy is read through the viewer's own row security, not through a service account.
+- **Off market.** Properties with no Qobrix id. The same filters run against this application's database, including a map area. There is no Off market tab for projects.
+- **Map area.** One saved filter value: a distance from a place, or a shape drawn with the map's existing tools. It is sent to Qobrix as `DISTANCE_FROM` (metres) or `IN_POLYGON`, and applied the same way on Off market. List, grid, pager and map all show the catalogue's total for that search.
+
 ---
 
 ## 2. Field-level overrides (stewardship)
