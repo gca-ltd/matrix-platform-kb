@@ -70,6 +70,7 @@ See [app-template.md](app-template.md) for full technical details.
 | [mls-datamart.md](mls-datamart.md) | MLS 2.0 data pipeline: sources, Databricks ETL, Supabase CDL sync |
 | [ecosystem-architecture.md](ecosystem-architecture.md) | Full platform architecture: channels, apps, data layer, AI/ML |
 | [app-catalog.md](app-catalog.md) | All apps in the platform: purpose, users, RESO resources consumed |
+| [vendored-modules.md](vendored-modules.md) | Port a Digital Employees feature into another app: byte-identical copy, adapter, page key |
 | [mcp/README.md](mcp/README.md) | Matrix MCP Profile (normative): auth types, routes, copy, tools, flows, conformance |
 | [matrix-mcp-server.md](matrix-mcp-server.md) | Inventory of Matrix tool servers; contract is the MCP profile |
 | [mcp-client.md](mcp-client.md) | Pointer: Digital Employees implements the client half of the MCP profile |
