@@ -8,7 +8,7 @@ Auth is named only by the four auth types in [glossary.md](glossary.md). Custom 
 
 | Role | Reference implementation |
 |---|---|
-| Server with a built-in authorization server | `gca-ltd/matrix-sa-mcp` |
+| Server with a built-in authorization server | `gca-ltd/matrix-sales-automation` (`mcp/server`). Also accepts a Matrix SSO JWT ([ADR-062](../../architecture/decisions/ADR-062.md)). |
 | Server with a separate authorization server | `gca-ltd/qobrix-crm-mcp` + `gca-ltd/qobrix-crm-mcp-oauth` |
 | Client | `gca-ltd/matrix-digital-employees` |
 

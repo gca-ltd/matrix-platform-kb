@@ -32,6 +32,8 @@ Health body:
 
 `version` is the server package version, read from `package.json`. `auth.scopes` lists what the server enforces. The field is `drift` (not `contractDrift`). `auth` is omitted when the scenario is `none` or `api_key`.
 
+The MSA server accepts a bearer that is either an opaque MCP OAuth token or a Matrix SSO JWT. The JWT is checked against the SSO JWKS and an allowlist of `client_id` / `azp` (MSA and Digital Employees). See [ADR-062](../../architecture/decisions/ADR-062.md).
+
 ## Built-in authorization server
 
 Same process, same public origin.

@@ -131,9 +131,9 @@ Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-sear
 
 | Property | Value |
 |---|---|
-| Repo | `gca-ltd/matrix-sa-mcp` |
+| Repo | `gca-ltd/matrix-sales-automation` (`mcp/server`) |
 | URL | `https://intranet.sharpsir.group/msa/mcp` |
-| Auth | `oauth_user` (built-in authorization server). Digital Employees uses `identityProbe` on `msa_whoami` |
-| Data | MSA App DB as the signed-in user. No service role. |
+| Auth | Matrix SSO JWT from MSA or Digital Employees, or MCP OAuth for Claude and Cursor. Digital Employees uses `sso_forward` and falls back to the stored user token when nobody is signed in. |
+| Data | MSA App DB as the signed-in user. No service role. Figures are `SECURITY INVOKER` `kpi_*` functions listed in `mcp/tools.yaml`. |
 
-See [ADR-059](../architecture/decisions/ADR-059.md). ADR-058's signed-header path is superseded. The app repo owns `mcp/contract.json`; the MCP vendors a copy and a nightly job fails when the two diverge.
+See [ADR-062](../architecture/decisions/ADR-062.md). ADR-058's separate repo and vendored contract are retired. ADR-059's four auth types still govern every other server.

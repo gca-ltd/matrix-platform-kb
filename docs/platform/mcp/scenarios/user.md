@@ -54,6 +54,6 @@ node tools/mcp-conformance/probe.mjs https://intranet.sharpsir.group/msa/mcp --s
 
 ## Reference
 
-Server with a built-in authorization server: `gca-ltd/matrix-sa-mcp`.
+Server with a built-in authorization server: `gca-ltd/matrix-sales-automation` (`mcp/server`). A Playground turn may send the caller's Matrix SSO JWT instead of completing this OAuth hop ([ADR-062](../../../architecture/decisions/ADR-062.md)).
 Server with a separate authorization server: `gca-ltd/qobrix-crm-mcp` + `gca-ltd/qobrix-crm-mcp-oauth`.
 Client: `gca-ltd/matrix-digital-employees` (`buildConnectTools` in `supabase/functions/_shared/agent-tools.ts`).

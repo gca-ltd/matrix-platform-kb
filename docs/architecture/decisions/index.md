@@ -67,3 +67,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-059](ADR-059.md) | Matrix MCP Profile: auth types only (`none`, `api_key`, `oauth_user`, `oauth_service`); custom auth headers retired | Accepted |
 | [ADR-060](ADR-060.md) | Progressive tool discovery in Digital Employees: server, then tools, then a direct call | Accepted |
 | [ADR-061](ADR-061.md) | Host the Digital Employees Playground as a vendored module in another Matrix app | Accepted |
+| [ADR-062](ADR-062.md) | A Matrix-owned MCP may accept the caller's Matrix SSO JWT (MSA server lives in the MSA repo) | Accepted |
