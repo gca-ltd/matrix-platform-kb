@@ -2,6 +2,7 @@
 
 > **App name:** ITSM (IT Service & Asset Management)
 > **URL:** [https://intranet.sharpsir.group/itsm/](https://intranet.sharpsir.group/itsm/)
+> **Service levels (15 October 2026):** [Уровни обслуживания](https://iris.sharpsir.group/doc/urovni-obsluzhivaniya-h4SRzyzRl2) for everyone, and [Регламент работы поддержки](https://iris.sharpsir.group/doc/reglament-raboty-podderzhki-lUvvLbow5Y) for L1, L2 and L3, both under [Поддержка Sharp Matrix](https://iris.sharpsir.group/doc/podderzhka-sharp-matrix-Nsx2hoeyg6) in the CDTO Office collection. Quote these pages for response and resolution times. A Teams message or a phone call is not a ticket.
 > **Purpose:** Submit and track IT service requests, manage IT assets, software licenses, vendors, projects, and budgets.
 > **Users:** All internal users (ticket submitters), IT Staff, IT Admins
 
@@ -243,13 +244,13 @@ You see "Access Denied" or "Page Not Available."
 ### For Requesters (All Employees)
 - **Be specific in your title** — "Email not working" is too vague. Try "Outlook not syncing in Matrix Pipeline since Monday."
 - **Always include**: what you were doing, what happened, what you expected, and a screenshot.
-- **Select the right service type** — Incidents are for broken things. Service Requests are for new things.
+- **Select the right service type** — An incident is something that used to work and is now broken. A service request is access, a data fix, or a how-to within what already exists. A change is new or different behaviour. Support sets the final type.
 - **Choose priority honestly** — Urgent is for outages affecting many people. Don't mark a cosmetic issue as Urgent.
 - **Select a related asset** — this is required. If unsure, describe the device in your description and IT will fix the link.
 - **Check before submitting** — search My Requests to see if you already have an open ticket for the same issue.
 
 ### For IT Staff
-- **Respond to Urgent tickets within minutes** — acknowledge receipt even if you can't resolve immediately.
+- **Reply to an Urgent ticket within 30 minutes** — a public reply in the ticket, even if you cannot fix it yet. Assigning the ticket is not a reply.
 - **Document everything in comments** — future tickets for the same asset will benefit from your notes.
 - **Link tickets to assets** — this builds a history for each asset that helps with replacement decisions.
 - **Use the analytics dashboard** — track response times and identify recurring problems that need deeper investigation.
@@ -260,29 +261,33 @@ You see "Access Denied" or "Page Not Available."
 
 | Type | When to Use |
 |------|-------------|
-| **Incident** | Something is broken or not working (e.g., "My email is down") |
-| **Service Request** | You need something new or a change to existing service (e.g., "I need a new laptop") |
-| **Change Request** | A planned change to IT infrastructure (e.g., "Upgrade server memory") |
-| **Problem** | A recurring issue that needs root cause investigation |
+| **Incident** | Something that used to work is broken, even when the fix needs code (e.g., "The Fix button does nothing") |
+| **Service Request** | Access, a data correction, or a how-to within what already exists (e.g., "I need a new laptop") |
+| **Change Request** | New or different behaviour. Assessed within 2 business days; accepted changes ship in the weekly Thursday release (e.g., "Save the email draft") |
+| **Problem** | A recurring cause. Support opens this; users do not |
 
 ## Ticket Priorities and Response Times
 
-| Priority | Response Time | Description |
-|----------|--------------|-------------|
-| **Urgent** | Immediate | Total service outage affecting many users |
-| **High** | Within hours | Major feature broken, no workaround |
-| **Medium** | Within 1 business day | Feature partially broken, workaround exists |
-| **Low** | Within 3 business days | Minor issue, cosmetic, or enhancement |
+Business hours are 09:00–18:00, Monday to Friday, local office time, excluding holidays. A ticket raised outside those hours starts at 09:00 on the next business day. The clock pauses while support waits for the user. Support sets the final priority from impact and urgency. These targets match the [service levels](https://iris.sharpsir.group/doc/urovni-obsluzhivaniya-h4SRzyzRl2) published on 15 October 2026.
+
+| Priority | Reply | Fix or workaround | When |
+|----------|-------|-------------------|------|
+| **Urgent (P1)** | 30 minutes | 4 business hours | Many people cannot work |
+| **High (P2)** | 1 business hour | 1 business day | A team cannot work, and there is no workaround |
+| **Medium (P3)** | 4 business hours | 3 business days | A workaround exists, or one person is blocked |
+| **Low (P4)** | 1 business day | 5 business days | It can wait |
+
+A change request is not on this timer. Reply within 1 business day. Decide (accept, reject, or schedule) within 2 business days. Accepted changes ship in the weekly Thursday release.
 
 ## Ticket Statuses
 
 | Status | Meaning |
 |--------|---------|
-| **Open** | Ticket has been submitted and is awaiting assignment |
-| **In Progress** | An IT staff member is working on it |
-| **Pending** | Ticket is waiting for a response (from user, vendor, or third party) |
-| **Resolved** | The issue has been fixed |
-| **Closed** | Ticket is complete and archived |
+| **Open** | New. Only at 1st line, and only before the first reply to the user |
+| **In Progress** | Someone is working on it. A fix that exists only on staging stays here |
+| **Pending** | Waiting for the user, a vendor, or an approval. The clock is paused |
+| **Resolved** | The fix is live in production, or the question has been answered. The user gets a short note of what was done |
+| **Closed** | The user confirmed, or 3 business days passed with no reply. A reply reopens it |
 
 ---
 
@@ -310,7 +315,7 @@ A: IT staff can see all service requests. Other employees can only see their own
 A: Go to My Requests in the sidebar. Your request shows its current status (Open, In Progress, Pending, Resolved, Closed).
 
 **Q: How long will it take to resolve my request?**
-A: Resolution time depends on the priority level. Urgent issues are addressed immediately; low-priority items may take up to 3 business days. You will receive notifications when your ticket is updated.
+A: It depends on priority, in business hours (09:00–18:00, Monday to Friday, local office time). Urgent: a reply within 30 minutes and a fix or workaround within 4 business hours. High: a reply within 1 business hour and a fix within 1 business day. Medium: a reply within 4 business hours and a fix within 3 business days. Low: a reply within 1 business day and a fix within 5 business days. A change is decided within 2 business days and, if accepted, ships in the weekly Thursday release. Full wording: [Уровни обслуживания](https://iris.sharpsir.group/doc/urovni-obsluzhivaniya-h4SRzyzRl2).
 
 ### Submitting Requests
 
