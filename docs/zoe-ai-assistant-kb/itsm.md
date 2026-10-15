@@ -48,16 +48,15 @@ The home page shows:
 
 This is where you submit and track your own IT requests.
 
-1. Click **My Requests** in the sidebar.
-2. To create a new request, click **New Request**.
-3. Fill in the form:
+1. Click **Service Catalog** in the sidebar and pick the matching item. If none matches, choose **Free-form request** (`/itsm/servicedesk/new`).
+2. Fill in the form:
    - **Title** (minimum 5 characters) — describe the issue briefly
    - **Description** (minimum 10 characters) — explain the problem or request in detail
    - **Priority** — Low, Medium, High, or Urgent
-   - **Service Type** — Incident, Service Request, Change Request, or Problem
+   - **Service Type** — Service Request or Change Request (the only two types)
    - **Related Asset** — you must select at least one IT asset related to the request
-4. Click **Submit**.
-5. Your request appears in the My Requests list with its current status.
+3. Click **Submit Ticket**.
+4. Your request appears in **My Requests** with its current status.
 
 ### Service Desk Queue (IT Staff)
 
@@ -169,30 +168,30 @@ You don't need to figure out ITSM alone. Zoe (the AI assistant) can help you cre
 ### How It Works
 1. **Tell Zoe your problem.** For example: "My laptop screen is flickering" or "I need access to Matrix FM."
 2. **Zoe suggests the right request type:**
-   - Something broken? → **Incident**
-   - Need something new? → **Service Request**
-   - Planned IT change? → **Change Request**
-   - Recurring issue? → **Problem**
+   - Something that used to work is broken? → **Service Request**
+   - Access, a data fix, equipment, a license, or a how-to? → **Service Request**
+   - New or different behaviour? → **Change Request**
+   - Broken again? → a new **Service Request** that quotes the earlier ticket number
 3. **Zoe suggests a priority:**
    - Total outage for many users → **Urgent**
    - Can't do your job, no workaround → **High**
    - Inconvenient but can work around it → **Medium**
    - Minor or cosmetic → **Low**
 4. **Zoe reminds you what to include:** app name, error message, screenshot, and which asset is affected.
-5. **Zoe directs you to ITSM:** Go to My Requests → New Request, fill in the form, and submit.
+5. **Zoe directs you to ITSM:** Go to Service Catalog, pick the matching item or **Free-form request**, fill in the form, and submit.
 
 ### Common Requests Zoe Can Help You Draft
 
 | Your situation | Service Type | Priority | Example title |
 |---------------|-------------|----------|---------------|
-| App shows blank page | Incident | High | "Meeting Hub loads blank page after login" |
+| App shows blank page | Service Request | High | "Meeting Hub loads blank page after login" |
 | Need a new laptop | Service Request | Medium | "Request new laptop for new hire Maria P." |
 | Software license needed | Service Request | Medium | "Need Adobe Acrobat Pro license for contracts" |
-| Email not working | Incident | High | "Outlook emails not syncing in Matrix Pipeline" |
-| Printer broken | Incident | Medium | "Office printer on 3rd floor not printing" |
+| Email not working | Service Request | High | "Outlook emails not syncing in Matrix Pipeline" |
+| Printer broken | Service Request | Medium | "Office printer on 3rd floor not printing" |
 | Request VPN access | Service Request | Low | "VPN access for remote work" |
-| Recurring app crash | Problem | Medium | "Client Connect crashes weekly during bulk export" |
-| Server upgrade planned | Change Request | Low | "Upgrade staging server to latest OS" |
+| Same app crash again | Service Request | Medium | "Client Connect crashes during bulk export again (see SR000xxx)" |
+| New report column needed | Change Request | Low | "Add a 'Source' column to the leads export" |
 
 ---
 
@@ -204,15 +203,15 @@ You don't need to figure out ITSM alone. Zoe (the AI assistant) can help you cre
 You open Meeting Hub and see a blank page or an error message.
 1. Try refreshing the page. If that does not help, press Ctrl+Shift+Delete, select "Cached images and files", and click Clear.
 2. If the problem persists, ask Zoe for help.
-3. If Zoe can't fix it, go to ITSM → My Requests → New Request.
+3. If Zoe can't fix it, go to ITSM → Service Catalog → Free-form request.
 4. Title: "Meeting Hub shows blank page after login"
 5. Description: Explain what you see, what browser you use, and attach a screenshot.
-6. Service Type: Incident. Priority: High (if you can't work).
+6. Service Type: Service Request. Priority: High (if you can't work).
 7. Related Asset: Select your laptop or the relevant system.
 
 **Use Case 2: "I need new equipment or software"**
 You need a new monitor or a software license.
-1. Go to ITSM → My Requests → New Request.
+1. Go to ITSM → Service Catalog and pick the equipment or software item.
 2. Title: "Request second monitor for desk 4B"
 3. Service Type: Service Request. Priority: Low or Medium.
 4. Description: Explain why you need it and any specifications.
@@ -221,7 +220,7 @@ You need a new monitor or a software license.
 You see "Access Denied" or "Page Not Available."
 1. First, check with your Admin — it may be a permissions issue.
 2. If it's a technical error (not permissions), submit an ITSM request.
-3. Service Type: Incident. Include the exact URL and error message.
+3. Service Type: Service Request. Include the exact URL and error message.
 
 ### For IT Staff
 
@@ -244,7 +243,7 @@ You see "Access Denied" or "Page Not Available."
 ### For Requesters (All Employees)
 - **Be specific in your title** — "Email not working" is too vague. Try "Outlook not syncing in Matrix Pipeline since Monday."
 - **Always include**: what you were doing, what happened, what you expected, and a screenshot.
-- **Select the right service type** — An incident is something that used to work and is now broken. A service request is access, a data fix, or a how-to within what already exists. A change is new or different behaviour. Support sets the final type.
+- **Select the right service type** — ITSM has two types. A service request covers something that used to work and is now broken, plus access, a data fix, or a how-to within what already exists. A change request is new or different behaviour. Support sets the final type.
 - **Choose priority honestly** — Urgent is for outages affecting many people. Don't mark a cosmetic issue as Urgent.
 - **Select a related asset** — this is required. If unsure, describe the device in your description and IT will fix the link.
 - **Check before submitting** — search My Requests to see if you already have an open ticket for the same issue.
@@ -261,10 +260,10 @@ You see "Access Denied" or "Page Not Available."
 
 | Type | When to Use |
 |------|-------------|
-| **Incident** | Something that used to work is broken, even when the fix needs code (e.g., "A report that opened yesterday now shows an error") |
-| **Service Request** | Access, a data correction, or a how-to within what already exists (e.g., "I need a new laptop") |
+| **Service Request** | Something that used to work is broken, even when the fix needs code (e.g., "A report that opened yesterday now shows an error"). Also access, a data correction, or a how-to within what already exists (e.g., "I need a new laptop") |
 | **Change Request** | New or different behaviour. Assessed within 2 business days; accepted changes ship in the weekly Thursday release (e.g., "Export this report to a file") |
-| **Problem** | A recurring cause. Support opens this; users do not |
+
+If the same thing breaks again, raise a new service request and quote the earlier ticket number. Support links them and records the cause in the active ticket.
 
 ## Ticket Priorities and Response Times
 
@@ -411,7 +410,7 @@ Report the issue using the standard incident template — see [How to Report an 
 
 | Task | Where to Go |
 |------|-------------|
-| Submit an IT request | Sidebar → My Requests → New Request |
+| Submit an IT request | Sidebar → Service Catalog → catalog item, or Free-form request |
 | View my requests | Sidebar → My Requests |
 | View all tickets (IT staff) | Sidebar → SD Queue |
 | View ticket analytics | Sidebar → SD Analytics |
