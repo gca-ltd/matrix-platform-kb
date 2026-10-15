@@ -58,6 +58,21 @@ This is **not** a contradiction of the `brand-network` / `dash` row above for CD
 
 **Related:** [ADR-049](decisions/ADR-049.md) (Digital Employees MCP over the same Storefront project); [app-catalog.md § Matrix Sales Automation — Hungary](../platform/app-catalog.md).
 
+### Developments and units (Matrix MLS)
+
+Matrix MLS (`gca-ltd/matrix-mls`, app DB `wckwfbbqiupvallmhqbu`) keeps new-build inventory on the same `listings` row as a resale property.
+
+- A **development** is a project (`developments`).
+- A **unit** is a `listings` row with `development_id` set. It is not a second, thinner table. Photos, the Qobrix field set, publishing, the listing agreement and history stay on that row.
+- `inherit_media`, `inherit_description` and `inherit_amenities` (default on) are what the unit shows when its own value is empty: the development's photos, description and amenities. An empty address or map pin falls back to the development even when those switches are off, so the unit still has a location.
+- Status follows the unit graph (`not_released` → `available` → `on_hold` → `reserved` → `contract_signed` → `sold` → `handed_over`) while `development_id` is set, and the resale graph otherwise. A unit may become `available` only while the development is `pre_launch`, `selling`, `under_construction` or `completed`. A unit can be published only while `available`.
+- Attaching a resale listing (`attach_listing_to_development`) sets `development_id`. It does not copy the row and delete the original. `detach_listing_from_development` clears the link and maps the status back onto the resale graph without landing on `active` unless a listing agreement already exists.
+- `development_units` remains a `security_invoker` view over those listing rows for one release, so older readers keep working. It is not a place to write.
+
+Column names on `listings` stay the Qobrix names already stored there (`unit_number`, `floor_number`, `construction_stage`). That is the same divergence as [app-catalog.md](../platform/app-catalog.md): this app matches MSA's Qobrix columns while Qobrix is still the Cyprus source. `hold_expires_at`, `buyer_name` and the inherit switches are lifecycle columns, not RESO fields and not Qobrix fields.
+
+Qobrix itself stays `legacy-internal` and is sunsetting. `qobrix-sync` only reads Qobrix into MLS. A Qobrix property that belongs to a project is written as a listing with `development_id`, and `inherit_project_media` maps to `inherit_media`.
+
 For internally-sourced listings, RESO's `StandardStatus` covers public-facing states only (`Active`, `Pending`, `Closed`, `Withdrawn`). The internal workflow needs additional pre-publish stages, so we keep both:
 
 - **`status`** = RESO StandardStatus (what channels see)
