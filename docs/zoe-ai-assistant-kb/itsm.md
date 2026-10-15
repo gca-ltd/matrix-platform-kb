@@ -261,9 +261,9 @@ You see "Access Denied" or "Page Not Available."
 
 | Type | When to Use |
 |------|-------------|
-| **Incident** | Something that used to work is broken, even when the fix needs code (e.g., "The Fix button does nothing") |
+| **Incident** | Something that used to work is broken, even when the fix needs code (e.g., "A report that opened yesterday now shows an error") |
 | **Service Request** | Access, a data correction, or a how-to within what already exists (e.g., "I need a new laptop") |
-| **Change Request** | New or different behaviour. Assessed within 2 business days; accepted changes ship in the weekly Thursday release (e.g., "Save the email draft") |
+| **Change Request** | New or different behaviour. Assessed within 2 business days; accepted changes ship in the weekly Thursday release (e.g., "Export this report to a file") |
 | **Problem** | A recurring cause. Support opens this; users do not |
 
 ## Ticket Priorities and Response Times
