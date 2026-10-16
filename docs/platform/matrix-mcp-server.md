@@ -137,3 +137,5 @@ Operator guide: repo `docs/digital-employees-setup.md`. Eval: `scripts/eval-sear
 | Data | MSA App DB as the signed-in user. No service role. Figures are `SECURITY INVOKER` `kpi_*` functions listed in `mcp/tools.yaml`. |
 
 See [ADR-062](../architecture/decisions/ADR-062.md). ADR-058's separate repo and vendored contract are retired. ADR-059's four auth types still govern every other server.
+
+What Mia may answer from these tools, and the evaluation set with a pass or fail for each question, is `docs/assistant/mia.md` in `gca-ltd/matrix-sales-automation`.
