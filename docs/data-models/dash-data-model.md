@@ -73,10 +73,10 @@ RESO DD 2.0 is an industry interoperability standard — useful for data exchang
 |-----------|------|----------------|-----------------|-------------|
 | `listingGuid` | string | `id` | `ListingKey` | Unique listing identifier |
 | `listingId` | string | `ref` | `ListingId` | Human-readable listing reference |
-| `statusCode` | string | `status` | `StandardStatus` | AC, PS, CL, WD |
+| `statusCode` | string | `status` | `StandardStatus` | AC, AV, PS, CL, WD |
 | `statusDescription` | string | `status_description` | — | Full status text |
 
-**Status mapping**: `AC` → Active, `PS` → Pending, `CL` → Closed, `WD` → Withdrawn
+**Status mapping**: `AC` → Active, `AV` → Available (on-market, same bucket as Active), `PS` → Pending, `CL` → Closed, `WD` → Withdrawn. A Hungary listings export (`HSIR_Listings_Dash_backend_export`, October 2026) used `AC` and `AV` for live listings. MLS treats `AV` as active (`AC`) when it checks syndication readiness. The full wire shape of that export is recorded in `matrix-mls` `docs/dash/export-contract.md`; this page stays the CDL view model.
 
 ### Pricing
 
