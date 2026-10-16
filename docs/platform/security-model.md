@@ -597,7 +597,7 @@ This table is **Qobrix RLS** (`yeBljGGV…`). Matrix Sales Automation (`Dk4cIY3~
 
 A stored `home` still opens the Agent View pages listed under the retired-key note above, except Pipeline and Listings, which need their own keys. Sharp SIR sales roles on MSA hold `['*']` (see below), so the split does not change what they see.
 
-**Acme Broker / Senior Broker differ by app.** On Qobrix RLS they stay `home, profile` / `create, edit` (the row above). On MSA they hold the granular daily set from `20261005160000`: `my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`, `listings`, `leads`, `profile`, with `create` / `edit`. Management, campaigns, and Administration stay off.
+**Acme Broker / Senior Broker differ by app.** On Qobrix RLS they stay `home, profile` / `create, edit` (the row above). On MSA they hold the granular daily set from `20261005160000`: `my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`, `listings`, `leads`, `profile`, with `create` / `edit`. Campaigns and Administration stay off for those two roles. Area Manager (`ac000002`) holds that daily set plus Management View (`dashboard`, `approvals`, `invoices`, `analytics`, `agents`, `reports`), with `create` / `edit` / `export`. Organization Admin (`ac000001`) holds `*` / `*`. Both grants are `20261016120000`.
 
 **Section-level page keys (2026-07-09, Qobrix RLS).** The sidebar is split into sections so
 managers and individual contributors can be gated separately:
@@ -632,11 +632,13 @@ with no row is `NO_ACCESS`, which is the "Page Not Available" wall.
 `20261005160000_acme_broker_msa_access.sql` puts the client id back on
 `apps_allowed` and grants the current granular broker pages
 (`my-day`, `calendar`, `email`, `pipeline`, `follow-ups`, `offers`, `contacts`,
-`listings`, `leads`, `profile`) with `create` / `edit`. Management, campaigns,
-and Administration stay off. To try that grant, the signed-in account must hold
-the Acme Broker role itself. Switching the organization to Acme while the active
-role is still Sharp SIR Broker finds no row — that is the wall, not a missing
-MSA deploy.
+`listings`, `leads`, `profile`) with `create` / `edit`. Campaigns and
+Administration stay off for brokers. `20261016120000_acme_manager_msa_access.sql`
+adds the client id for Area Manager and Organization Admin: the area manager
+also receives Management View, and the organisation administrator receives
+every page. To try a grant, the signed-in account must hold that Acme role.
+Switching the organization to Acme while the active role is still a Sharp SIR
+role finds no row — that is the wall, not a missing MSA deploy.
 
 **Team membership is required for management visibility (MSA / Qobrix).** Granting
 a role + `apps_allowed` is not enough. JWT `team_ids` is built from
