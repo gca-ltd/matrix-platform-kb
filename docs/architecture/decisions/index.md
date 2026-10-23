@@ -68,3 +68,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-060](ADR-060.md) | Progressive tool discovery in Digital Employees: server, then tools, then a direct call | Accepted |
 | [ADR-061](ADR-061.md) | Host the Digital Employees Playground as a vendored module in another Matrix app | Accepted |
 | [ADR-062](ADR-062.md) | A Matrix-owned MCP may accept the caller's Matrix SSO JWT (MSA server lives in the MSA repo) | Accepted |
+| [ADR-063](ADR-063.md) | Storefront partner schema for list-sync listings, interim before CDL MLS 2.1 | Accepted |
