@@ -69,13 +69,28 @@ Filled from the 2026-09-30 review after the fixes in that change. `pass` means t
 | C-1 … C-18 | n/a | n/a | pass, including instructions and the step-up gate |
 | C-19 connect tool | n/a | n/a | pass |
 
+## Multi-tenant connectors and tool groups
+
+Use this when one OAuth token can see more than one tenant (Xero organisations, and the same shape elsewhere).
+
+- Store every tenant on the connection, not only the first. The agent lists them (`list-organisations` and, when the client supports resources, `xero://organisations`) and passes `organisation` for one tenant or `organisations` for a subset. Omit `organisations` on a holding read to include all of them.
+- Writes that move money or post to the ledger require an explicit tenant when more than one is connected. Do not fall back to "the first one".
+- Share one process-wide queue across users so parallel chats delay before the upstream rate limit, instead of each chat retrying into HTTP 429.
+- Claude's permission panel only has three buckets. Set them with MCP tool annotations, not with a custom group name:
+  - Read-only: `readOnlyHint: true` and `destructiveHint: false` (Always allow).
+  - Write/delete: `destructiveHint: true` for sensitive tools (Needs approval or Deny).
+  - Other: a title and no read/destructive hints, for ordinary draft edits (Needs approval).
+- A path or env profile (`/mcp/read`, `TOOL_GROUPS=read`) is the hard guarantee. Annotations only steer the client UI.
+
+Xero Advanced MCP is the reference implementation (`sharpsir-xero-mcp-server`).
+
 ## Drift register
 
 These servers are outside this change. A follow-up plan tracks them.
 
 | Server | Where | Drift |
 |---|---|---|
-| Xero | `sharpsir-xero-mcp-server` | Still documents Modes A–D. Terminology check fails. |
+| Xero | `sharpsir-xero-mcp-server` | Multi-org, tool groups, and the shared API queue are the reference above. Modes A–D wording and the terminology check are still open. |
 | Ask Google | `ask-google-mcp-server` | Still documents Mode D. Terminology check fails. |
 | Charts | `sharpsir-charts-mcp-server` | `api_key` Streamable HTTP. Missing `destructiveHint` and `whoami`. |
 | Topixe | `topixe/mcp` | Retired signed-header connect. Not on the intranet. |
