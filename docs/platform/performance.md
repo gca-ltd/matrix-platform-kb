@@ -500,23 +500,30 @@ every user, including those who never connected the overlay. Pattern: render as
 soon as primary queries resolve; merge overlay events reactively; use
 `placeholderData: keepPreviousData` so range navigation does not blank the grid.
 
-## Known exception — Matrix MLS inventory (interim, 2026-10-24)
+## Matrix MLS inventory — server-side RPC contract (2026-10-24)
 
-`matrix-mls` Inventory loads the **full slim listing/project set into the browser**
-(~18k rows, ~20 MB uncompressed, no `qobrix_raw`) via parallel 1k PostgREST
-pages ordered by `id`. This deliberately bypasses cursor pagination and
-estimated-count list contracts so existing client-side filters, map clustering
-and sort keep working after the Qobrix bulk sync.
+`matrix-mls` Inventory no longer loads the full listing/project set into the
+browser. Reads go through `SECURITY INVOKER` RPCs on view
+`v_inventory_slim` for filter/count/pin scans; `v_inventory_items` for full page
+rows (photo + dash_ready computed only for returned keys). RLS on
+`listings` / `developments` unchanged:
 
-**Follow-up:** server-side `inventory_search` RPC with keyset cursors and
-estimated counts (same shape as CDL list paths above). Record pages already
-fetch one full row by id; photos use local storage first, then
-`x_qobrix_photos` → `qobrix-image-proxy` while the tiered media worker copies
-files into MLS storage.
+| RPC | Role |
+|---|---|
+| `inventory_search(p_filters, p_sort, p_cursor, p_limit, p_collapse, p_development_id)` | Keyset pages; exact `total` capped at 10,001 (shown as 10,000+). Slim rows: one thumbnail (`photo` + `photo_is_qobrix`). |
+| `inventory_stats(p_filters, p_projects)` | Header counts + volume by currency. |
+| `inventory_pins(p_filters, p_projects)` | Map pins only (~80 B each). |
+| `inventory_quick_search(q, p_limit, p_unattached)` | GlobalSearch / attach picker; debounced, min 2 chars. |
+| `listing_status_counts()` | My Day status tiles (standalone properties). |
+| `inventory_nearby(p_listing_id, p_radius_km, p_limit)` | Nearby / Similar candidate prefilter. |
 
-RLS is tenant-wide on `listings` / `developments`; this is not a
-service-harvested cache on a restricted scope — the anti-pattern in
-[security-model.md](security-model.md) does not apply.
+Filter JSON mirrors client `matches()` / `toRpcFilters()` (`src/lib/inventoryQuery.ts`).
+Sort keyset on `(sort_key, id)`; `relevance` = `updated_at desc`.
+Board view caps at 500 rows with an honest truncation banner.
+CSV export walks the cursor explicitly (1k pages).
+
+Photos: RPC returns one thumbnail path or Qobrix id; full record pages still
+fetch by id. Not a service-harvested cache — caller RLS applies.
 
 ## Cross-Reference
 
