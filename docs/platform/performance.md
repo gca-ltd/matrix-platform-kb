@@ -500,6 +500,24 @@ every user, including those who never connected the overlay. Pattern: render as
 soon as primary queries resolve; merge overlay events reactively; use
 `placeholderData: keepPreviousData` so range navigation does not blank the grid.
 
+## Known exception — Matrix MLS inventory (interim, 2026-10-24)
+
+`matrix-mls` Inventory loads the **full slim listing/project set into the browser**
+(~18k rows, ~20 MB uncompressed, no `qobrix_raw`) via parallel 1k PostgREST
+pages ordered by `id`. This deliberately bypasses cursor pagination and
+estimated-count list contracts so existing client-side filters, map clustering
+and sort keep working after the Qobrix bulk sync.
+
+**Follow-up:** server-side `inventory_search` RPC with keyset cursors and
+estimated counts (same shape as CDL list paths above). Record pages already
+fetch one full row by id; photos use local storage first, then
+`x_qobrix_photos` → `qobrix-image-proxy` while the tiered media worker copies
+files into MLS storage.
+
+RLS is tenant-wide on `listings` / `developments`; this is not a
+service-harvested cache on a restricted scope — the anti-pattern in
+[security-model.md](security-model.md) does not apply.
+
 ## Cross-Reference
 
 | For | See |
