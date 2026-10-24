@@ -364,6 +364,10 @@ listing_status_counts() → status, count
 inventory_nearby(p_listing_id uuid, p_radius_km numeric DEFAULT 5, p_limit int DEFAULT 200)
 ```
 
+`inventory_nearby` reads the source listing's effective coordinates from
+`inventory_items` (unit inherits project lat/lng). When none exist, it returns up
+to `p_limit` same-city rows with `distance_km = NULL` instead of an empty set.
+
 `p_filters` keys mirror `src/lib/inventoryQuery.ts` `toRpcFilters()` (tab, types,
 statuses, places, search_tokens, predicates[], radius, polygon, dash,
 `created_after`, `properties_only`, …). Reads scan table **`inventory_items`**
