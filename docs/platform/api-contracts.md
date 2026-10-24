@@ -345,31 +345,30 @@ The realtime topic `runs:<tenantId>` is a public broadcast of refresh pings. It 
 ## Matrix MLS App DB — inventory RPCs (`wckwfbbqiupvallmhqbu`)
 
 All functions are `SECURITY INVOKER` (tenant RLS on `listings` / `developments`).
-Source: `matrix-mls/supabase/migrations/20261024200000_inventory_search.sql`.
+Source: `matrix-mls/supabase/migrations/20261024230000_inventory_items_table.sql`.
 
 ```sql
 inventory_search(
   p_filters jsonb DEFAULT '{}',
-  p_sort text DEFAULT 'relevance',  -- relevance|price_desc|price_asc|newest|name|developer|city
+  p_sort text DEFAULT 'relevance',  -- + units_asc|units_desc|sold_*|remaining_*
   p_cursor jsonb DEFAULT NULL,    -- {"sort_key","id","sort"}
   p_limit int DEFAULT 25,
   p_collapse bool DEFAULT false,
   p_development_id uuid DEFAULT NULL
 ) → rows + next_cursor + total (exact, capped at 10001)
 
-inventory_stats(p_filters jsonb, p_projects bool) → property_count, project_count, volume jsonb
+inventory_stats(p_filters jsonb, p_projects bool) → property_count, project_count, volume jsonb, type_counts jsonb
 inventory_pins(p_filters jsonb, p_projects bool) → key, title, lat, lng, kind
-inventory_quick_search(q text, p_limit int DEFAULT 20, p_unattached bool DEFAULT false)
+inventory_quick_search(q text, p_limit int DEFAULT 20, p_unattached bool DEFAULT false) → incl. price, currency
 listing_status_counts() → status, count
 inventory_nearby(p_listing_id uuid, p_radius_km numeric DEFAULT 5, p_limit int DEFAULT 200)
 ```
 
 `p_filters` keys mirror `src/lib/inventoryQuery.ts` `toRpcFilters()` (tab, types,
-statuses, places, search_tokens, predicates[], radius, polygon, dash, …).
-Views: `v_inventory_slim` (filter/count scans — no photo/dash_ready) and
-`v_inventory_items` (full row incl. photo + dash_ready for page joins).
-`v_inventory_items` exposes slim `InventoryItem` columns + `attrs jsonb` for
-dynamic field predicates (whitelist = `REGISTRY_KEY_TO_LISTING` values).
+statuses, places, search_tokens, predicates[], radius, polygon, dash,
+`created_after`, `properties_only`, …). Reads scan table **`inventory_items`**
+(trigger-maintained; `v_inventory_items` is refresh source only). Rows include
+`attrs jsonb` for dynamic field predicates (whitelist = `REGISTRY_KEY_TO_LISTING` values).
 
 Performance contract: [performance.md](performance.md) § Matrix MLS inventory.
 

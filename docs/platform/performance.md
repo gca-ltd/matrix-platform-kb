@@ -500,30 +500,40 @@ every user, including those who never connected the overlay. Pattern: render as
 soon as primary queries resolve; merge overlay events reactively; use
 `placeholderData: keepPreviousData` so range navigation does not blank the grid.
 
-## Matrix MLS inventory — server-side RPC contract (2026-10-24)
+## Matrix MLS inventory — trigger-maintained table (2026-10-24)
 
 `matrix-mls` Inventory no longer loads the full listing/project set into the
-browser. Reads go through `SECURITY INVOKER` RPCs on view
-`v_inventory_slim` for filter/count/pin scans; `v_inventory_items` for full page
-rows (photo + dash_ready computed only for returned keys). RLS on
-`listings` / `developments` unchanged:
+browser. Reads go through `SECURITY INVOKER` RPCs on table
+**`inventory_items`** (AFTER triggers on `listings` / `developments` refresh
+changed rows; `v_inventory_items` is refresh source only). RLS on
+`listings` / `developments` unchanged — `inventory_items` carries the same
+tenant-only SELECT policy.
+
+Indexes (App DB `wckwfbbqiupvallmhqbu`): GIN trigram on `search_text`;
+`(tenant_id, kind, is_off_market, updated_at desc, id)`; price and created_at
+variants; `(project_id)`, `(lat, lng)`, `(tenant_id, lower(city))`.
+
+Measured targets (tenant JWT, ~21k rows): unfiltered count, text (`limassol`),
+price range, polygon, `dash=missing` — each **≤ 50 ms** p99 on
+`inventory_search` / `inventory_stats`.
 
 | RPC | Role |
 |---|---|
-| `inventory_search(p_filters, p_sort, p_cursor, p_limit, p_collapse, p_development_id)` | Keyset pages; exact `total` capped at 10,001 (shown as 10,000+). Slim rows: one thumbnail (`photo` + `photo_is_qobrix`). |
-| `inventory_stats(p_filters, p_projects)` | Header counts + volume by currency. |
-| `inventory_pins(p_filters, p_projects)` | Map pins only (~80 B each). |
-| `inventory_quick_search(q, p_limit, p_unattached)` | GlobalSearch / attach picker; debounced, min 2 chars. |
+| `inventory_search(…)` | Keyset pages; exact `total` capped at 10,001. Sort includes `units_*`, `sold_*`, `remaining_*`. One thumbnail per row. |
+| `inventory_stats(…)` | Header counts, volume by currency, **`type_counts jsonb`** for filter panel. |
+| `inventory_pins(…)` | Map pins only (~80 B each). |
+| `inventory_quick_search(…)` | GlobalSearch / attach picker; returns **price + currency**; debounced, min 2 chars. |
 | `listing_status_counts()` | My Day status tiles (standalone properties). |
-| `inventory_nearby(p_listing_id, p_radius_km, p_limit)` | Nearby / Similar candidate prefilter. |
+| `inventory_nearby(…)` | Nearby / Similar candidate prefilter. |
 
-Filter JSON mirrors client `matches()` / `toRpcFilters()` (`src/lib/inventoryQuery.ts`).
-Sort keyset on `(sort_key, id)`; `relevance` = `updated_at desc`.
-Board view caps at 500 rows with an honest truncation banner.
-CSV export walks the cursor explicitly (1k pages).
+Filter JSON mirrors `toRpcFilters()` (`src/lib/inventoryQuery.ts`). Search tokens
+use `search_text ILIKE` (trigram index). Sort keyset on `(sort_key, id)`;
+`relevance` = `updated_at desc`. Board view caps at 500 rows with truncation banner.
+CSV export walks cursor ids then fetches full `listings` rows in 500-id chunks.
 
 Photos: RPC returns one thumbnail path or Qobrix id; full record pages still
-fetch by id. Not a service-harvested cache — caller RLS applies.
+fetch by id. Derived 1:1 from authoritative tables under caller RLS — not a
+service-harvested cache (see [security-model.md](security-model.md)).
 
 ## Cross-Reference
 

@@ -841,6 +841,13 @@ a third-party CRM, a denormalised cache, a materialised view, or a pre-joined
 table from the *anon/authenticated* client, but says nothing about an Edge Function
 that reads it with the service key and returns the rows to whoever called.
 
+**Matrix MLS `inventory_items` (2026-10-24).** User-facing inventory RPCs read a
+trigger-maintained table derived 1:1 from `listings` / `developments`, whose SELECT
+RLS is tenant-only (same as today). This is **not** harvested under a narrower or
+broader identity — each row is recomputed from the authoritative source on write.
+If `listings` ever gains per-user (`self` / `team`) visibility, `inventory_items`
+must be redesigned in the same migration.
+
 **Datacore scores (ADR-057).** `datacore-score-api` does not list leads. A server caller posts keys it already holds and receives only `subject_key, p, algo, model_version_id, as_of` for those keys (at most 200). The bearer stays on the server. An MSA server function may call it after its own user-scoped read and decorate those rows. The MSA MCP server (ADR-058) does not call this function.
 
 **How it ships undetected.** Where the permission guarantee is carried by the
