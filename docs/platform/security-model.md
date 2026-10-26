@@ -851,8 +851,10 @@ must be redesigned in the same migration.
 **Matrix MLS client contacts (ADR-002, 2026-10-26).** Client contact PII is **not**
 stored in MLS. The loader scrubs nested contact objects to `{id, ref, kind}`; the
 record UI reads seller/client details from MSA (`listing_seller_contacts`, `contacts`)
-via `msaDb` under the user's SSO token. Global/org/system admins may call a live
-`qobrix-read` `contact` action (not persisted). Developer companies and staff are
+via `msaDb` under the user's SSO token. `qobrix-read` exposes `canSeeClientPii`
+(admin or global/org/system scope) for live `contact` lookup and client name
+resolution; developer category lookup is open to all authenticated users.
+Developer companies and staff are
 tenant-wide business data in `developers` / `developer_contacts`. CRM mirrors
 (`qobrix_opportunities`, …) are admin-only via `qobrix_mirror_admin_visible()`.
 
