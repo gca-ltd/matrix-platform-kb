@@ -41,6 +41,20 @@ Out of scope:
   [`transaction-lifecycle.md`](transaction-lifecycle.md)).
 - Showings/open houses while Active (separate state machines, listed
   as cross-references below).
+- Matrix MLS seller-side **UI ownership** (opportunity vs inventory
+  record vs deal, navigation lenses, projects as one mandate + unit
+  grid): [ADR-064](../../../architecture/decisions/ADR-064.md). This
+  document remains the RESO `Property` state machine only.
+
+## Matrix MLS UI ownership (cross-reference)
+
+| Where brokers edit | Owns |
+|---|---|
+| Seller opportunity workspace | Seller, mandate, qualification, CMA, confidential price, seller reports, opportunity tasks |
+| Inventory record (listing / project) | Property facts, media, publication, showings, read-only offers, documents on file, unit grid (projects) |
+| Deal (workspace Negotiation / Closing gates) | Buyer, offer, reservation, contract, closing checklist |
+
+List/Grid/Map open the **record** when it exists; the **Board** opens the **workspace** at the matching gate. See ADR-064.
 
 ## Primary state machine: `Property.StandardStatus`
 
