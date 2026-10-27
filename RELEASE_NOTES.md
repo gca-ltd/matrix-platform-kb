@@ -12,6 +12,7 @@ date: 2026-08-17
 
 ## Unreleased — 2026-10-05
 
+- Standing-contour security audit of 2026-10-27 re-measured all 18 reachable databases. Atlas MLS now lets the public key clear 55 tables and rewrite the inventory without a signed-in user (S23). MSA Cyprus has a backfill that sets deal owners for any office id with no caller check (S24). The MSA Cyprus "view runs as owner" error is closed (S11). The lead generator can clear 24 tables, including contacts and leads. Report: `docs/platform/security-audits/2026-10-27.md`.
 - The Acme individual-contributor role is named Broker at Acme, so a page-access check does not treat it as Sharp SIR Broker. The user-guide screenshots use a re-seedable Acme demo dataset at `matrix-sales-automation/scripts/seed/acme-demo/`, owned by Anna Ioannou.
 - MSA What's new and Sales methodology now live in the Outline user guide. The About menu item is named What's new and opens that page; the old Build status record is folded into it. ADR-053 keeps the always-visible About menu, and the in-app Markdown viewer stays retired for MSA.
 

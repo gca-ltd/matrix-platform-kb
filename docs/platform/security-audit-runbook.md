@@ -290,6 +290,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | 2026-09-15 | [security-audits/2026-09-15.md](security-audits/2026-09-15.md) — 23 projects scan-only; HU S18; [RU](security-audits/2026-09-15-ru.md) |
 | 2026-09-16 | [security-audits/2026-09-16.md](security-audits/2026-09-16.md) — new standing contour baseline + HU S18/S16; [RU](security-audits/2026-09-16-ru.md) |
 | 2026-09-29 | [security-audits/2026-09-29.md](security-audits/2026-09-29.md) — skip-unchanged; read-only; S20/S21; [RU](security-audits/2026-09-29-ru.md) |
+| 2026-10-27 | [security-audits/2026-10-27.md](security-audits/2026-10-27.md) — full baseline, read-only; S23/S24; S11 closed; [RU](security-audits/2026-10-27-ru.md) |
 
 ## Related
 
