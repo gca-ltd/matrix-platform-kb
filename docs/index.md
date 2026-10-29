@@ -25,6 +25,7 @@ What Sharp Matrix is, the three-platform architecture (Supabase + Databricks + L
 | [platform/app-catalog.md](platform/app-catalog.md) | All platform apps and components (11 live, 7 in progress, 6 planned) with delivery status |
 | [platform/mcp/README.md](platform/mcp/README.md) | Matrix MCP Profile: server, authorization server, and client contract (MCP 2025-11-25) |
 | [platform/matrix-mcp-server.md](platform/matrix-mcp-server.md) | Pointer to the MCP profile and the inventory of Matrix tool servers |
+| [platform/xero-mcp-finance-connector.md](platform/xero-mcp-finance-connector.md) | Xero Advanced MCP: multi-org finance connector, bank-statement loading, org guides |
 | [platform/security-model.md](platform/security-model.md) | Security model: 5-level scope, 23 roles, JWT claims, RLS patterns A-E |
 | [platform/security-audit-runbook.md](platform/security-audit-runbook.md) | Weekly infosec audit: Advisors + Matrix SQL + project inventory |
 | [platform/operations.md](platform/operations.md) | Operations: CI/CD, deployment, monitoring, logging, audit trail, DR/backup |
