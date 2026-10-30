@@ -56,7 +56,9 @@ Recovery:
 2. The next MCP request gets HTTP 401 + `WWW-Authenticate` so the client prompts sign-in again.
 3. Remembered-browser skip and key reuse only happen after a live 204 probe. Sign-in resolves `user.id` from `GET /api/v2/session/` and mints a fresh key when needed.
 
-`qobrix_whoami` reports live **`connection.status`** (`ok` | `qobrix_key_rejected` | `qobrix_unavailable`) so a stored identity cannot look healthy when the key is dead.
+`qobrix_whoami` reports live **`connection.status`** (`ok` | `not_connected` | `qobrix_key_rejected` | `qobrix_unavailable`) so a stored identity cannot look healthy when the key is dead.
+
+Tool errors use stable codes. Besides **`qobrix_key_rejected`** (dead key, reconnect), **`qobrix_auth_unverified`** means Qobrix returned 401 but the key could not be live-checked (retry, then reconnect if it repeats). Relay **`user_action`** and **`fix_owner`** from the tool response; do not guess IT “service token” failures.
 
 ## Probe
 
