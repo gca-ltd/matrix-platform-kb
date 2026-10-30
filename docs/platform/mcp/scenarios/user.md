@@ -46,6 +46,18 @@ Follow C-1 … C-19. Registration order is pre-registered client, then CIMD, the
 { "presetClientId": "optional", "scopes": ["optional"], "identityProbe": { "tool": "<prefix>_whoami", "emailPath": "email" } }
 ```
 
+## Dead Qobrix API key (Qobrix CRM MCP)
+
+There is **no shared service token** — each person has one Qobrix API key stored in the authorization server vault after sign-in. If Qobrix rejects that key (regenerated in Qobrix, deleted, or replaced by another sign-in), tool calls return structured error code **`qobrix_key_rejected`** with `fix_owner: user` and a reconnect action. Agents must relay `user_action` and `not_the_cause` as given; do not infer IT “bridge token” failures.
+
+Recovery:
+
+1. The resource server probes `GET /api/v2/profile/api-key` on 401, notifies the authorization server (`POST /credentials/invalidate`), and drops the vault row.
+2. The next MCP request gets HTTP 401 + `WWW-Authenticate` so the client prompts sign-in again.
+3. Remembered-browser skip and key reuse only happen after a live 204 probe. Sign-in resolves `user.id` from `GET /api/v2/session/` and mints a fresh key when needed.
+
+`qobrix_whoami` reports live **`connection.status`** (`ok` | `qobrix_key_rejected` | `qobrix_unavailable`) so a stored identity cannot look healthy when the key is dead.
+
 ## Probe
 
 ```bash
