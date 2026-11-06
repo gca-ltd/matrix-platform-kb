@@ -6,29 +6,49 @@
 
 ## Role
 
-Xero is the **finance ERP / system of record** for Sharp SIR holding entities. The MCP exposes Accounting API tools to Claude and Cursor under **per-user OAuth** (Modes C/D). It does **not** replace Xero UI for all tasks; it automates high-friction flows (bank statement coding, cross-org reads, reports).
+Xero is the **finance ERP / system of record** for Sharp SIR holding entities. The MCP exposes Accounting (and related) APIs to Claude and Cursor under **per-user OAuth** (Modes C/D). It is **universal**: any user, any set of organisations — no per-org files in the repo.
+
+## Organisation profile (live)
+
+- `get-org-profile` builds a live profile from Xero (org details, BANK accounts, tracking, tax rates, currencies) plus encrypted **tenant settings** (bank modes, coding notes).
+- Bank account modes: `unset` (default) | `manual` | `feed`. Real statement posts require `manual`. Dry runs allowed on `unset`. `feed` is always blocked.
+- `set-bank-account-mode` (sensitive): gated by live Xero `OrganisationRole` (`ADMIN` / `FINANCIALADVISER` by default via `BANK_MODE_ROLES`). Preview + `confirmToken` (or elicitation).
+- Legacy `packages/mcp/data/org-guides/*.md` files are optional one-time seed only; `_TEMPLATE.md` documents the format.
 
 ## Bank statement loading (manual banks)
 
-Revolut uses a native Xero feed. Other banks: operators attach statements in Claude; the agent:
+1. `get-org-profile` — confirm bank mode.
+2. Admin: `set-bank-account-mode` → `manual` if needed.
+3. `suggest-bank-coding` → `preview-bank-transactions` (`confirmDryRunHash`) → `create-bank-transactions` → `verify-bank-load` → `mark-bank-transactions-reconciled`.
 
-1. `get-org-guide` — divisions, cost centres, manual vs feed accounts (`packages/mcp/data/org-guides/`).
-2. `suggest-bank-coding` — history from past bank transactions (no Xero Bank Rules API).
-3. `create-bank-transactions` — batch up to 50 lines; **dryRun defaults true**; Inclusive amounts; refuses feed accounts.
-4. `verify-bank-load` — control totals vs statement.
-5. `mark-bank-transactions-reconciled` — only after verify pass (30-minute gate).
+**Anti-patterns:** posting to feed / unset accounts; reconcile before verify; skipping dry-run approval.
 
-**Anti-patterns:** posting to feed accounts; reconcile before verify; skipping dry-run approval.
+## Search + execute (full coverage)
 
-## Scopes and reports
+Default tool surface is compact (~15 tools). Registry-driven tools cover the rest:
 
-Default Web App uses **granular** scopes (March 2026+). Official **Profit and Loss** and **Balance Sheet** reports may require `accounting.reports.profitandloss.read` / App Partner Program on new apps. Fallback: `report-pnl-by-tracking` + `list-trial-balance` tie-out.
+| Tool | Group | Role |
+|---|---|---|
+| `xero-search` | read | Discover resources/actions + availability (scopes, country) |
+| `xero-read` | read | list/get/pdf with pagination and field trimming |
+| `xero-write` | write | create/update with confirmToken + Idempotency-Key |
+| `xero-delete` | sensitive | void/delete with confirmToken |
 
-## Plan
+Thin `list-*` / `create-*` / `update-*` tools remain behind `XERO_TOOLSETS=all` (legacy) for one release. Payroll API region follows org `countryCode` (AU/NZ/UK/none). Deprecated classic expenses (receipts / expense claims) are excluded.
 
-Production app is on Xero **Core** (50 connections, 5k calls/org/day).
+## Capabilities and scopes
+
+- Granted scopes are read from the access-token claim when present; otherwise Xero errors decide availability.
+- Default `XERO_SCOPES` is granular (contacts, settings, attachments, invoices, payments, banktransactions, manualjournals, budgets, reports subset, assets, files, projects, payroll.*). Journals / official P&L / finance stay out unless entitled — add via env.
+- The server is **plan-agnostic**: no hardcoded connection/day quotas. It reads `X-*-Remaining` headers, honours `Retry-After` on 429, and surfaces connection-limit / scope errors verbatim. Concurrent calls per tenant are capped at 5 (Xero’s documented concurrency).
+
+## Compliance
+
+- No request/response payloads in logs. Optional tool-call audit JSONL (`XERO_MCP_AUDIT_LOG`).
+- Connecting implies consent that data may pass to the MCP client (e.g. Claude). API data must not be used to train AI models (Xero Developer Platform Terms).
 
 ## KB sources
 
-- Xero Limits FAQ, Bank Transactions API, granular scopes devblog (2026).
+- Xero Limits FAQ, granular scopes changelog / FAQs (2026), Developer Platform Terms, Accounting Users endpoint.
+- MCP tool-design guidance (search+execute above ~30 tools).
 - Sharp Matrix meeting 2026-10-29 (Artur / Sergey) — pilot workflow.
