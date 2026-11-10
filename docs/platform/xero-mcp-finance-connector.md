@@ -34,7 +34,7 @@ Default tool surface is compact (~15 tools). Registry-driven tools cover the res
 | `xero-write` | write | create/update with confirmToken + Idempotency-Key |
 | `xero-delete` | sensitive | void/delete with confirmToken |
 
-Default surface is ~22 tools: org/profile, registry (`xero-*`), bank-statement flow, `report-pnl-by-tracking`, plus bank-flow reads (`list-accounts`, `list-contacts`, `list-tracking-categories`, `list-tax-rates`, `list-bank-transactions`, `list-organisation-details`). Other thin `list-*` / `create-*` / `update-*` / `holding-*` tools remain behind `XERO_TOOLSETS=all` (legacy). Payroll API region follows org `countryCode` (AU/NZ/UK/none). Deprecated classic expenses (receipts / expense claims) are excluded.
+Default surface is ~24 tools: org/profile, registry (`xero-*` with `params` for report dates), bank-statement flow, `report-pnl-by-tracking`, bank-flow reads, plus `holding-bank-summary` and `holding-trial-balance` for multi-org reports. Other thin `list-*` / `create-*` / `update-*` / `holding-*` tools remain behind `XERO_TOOLSETS=all` (legacy). Payroll API region follows org `countryCode` (AU/NZ/UK/none). Deprecated classic expenses (receipts / expense claims) are excluded.
 
 ## Capabilities and scopes
 
