@@ -69,3 +69,5 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-061](ADR-061.md) | Host the Digital Employees Playground as a vendored module in another Matrix app | Accepted |
 | [ADR-062](ADR-062.md) | A Matrix-owned MCP may accept the caller's Matrix SSO JWT (MSA server lives in the MSA repo) | Accepted |
 | [ADR-063](ADR-063.md) | Storefront partner schema for list-sync listings, interim before CDL MLS 2.1 | Accepted |
+| [ADR-064](ADR-064.md) | Seller-side UI ownership — opportunity, inventory item, deal | Accepted |
+| [ADR-065](ADR-065.md) | MSA writes for an agent go through a separate Edge Function, as the signed-in broker | Accepted |
