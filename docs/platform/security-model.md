@@ -392,16 +392,17 @@ ITSM **diverges** from generic Pattern B for `service_desk_tickets`:
 
 | Scope | Ticket visibility | Cross-tenant |
 |-------|-----------------|--------------|
-| `self` | Own tickets only (`created_by` or `assigned_to` = JWT `sub`) | Active tenant only |
-| `team` | Own/assigned **or** `requester_team_id` ∈ JWT `team_ids` | Active tenant only |
+| `self` | Own tickets only (`created_by` or `assigned_to` = JWT `sub`, **or** `created_by_email` = verified JWT `email`) | Active tenant only |
+| `team` | Own/assigned/requester-email **or** `requester_team_id` ∈ JWT `team_ids` | Active tenant only |
 | `global` / `org_admin` | All tickets in active tenant | Active tenant only |
 | `system_admin` | All tickets in **active tenant only** (`uoi`) | **No** cross-tenant read at RLS — use Switch Organization to change `uoi` |
 
 - **`requester_team_id`** is stamped on ticket create from the requester's primary SSO team (`UnifiedTicketForm`).
 - **`Broker`** role uses `scope=self`, `crud=cru` — requesters can create/read/update own tickets without global scope.
 - UI queries use `scopeRead(query, tenantId)` as defense-in-depth alongside RLS.
+- **Requester by email (SR000657, 2026-11-13).** Webhook/chat tickets carry `created_by = 00000000-…`, and changing the requester in the ticket card rewrites only `created_by_name` / `created_by_email`; `sync_ticket_requester_owner` can map an email to an id only through the near-empty ITSM `profiles` table. So `self` / `team` also match `lower(created_by_email) = get_current_user_email()` — the JWT `email` claim, honoured only when `email_verified = true`. `user_can_access_ticket()` (used by every `ticket_*` child table and the `ticket-attachments` bucket) = `user_can_access_ticket_by_role()` (the id/team rule) **or** that email match. Access reached only through the email path never includes internal comments: `ticket_comments` policies add `NOT is_internal OR user_can_access_ticket_by_role(ticket_id)`. `tickets_update` stays id-based; the requester's status flip on reply runs in the `SECURITY DEFINER` trigger `requester_reply_flip_status`.
 
-Migration: `matrix-itsm/supabase/migrations/20260619130000_p2_ticket_team_tenancy.sql`
+Migrations: `matrix-itsm/supabase/migrations/20260619130000_p2_ticket_team_tenancy.sql`, `20261113110555_sr000657_requester_email_ticket_access.sql` (rollback: `supabase/rollbacks/20261113_sr000657_requester_email_access_rollback.sql`)
 
 ### Qobrix Sales Automation — `global` write-all (app-specific exception)
 
