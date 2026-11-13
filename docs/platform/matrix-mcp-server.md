@@ -151,6 +151,6 @@ What Mia may answer from these tools, and the evaluation set with a pass or fail
 | Auth | Matrix SSO JWT only, verified against the SSO JWKS (`iss`, `aud=authenticated`, `exp`) for the MSA and Digital Employees clients. No OAuth, so Claude and Cursor cannot call it. |
 | Data | `assistant_*` functions on the MSA App DB, as the signed-in broker. No service role. `SECURITY INVOKER`, so row-level security still applies. Stage moves call the existing gate functions with gates enabled. |
 
-The read server at `/msa/mcp` is unchanged. Digital Employees attaches this function to MSA Navigator as `msa_actions` (`sso_forward`). Mia is not given it. `msa_close_opportunity` is Ask until the CRO decides otherwise.
+The read server at `/msa/mcp` is unchanged. Digital Employees attaches this function to MSA Navigator as `msa_actions` (`sso_forward`). Mia is not given it. `msa_close_opportunity`, `msa_reassign_opportunity`, and `msa_reassign_contact` are Ask until the CRO decides otherwise. Navigator can read one Opportunity, change its client, add a note or a reminder, replace the team, and add a listing to the shortlist, each as the signed-in person. Invoices, files, and sending the shortlist stay on the screen.
 
 What Navigator may do, and the checks, is `docs/assistant/navigator.md` in `gca-ltd/matrix-sales-automation`.
