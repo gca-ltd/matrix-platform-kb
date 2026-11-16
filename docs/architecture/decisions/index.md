@@ -71,3 +71,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-063](ADR-063.md) | Storefront partner schema for list-sync listings, interim before CDL MLS 2.1 | Accepted |
 | [ADR-064](ADR-064.md) | Seller-side UI ownership — opportunity, inventory item, deal | Accepted |
 | [ADR-065](ADR-065.md) | MSA writes for an agent go through a separate Edge Function, as the signed-in broker | Accepted |
+| [ADR-066](ADR-066.md) | An app records how its screen is used, in its own database, without the text people type | Accepted |
