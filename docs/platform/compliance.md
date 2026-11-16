@@ -59,6 +59,9 @@ breach. Normal collection/contact RLS continues to govern every broader use.
 | Audit logs | 5 years | Legitimate interest (security) | Purge |
 | Pipeline/ETL logs | 1 year | Operational necessity | Rotate |
 | Session/visitor data | 90 days (anonymous), linked to user retention (authenticated) | Consent (cookie banner) | Auto-purge |
+| MSA screen journal, raw events | 90 days | Legitimate interest (product improvement). Owner read only | Drop the month partition |
+| MSA screen journal, typed text | 30 days | Legitimate interest. Passwords excluded. Owner read only | Drop the month partition |
+| MSA screen journal, daily counts | Kept | Legitimate interest | None |
 
 ## Data Subject Rights (DSAR)
 

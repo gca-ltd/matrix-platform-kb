@@ -26,7 +26,7 @@ What Sharp Matrix is, the three-platform architecture (Supabase + Databricks + L
 | [platform/mcp/README.md](platform/mcp/README.md) | Matrix MCP Profile: server, authorization server, and client contract (MCP 2025-11-25) |
 | [platform/matrix-mcp-server.md](platform/matrix-mcp-server.md) | Pointer to the MCP profile and the inventory of Matrix tool servers |
 | [platform/security-model.md](platform/security-model.md) | Security model: 5-level scope, 23 roles, JWT claims, RLS patterns A-E |
-| [platform/product-analytics.md](platform/product-analytics.md) | How an app records screen actions in its own database, without the text people type |
+| [platform/product-analytics.md](platform/product-analytics.md) | How an app records screen actions in its own database, including typed text for 30 days |
 | [platform/security-audit-runbook.md](platform/security-audit-runbook.md) | Weekly infosec audit: Advisors + Matrix SQL + project inventory |
 | [platform/operations.md](platform/operations.md) | Operations: CI/CD, deployment, monitoring, logging, audit trail, DR/backup |
 | [platform/compliance.md](platform/compliance.md) | Compliance: GDPR, data protection, retention policy, DSAR procedures |
