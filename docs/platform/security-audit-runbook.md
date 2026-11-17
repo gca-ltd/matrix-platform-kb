@@ -129,11 +129,34 @@ Do **not** drop them from the contour just because Advisors return 403.
 Management API PAT (`~/.supabase/access-token`) currently reaches org
 `iipqkbmihgjxngwqjvzd` only.
 
+### External probe when the Management API returns 403
+
+Used on **2026-11-17** for the three projects above. This does not replace
+Matrix SQL. TRUNCATE and `pg_default_acl` are not visible from outside.
+
+1. Read the publishable key from the app repo `.env`. Do not write the key
+   into the audit artifacts.
+2. If the key is a JWT, decode the payload and stop unless `role` is `anon`.
+   A `sb_publishable_` key is the anon key. A `sb_secret_` key is not a probe.
+3. `GET /rest/v1/` with `Accept: application/openapi+json`. If that is 401,
+   take table names from `CREATE TABLE` in `supabase/migrations/`.
+4. For each table, `HEAD /rest/v1/<table>?select=*&limit=0` with
+   `Prefer: count=exact`. Record the status and `Content-Range` only.
+   Do not read rows. A **200 with count 0** means the role has SELECT and
+   RLS returned no rows. It is not by itself a demonstrated read.
+   A **401** means no SELECT grant.
+5. `GET /auth/v1/settings` and `GET /storage/v1/bucket`. Record signup,
+   autoconfirm, anonymous sign-in, and which buckets are public.
+6. Do not call `/rpc/` or an Edge Function. Review `supabase/functions/` and
+   `config.toml` from the repo instead.
+7. If the hostname does not resolve, record that and review the repo only.
+   Say so in the report. Do not treat source findings as live.
+
 ## Out of standing weekly contour
 
 | Item | Why out |
 |------|---------|
-| Task Manager HU (`rwg…`) | **Deleted** (confirmed 2026-09-16) |
+| Task Manager HU (`rwg…`) | **Deleted** in the 2026-09-16 decision. Advisors still returned 200 on 2026-11-17 (0 ERROR / 0 WARN). Finish the deletion |
 | Performance Dashboard | Not in leadership list |
 | Pipeline v1 | Legacy; not in leadership list |
 | HRMS Sandbox / MSA Hungary sandbox | Not standing; one-off if prod-like PII suspected |
@@ -291,6 +314,7 @@ Promote new **HIGH** items into [security-model.md](security-model.md) § Securi
 | 2026-09-16 | [security-audits/2026-09-16.md](security-audits/2026-09-16.md) — new standing contour baseline + HU S18/S16; [RU](security-audits/2026-09-16-ru.md) |
 | 2026-09-29 | [security-audits/2026-09-29.md](security-audits/2026-09-29.md) — skip-unchanged; read-only; S20/S21; [RU](security-audits/2026-09-29-ru.md) |
 | 2026-10-27 | [security-audits/2026-10-27.md](security-audits/2026-10-27.md) — full baseline, read-only; S23/S24; S11 closed; [RU](security-audits/2026-10-27-ru.md) |
+| 2026-11-17 | [security-audits/2026-11-17.md](security-audits/2026-11-17.md) — full baseline, read-only; S25–S29; external probe of the second org; [RU](security-audits/2026-11-17-ru.md) |
 
 ## Related
 
