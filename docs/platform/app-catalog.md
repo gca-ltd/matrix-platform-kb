@@ -37,7 +37,7 @@
 >
 > **MSA ↔ Atlas MLS contact reads (2026-10-29):** seller identity is authoritative in MSA `contacts`. Atlas MLS reads MSA contacts read-only (`msaDbClient`, user SSO token) for Intake (MSA contact search only — no free-text seller on new opportunities), agreement seller chips and `seller_opportunities.contact_name`. Matrix Sales Automation reads Atlas MLS `seller_opportunities` read-only (`mlsDbClient`, same user token) on the contact profile Contracts tab when `contact_name` matches the MSA contact id or Qobrix `external_qobrix_id`. Neither app writes to the other's App DB.
 >
-> **MSA seller doorway (2026-11-19):** a seller or landlord opportunity stays in Qualification on MSA `cdto` and opens MLS. MLS reads that opportunity live as the signed-in user (`/inventory/msa/<id>`). The MLS row, linked by `x_msa_lead_id` with `x_intake.handoff`, is created on the first save, not on open. **Not a seller** sets `handoff.returned` and MSA shows the buyer page again. No MSA database write, and no copy of MSA rows under a service account. See ADR-064.
+> **MSA seller doorway (2026-11-19):** only a seller or landlord opportunity stored in Qualification on MSA `cdto` opens MLS. Later stages are left as they are. MLS reads that opportunity live as the signed-in user (`/inventory/msa/<id>`). The MLS row, linked by `x_msa_lead_id` with `x_intake.handoff`, is created on the first save, not on open. **Not a seller** sets `handoff.returned` and MSA shows the buyer page again. No MSA database write, and no copy of MSA rows under a service account. See ADR-064.
 
 ### In Progress
 
