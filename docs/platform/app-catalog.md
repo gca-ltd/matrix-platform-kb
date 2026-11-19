@@ -36,6 +36,8 @@
 > **Record Analysis tab** (v1.3.0+): listing and project records expose an **Analysis** tab — CMA comparables, segment pricing, competition, DOM/absorption (with sample-size confidence), reduction signals, buyer offer guide and investment yields. Backend: `listing_comps`, `market_segment_stats`, `project_analytics` RPCs on the MLS App DB; contract in `matrix-mls` `docs/analysis/rpc-contracts.md`.
 >
 > **MSA ↔ Atlas MLS contact reads (2026-10-29):** seller identity is authoritative in MSA `contacts`. Atlas MLS reads MSA contacts read-only (`msaDbClient`, user SSO token) for Intake (MSA contact search only — no free-text seller on new opportunities), agreement seller chips and `seller_opportunities.contact_name`. Matrix Sales Automation reads Atlas MLS `seller_opportunities` read-only (`mlsDbClient`, same user token) on the contact profile Contracts tab when `contact_name` matches the MSA contact id or Qobrix `external_qobrix_id`. Neither app writes to the other's App DB.
+>
+> **MSA Qualification handoff (2026-11-19, Phase 1):** the cross-app record is MLS `seller_opportunities.x_intake.handoff` (`mode` transfer or both, `side`, `from_app: msa`, `msa_opportunity_id`). MSA `cdto` opens `/mls-staging-main/add?kind=seller&msaLead=&side=&mode=` and reads the row back by `x_msa_lead_id`. No MSA database write. See ADR-064.
 
 ### In Progress
 
