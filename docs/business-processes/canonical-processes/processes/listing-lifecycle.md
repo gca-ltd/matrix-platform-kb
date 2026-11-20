@@ -52,7 +52,7 @@ Out of scope:
 |---|---|
 | Seller opportunity workspace | Seller, mandate, qualification, CMA, confidential price, seller reports, opportunity tasks |
 | Inventory record (listing / project) | Property facts, media, publication, showings, read-only offers, documents on file, unit grid (projects) |
-| Deal (workspace Negotiation / Closing gates) | Buyer, offer, reservation, contract, closing checklist |
+| Deal (workspace Negotiation / Closing gates) | Buyer, offer and reservation in Negotiation; the agreed contract and closing checklist in Closing |
 
 List/Grid/Map open the **record** when it exists; the **Board** opens the **workspace** at the matching gate. See ADR-064.
 

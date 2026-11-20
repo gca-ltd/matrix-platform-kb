@@ -73,3 +73,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-065](ADR-065.md) | MSA writes for an agent go through a separate Edge Function, as the signed-in broker | Accepted |
 | [ADR-066](ADR-066.md) | An app records how its screen is used, in its own database, without the text people type | Accepted; point 3 superseded by ADR-067 |
 | [ADR-067](ADR-067.md) | The usage journal stores what was typed, except secrets, for 30 days | Accepted |
+| [ADR-068](ADR-068.md) | A reservation belongs in Negotiation; Closing starts at the agreed contract | Accepted |
