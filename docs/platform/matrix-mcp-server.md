@@ -153,4 +153,12 @@ What Mia may answer from these tools, and the evaluation set with a pass or fail
 
 The read server at `/msa/mcp` is unchanged. Digital Employees attaches this function to MSA Navigator as `msa_actions` (`sso_forward`). Mia is not given it. `msa_close_opportunity`, `msa_reassign_opportunity`, and `msa_reassign_contact` are Ask until the CRO decides otherwise. Navigator can read one Opportunity, change its client, add a note or a reminder, replace the team, and add a listing to the shortlist, each as the signed-in person. Invoices, files, and sending the shortlist stay on the screen.
 
+The App DB is shared by MSA staging and production, so a record Navigator writes is a production record, and its link points at `/msa/pipeline/`.
+
+Since 2026-11-20 the write contract is explicit:
+
+- **Coded fields** (`enquiry_type`, `source`, `direct_source`, `reason_to_buy`, `client_presence`, `property_statuses`) are matched to the screen code regardless of case, spaces, `_` or `-`. A value that matches none is refused with SQLSTATE `22023` and the allowed values, and nothing is written. `msa_validate_opportunity_draft` reports the same as blocking `invalid_value`. `property_types` is only lowercased, because its vocabulary comes from Qobrix.
+- **Create and update return** `saved` (each sent field as read back from the row, under row-level security) and `ignored` (each sent field that was not stored, and why). `msa_update_client` returns the same for the client fields.
+- **A failed call returns** `{"error": {"code", "retryable", "message", "details"?}}`. `retryable` is true only when the same call, sent again unchanged, may succeed (`in_progress`, `temporary`). Every other code (`invalid_value`, `invalid_input`, `draft_blocked`, `stage_gate_blocked`, `not_permitted`, `not_found`, `internal_error`, …) needs a different input or a person.
+
 What Navigator may do, and the checks, is `docs/assistant/navigator.md` in `gca-ltd/matrix-sales-automation`.
