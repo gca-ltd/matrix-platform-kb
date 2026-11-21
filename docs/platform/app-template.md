@@ -204,7 +204,7 @@ Do **not** scaffold `/settings`, `/setup`, an Organization tab, `OrgAdminPanel`,
 `update-tenant-settings` (removed). Apps are **read-only** for org branding/regional
 settings via the hooks above. Hard cutover: no redirect aliases for retired paths.
 
-A page the client opens without signing in cannot read this branding. The signed-in app saves a copy of the office's design on the record (`settings.branding`, or `settings.branding.share` when that office has its own client-page design: `display_name`, `site_name`, `logo_on_dark_url`, `logo_on_light_url`, `palette`). The public page draws only that copy. One office never receives another's logo or colours. See [security-model.md](security-model.md) § Tenant roster + branding reads.
+A page the client opens without signing in cannot read this branding. The signed-in app saves a copy of the office's design on the record (`settings.branding`, or `settings.branding.share` when that office has its own client-page design: `display_name`, `site_name`, `logo_on_dark_url`, `logo_on_light_url`, `palette`, and `legal_notice` for a legal sentence that belongs to that office). The public page draws only that copy. One office never receives another's logo or colours. See [security-model.md](security-model.md) § Tenant roster + branding reads.
 
 Preferences is reachable by every signed-in user (`pageKey: profile`), so it must
 carry **only** per-user preferences. Anything that changes behaviour for other users
