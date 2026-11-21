@@ -36,6 +36,8 @@ Both produce a fresh JWT with new tokens. The frontend clears all cached data on
 
 **Tenant roster + branding reads (post-login):** After the 2026-07-07 anon lockdown (C8/C9), apps must load the active-tenant roster (`TenantSwitcher`) and per-tenant branding (`useTenantBranding`, `OrgAdminPanel`) via the **authenticated** SSO client (`ssoAuthedClient` / `ssoClient` with `postgrestAccessToken`), not the anon key. The SSO project verifies the ES256 JWT via its GoTrue standby key; RLS policy `"Users can view own tenant"` (`has_rw_global_permission() OR id = get_my_tenant_id()`) covers system_admin roster reads and own-tenant branding. Pre-login branding is intentionally unavailable (apps fall back to defaults).
 
+A page opened without sign-in, such as a client shortlist link, cannot read `tenants` at all. It uses the design saved with the record when a signed-in member of that office created or updated it (`collection_shares.share_config.brand` in Sales Automation). That copy is built only from the office's own `settings.branding`, including `settings.branding.share` when the office has a design of its own. Logo URLs on the way out are kept only when they are `https` on a `*.supabase.co` storage host. An office with nothing saved gets a neutral page and its name, never another office's logo or colours.
+
 ### One Sharp production tenant (all countries)
 
 Sharp SIR operates in **Cyprus, Hungary, and Kazakhstan**, but SSO uses **one production tenant** for all of them:
