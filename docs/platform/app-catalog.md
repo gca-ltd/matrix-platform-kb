@@ -15,7 +15,7 @@
 
 | # | Component | KB Name | Type | Primary Users |
 |---|-----------|---------|------|---------------|
-| 1 | Identity & Access Management | **SSO Console** | Platform | Admins |
+| 1 | Identity & Access Management | **Matrix Management Console** | Platform | Admins |
 | 2 | Home Dashboard & App Launcher | **Agency Portal** | App | Everyone |
 | 3 | App Builder Starter Kit | **App Builder Template** | Infrastructure | Developers (Lovable) |
 | 4 | Contact Registration | **Client Connect** | App | Brokers, Contact Center, Sales Managers |
@@ -135,7 +135,7 @@ Four apps are backfilled into **every** role's `apps_allowed` so they stay broad
 
 ## App Details — Done (Live)
 
-### SSO Console (Identity & Access Management)
+### Matrix Management Console (Identity & Access Management)
 **Status**: Done
 **Users**: System administrators
 **URL**: `/sso-console/`
