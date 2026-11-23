@@ -628,6 +628,18 @@ wildcard originally from `20260803120000_sir_area_manager_qobrix_v10_wildcard.sq
 Team-scope roles without a config row get `NO_ACCESS` in `useRoleConfig` — the
 wildcard grant is required for those roles to pass `ProtectedRoute`.
 
+**Sharp SIR MLS Coordinator (2026-11-23).** Role `c11c0001-0000-4000-8000-000000000001`,
+tenant `1d306081-79be-42cb-91bc-9f9d5f0fd7dd`, scope `team`, create/read/update,
+no delete. Atlas MLS client `jT7o-v2LSKtt9-37QsbOcOBtD8qw.HcV` is its only app.
+Pages: Broker View (`home`, `inventory`, `projects`, `developers`,
+`listing-requests`, `profile`) plus the MLS Coordinator View
+(`listing-requests-queue`, `project-setup`), with the legacy `listings` key kept
+for one release. Actions: `developer.create`, `project.create`. Nobody is
+assigned yet. Brokers request a developer, a developer contact, a project (and
+claim to own it) or another object; the coordinator enters the data. The Qobrix
+key holder stays a legacy owner source only. Migration
+`20261120190000_sir_mls_coordinator_role.sql`.
+
 **Acme UAT Broker / Senior Broker on MSA** (`ac000003`, `ac000004`, tenant
 `025a9ba8-2b99-42a1-b6aa-cc573cbef1b5`). `20260709160000` deleted their MSA
 rows because those roles were entitled only to Qobrix RLS; a self-scoped role
