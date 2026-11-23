@@ -10,6 +10,7 @@
 
 | Document | What It Contains |
 |----------|-----------------|
+| [mls-broker-requests.md](mls-broker-requests.md) | Sharp SIR operational flow: a broker requests a developer, contact, project (and claims to own it) or another object, and the MLS Coordinator enters it. Not a RESO state machine. |
 | [canonical-processes/USAGE.md](canonical-processes/USAGE.md) | **Start here for canonical state-machine semantics.** Task-oriented entry points: state lookup, step implementation, cross-resource impact analysis. |
 | [canonical-processes/README.md](canonical-processes/README.md) | Methodology, 2-script phase-gated pipeline (Author → Validate → Emit), boundaries with `reso-dd-kb/` and product-specs. |
 | [canonical-processes/AGENTS.md](canonical-processes/AGENTS.md) | Local rules: phase boundaries, citation contract, mermaid contract, 5 hard-fail gates. |
