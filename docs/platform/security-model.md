@@ -636,9 +636,14 @@ Pages: Broker View (`home`, `inventory`, `projects`, `developers`,
 (`listing-requests-queue`, `project-setup`), with the legacy `listings` key kept
 for one release. Actions: `developer.create`, `project.create`. Nobody is
 assigned yet. Brokers request a developer, a developer contact, a project (and
-claim to own it) or another object; the coordinator enters the data. The Qobrix
-key holder stays a legacy owner source only. Migration
-`20261120190000_sir_mls_coordinator_role.sql`.
+claim to own it) or another object; the coordinator enters the data. The request
+tables live on the MLS App DB. Their select policy uses JWT scope, not the
+`listing-requests-queue` page key, because this database cannot read
+`sso_role_configurations`. A self-scope broker sees only rows they submitted. A
+wider scope can read every request in the tenant through the API; the sidebar
+still hides the queue. The Qobrix key holder stays a legacy owner source only.
+Migration `20261120190000_sir_mls_coordinator_role.sql` and MLS
+`20261123150000_listing_requests.sql`.
 
 **Acme UAT Broker / Senior Broker on MSA** (`ac000003`, `ac000004`, tenant
 `025a9ba8-2b99-42a1-b6aa-cc573cbef1b5`). `20260709160000` deleted their MSA
