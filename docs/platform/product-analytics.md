@@ -14,7 +14,7 @@ Search stores the query text the same way, and its length. A select stores a scr
 
 ## Who can read it
 
-The signed-in person can insert their own rows and cannot read the journal. There is no select policy. The database owner reads it, and a later report can aggregate it. It is not a path through which one person sees another's clients. `ui_activity_log` runs as the invoker and is not granted to `authenticated`.
+The signed-in person can insert their own rows and cannot read the journal. There is no select policy. `log_ui_events` chooses the row id itself and does not read the row back: `RETURNING` needs `SELECT`, and that missing privilege used to discard every event while the call still answered success. The database owner reads it, and a later report can aggregate it. It is not a path through which one person sees another's clients. `ui_activity_log` runs as the invoker and is not granted to `authenticated`.
 
 `ui_event_catalog` is the dictionary and is readable. `ui_action_catalog` names a control and a later edit applies to events already stored. `ui_events_daily` keeps counts after raw rows older than 90 days are dropped.
 
@@ -22,7 +22,7 @@ The signed-in person can insert their own rows and cannot read the journal. Ther
 
 The browser queues events and posts them in batches of at most 200 to `log_ui_events`, with the person's SSO JWT. A build plugin adds `data-track` to buttons, fields, links, dialogs, and anything with a click handler, and writes the caption and the bound field. Password fields are marked `data-track-off` and are ignored. The names are listed in the app's `docs/analytics/ui-element-map.json`.
 
-The post is not on the render path. A failed post stays in the browser and is tried again.
+The post is not on the render path. A failed post, or a post that reports nothing stored, stays in the browser and is tried again.
 
 ## What this is not
 
