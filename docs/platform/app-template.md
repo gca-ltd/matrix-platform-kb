@@ -196,7 +196,7 @@ export const cdlClient = buildCdlClient();
 
 | Surface | Route | Owns |
 |---|---|---|
-| **Preferences** | `/preferences` | Per-user prefs (theme, language, MCP, mailbox connect) |
+| **Preferences** | `/preferences` | Per-user prefs (theme, language, mailbox connect) |
 | **Administration** | `/administration` | Per-app admin (permissions, data layer, AI providers, labels, integrations, write mode, MSA Qobrix ops) |
 | **Organization** | Console `/iam/orgs/:id` only | Tenant identity, branding, currency, timezone, locations |
 

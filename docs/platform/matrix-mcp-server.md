@@ -2,6 +2,32 @@
 
 The contract is the [Matrix MCP Profile](mcp/README.md) ([ADR-059](../architecture/decisions/ADR-059.md)). This page is the inventory. The client pointer is [mcp-client.md](mcp-client.md).
 
+## ITSM
+
+Ticket MCP for the signed-in user. Reads and writes run in one Node process.
+The database sees the user's own SSO token, so row-level security decides which
+tickets they can reach. There is no service-role key.
+
+`self` and `team` users are requesters: their own tickets (team also sees tickets
+raised by their teams), title, description, a public comment, answering a
+waiting-for-requester ticket, and closing a resolved one. `global`, `org_admin`
+and `system_admin` users are service desk: every ticket in the tenant, any field,
+and internal notes. UI page keys are not consulted.
+
+The Supabase edge functions `mcp-server`, `mcp-oauth` and `mcp-admin`, and the
+`mcp_*` tables, were removed on 2026-11-23. Do not deploy them.
+
+| Property | Value |
+|---|---|
+| Repo | `gca-ltd/matrix-itsm` (`mcp/server`) |
+| URL | `https://intranet.sharpsir.group/itsm/mcp` |
+| Transport | Streamable HTTP |
+| Auth | `oauth_user` (PKCE, dynamic registration) and SSO token forward from ITSM and Digital Employees |
+| Tools | `itsm_whoami`, `itsm_create_ticket`, `itsm_list_tickets` (counts via `group_by`), `itsm_get_ticket`, `itsm_update_ticket` |
+| Process | pm2 `matrix-itsm-mcp` on `127.0.0.1:3530` |
+
+Writes stay in this server, which is an exception to ADR-065 (MSA keeps writes on a separate edge function). The safety property is the same: the user's token under RLS, no service role.
+
 ## Qobrix CRM MCP
 
 Reference server with a separate authorization server.

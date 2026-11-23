@@ -739,6 +739,10 @@ Ticket visibility is L2: self sees own tickets; team sees own/assigned + `reques
 
 ## Delegated minting for chat agents (ADR-032)
 
+> **ITSM caller removed 2026-11-23.** The ITSM edge MCP no longer calls
+> `mint-delegated-token`. The function stays available for any other caller.
+> The paragraph below describes the retired ITSM chat-identity binding.
+
 SSO is the **sole identity authority** — apps never store user credentials
 (passwords, refresh tokens). For the ITSM MCP chat-identity binding, the
 chat agent acts for a chat user **without holding any token**: the MCP calls

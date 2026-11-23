@@ -115,6 +115,11 @@ Apps send `Authorization: Bearer <token>` with the SSO JWT obtained from the OAu
 
 ## Chat agent → MCP ingestion contract (ADR-032)
 
+> **Removed 2026-11-23.** The ITSM edge functions `mcp-server`, `mcp-oauth` and
+> `mcp-admin`, their tables, and the chat-identity flow below are gone. The
+> replacement is the Node server at `https://intranet.sharpsir.group/itsm/mcp`
+> ([matrix-mcp-server.md](matrix-mcp-server.md)). The steps below are historical.
+
 Chat agents (e.g. Claude, Cursor) call the ITSM `mcp-server` MCP endpoint as a tool
 while holding **no SSO tokens or per-user credentials**. The contract:
 
