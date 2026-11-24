@@ -134,7 +134,12 @@ cards first (`rank_employee_servers`), then ranks tools only inside the
 servers that clear the floor. It loads up to 5 tools already used in the
 conversation, plus the closest tools that clear the floor and the score gap,
 capped at 12. The ranking text is the latest user message, the head of the
-previous reply, and the names of recently used tools. That embedding is
+previous reply, and the names of recently used tools. MSA Navigator
+additionally loads `msa_create_opportunity`, `msa_update_opportunity`,
+`msa_log_activity` and `msa_move_stage` ahead of that ranking: a missed
+update tool produced a second card, and finding the tool was an extra
+model step. A stated write from him also skips the user-guide search;
+a how or where question still runs it. That embedding is
 computed whenever knowledge, memory, or a deferred catalogue may be used,
 including when retrieval itself is off. Until server cards exist, every
 allowed server is ranked, which is the previous behaviour.
