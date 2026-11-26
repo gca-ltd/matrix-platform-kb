@@ -50,11 +50,25 @@ Out of scope:
 
 | Where brokers edit | Owns |
 |---|---|
-| Seller opportunity workspace | Seller, mandate, qualification, CMA, confidential price, seller reports, opportunity tasks |
+| Seller opportunity workspace | Seller, sources, mandate, qualification approvals, CMA, confidential price, seller reports, opportunity tasks |
 | Inventory record (listing / project) | Property facts, media, publication, showings, read-only offers, documents on file, unit grid (projects) |
-| Deal (workspace Negotiation / Closing gates) | Buyer, offer and reservation in Negotiation; the agreed contract and closing checklist in Closing |
+| Deal (workspace Offers & deal gate, On market) | Buyer, offer, reservation, the agreed contract and the closing checklist |
 
 List/Grid/Map open the **record** when it exists; the **Board** opens the **workspace** at the matching gate. See ADR-064.
+
+### Matrix MLS seller stages (ADR-069)
+
+The Atlas MLS Board has four stages of work: Intake, Qualification (a lawyer and a business approver), Preparation and On market. They are never syndicated. Each stage maps to the `StandardStatus` values its listing can have:
+
+| Stage | `StandardStatus` |
+|---|---|
+| Intake | none; no listing exists yet |
+| Qualification | `Incomplete` (a draft, if Take created one) |
+| Preparation | `Incomplete` |
+| On market | `Coming Soon`, `Active`, `Active Under Contract`, `Pending` (the last two come from the deal, shown as a chip) |
+| Outcome | ended: `Closed` (Won), `Canceled` (owner withdrew), `Expired`; paused: `Hold` or `Withdrawn` (agreement still in force) |
+
+The owner withdrawing ends the agreement, so it sets `Canceled`, never `Withdrawn`. A pause sets `Hold` (or `Withdrawn` from Coming Soon) and keeps the agreement.
 
 ## Primary state machine: `Property.StandardStatus`
 
