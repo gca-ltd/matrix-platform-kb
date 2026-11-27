@@ -136,6 +136,7 @@ These are registered as platform-specific lookup values:
 | x_checklist | JSONB | Live SIR listing checklist attributes (key → `{v, by, at}`) for Draft and later stages | Check-list Listing Residential ENG 2026-2027 | Atlas MLS |
 | x_checklist_submitted | JSONB | Frozen checklist snapshot written by `send_to_qualification` | same | Atlas MLS |
 | x_checklist_submitted_at | Timestamptz | When the submitted snapshot was written | — | Atlas MLS |
+| x_submitted_gaps | JSONB | Readiness items still open at Submit to Review (`[{key, label, gate}]`). Qualification gates are soft (MSA pattern): only the approvers are required; Review shows these as "Submitted incomplete" | — | Atlas MLS |
 
 Catalog and RESO mapping: `matrix-mls` `src/lib/listingChecklist.ts`. Spec: [sir-listing-forms.md](../product-specs/sir-listing-forms.md).
 
