@@ -2,9 +2,12 @@
 
 > Source: `raw/dash/BlankForm_*.docx` (6 form templates from SIR Anywhere.com / Sotheby's International Realty)
 >
-> **Role in Sharp Matrix**: These forms are a **reference source** — they document what fields
-> brokers currently fill in when creating listings. Sharp Matrix uses these to ensure all
-> required business fields are covered, mapped to RESO DD standard names.
+> **Role in Sharp Matrix**: These forms are the **canonical attribute catalog** for the MLS
+> Draft (Qualification) checklist and later stages. Source workbook:
+> `Check-list Listing Residential Properties and Land ENG 2026-2027.xlsx`.
+> MLS stores live values in `seller_opportunities.x_checklist` and freezes them into
+> `x_checklist_submitted` on Send to review. Mapped to RESO DD / `x_sm_*` keys in
+> `matrix-mls` `src/lib/listingChecklist.ts`.
 > See [property-field-mapping.md](../data-models/property-field-mapping.md) for the RESO ← SIR mapping.
 
 ## Residential Sale Listing

@@ -129,6 +129,16 @@ These are registered as platform-specific lookup values:
 
 > Materialized in CDL today (the rest are spec-only): `properties.x_property_name` (+ `properties_published.x_property_name`, added 2026-06-05 by `20260605170000_add_x_property_name_to_properties_published.sql`) and `contacts.x_privacy_level`. `x_privacy_level` was renamed from the legacy `x_sm_` prefix by migration `20260605160000_rename_x_sm_extensions_to_x.sql` ([ADR-023](../architecture/decisions/ADR-023.md)). (The member employer name is canonical `members.office_name`, and the buyer↔showing link is the `showing_participation` project-flavour resource — neither is an extension; see above.)
 
+## Extension Fields — Seller opportunity (MLS App DB)
+
+| Extension Field | Data Type | Reason | SIR Source | Apps |
+|----------------|-----------|--------|------------|------|
+| x_checklist | JSONB | Live SIR listing checklist attributes (key → `{v, by, at}`) for Draft and later stages | Check-list Listing Residential ENG 2026-2027 | Atlas MLS |
+| x_checklist_submitted | JSONB | Frozen checklist snapshot written by `send_to_qualification` | same | Atlas MLS |
+| x_checklist_submitted_at | Timestamptz | When the submitted snapshot was written | — | Atlas MLS |
+
+Catalog and RESO mapping: `matrix-mls` `src/lib/listingChecklist.ts`. Spec: [sir-listing-forms.md](../product-specs/sir-listing-forms.md).
+
 ## Governance Notes
 
 - **Regional scope**: Most extensions are Cyprus-specific or Mediterranean-specific. When Sharp Matrix expands to Hungary and Kazakhstan, additional regional extensions may be needed (e.g., Hungarian land registry fields, Kazakh property registration).
