@@ -58,17 +58,18 @@ List/Grid/Map open the **record** when it exists; the **Board** opens the **work
 
 ### Matrix MLS seller stages (ADR-069)
 
-The Atlas MLS Board has four stages of work: Intake, Qualification (a lawyer and a business approver), Preparation and On market. They are never syndicated. Each stage maps to the `StandardStatus` values its listing can have:
+The Atlas MLS Board has five stages of work, labels aligned with Sales Automation (26 Nov): Qualification, Review (a lawyer and a manager, with a saved CMA), Production, On market and Payment. Stored keys stay `intake`, `listing_qualification`, `pre_listing`, `marketing`, `payment`. They are never syndicated. Each stage maps to the `StandardStatus` values its listing can have:
 
-| Stage | `StandardStatus` |
-|---|---|
-| Intake | none; no listing exists yet |
-| Qualification | `Incomplete` (a draft, if Take created one) |
-| Preparation | `Incomplete` |
-| On market | `Coming Soon`, `Active`, `Active Under Contract`, `Pending` (the last two come from the deal, shown as a chip) |
-| Outcome | ended: `Closed` (Won), `Canceled` (owner withdrew), `Expired`; paused: `Hold` or `Withdrawn` (agreement still in force) |
+| Stage (label) | Stored key | `StandardStatus` |
+|---|---|---|
+| Qualification | `intake` | none, or a draft only; nothing is syndicated until Take |
+| Review | `listing_qualification` | `Incomplete` (a draft, if Take created one) |
+| Production | `pre_listing` | `Incomplete` |
+| On market | `marketing` | `Coming Soon`, `Active`, `Active Under Contract`, `Pending` (the last two come from the deal, shown as a chip) |
+| Payment | `payment` | path toward `Closed` after the agreed sale contract *(Payment step TBD)* |
+| Outcome | — | ended: `Closed` (Won), `Canceled` (owner withdrew), `Expired`; paused: `Hold` or `Withdrawn` (agreement still in force) |
 
-The owner withdrawing ends the agreement, so it sets `Canceled`, never `Withdrawn`. A pause sets `Hold` (or `Withdrawn` from Coming Soon) and keeps the agreement.
+The owner withdrawing ends the agreement, so it sets `Canceled`, never `Withdrawn`. A pause sets `Hold` (or `Withdrawn` from Coming Soon) and keeps the agreement. See [ADR-069](../../../architecture/decisions/ADR-069.md).
 
 ## Primary state machine: `Property.StandardStatus`
 

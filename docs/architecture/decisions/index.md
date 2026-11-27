@@ -74,4 +74,4 @@ This directory contains Architecture Decision Records (ADRs) for the Sharp Matri
 | [ADR-066](ADR-066.md) | An app records how its screen is used, in its own database, without the text people type | Accepted; point 3 superseded by ADR-067 |
 | [ADR-067](ADR-067.md) | The usage journal stores what was typed, except secrets, for 30 days | Accepted |
 | [ADR-068](ADR-068.md) | A reservation belongs in Negotiation; Closing starts at the agreed contract | Accepted; Board columns superseded by ADR-069 |
-| [ADR-069](ADR-069.md) | Qualification approvals and the four-stage seller board (Intake, Qualification, Preparation, On market) | Accepted |
+| [ADR-069](ADR-069.md) | Qualification approvals and the five-stage seller board (Qualification, Review, Production, On market, Payment) | Accepted |
