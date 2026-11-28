@@ -136,7 +136,12 @@ These are registered as platform-specific lookup values:
 | x_checklist | JSONB | Live SIR listing checklist attributes (key → `{v, by, at}`) for Draft and later stages | Check-list Listing Residential ENG 2026-2027 | Atlas MLS |
 | x_checklist_submitted | JSONB | Frozen checklist snapshot written by `send_to_qualification` | same | Atlas MLS |
 | x_checklist_submitted_at | Timestamptz | When the submitted snapshot was written | — | Atlas MLS |
-| x_submitted_gaps | JSONB | Readiness items still open at Submit to Review (`[{key, label, gate}]`). Qualification gates are soft (MSA pattern): only the approvers are required; Review shows these as "Submitted incomplete" | — | Atlas MLS |
+| x_submitted_gaps | JSONB | Readiness items still open at Submit to Review (`[{key, label, gate}]`). Qualification gates are soft (MSA pattern): only the required approvers block; Review shows these as "Submitted incomplete" | — | Atlas MLS |
+| x_review_gaps | JSONB | Readiness items still open at soft Move to Production (`advance_to_production`). Production shows "Review incomplete"; publishing stays hard-gated by `go_live_gate_missing` | — | Atlas MLS |
+
+### Review roles (MLS App DB)
+
+Admin-configurable table `review_roles` `(tenant_id, key)`: labels EN/RU/HU, `required`, `needs_cma`, `applies_to text[]`, default approver, `sort_order`, `active`. Seed: `legal`, `business` (Management, needs CMA), `marketing` (optional). `qualification_approvals.role` FKs here; statuses include `info_requested` (non-terminal). RPCs: `send_to_qualification(opp, approvers jsonb, gaps)`, `add_review_approver`, `request_review_info`, `answer_review_info`, `advance_to_production`.
 
 Catalog and RESO mapping: `matrix-mls` `src/lib/listingChecklist.ts`. Spec: [sir-listing-forms.md](../product-specs/sir-listing-forms.md).
 
