@@ -138,6 +138,13 @@ These are registered as platform-specific lookup values:
 | x_checklist_submitted_at | Timestamptz | When the submitted snapshot was written | — | Atlas MLS |
 | x_submitted_gaps | JSONB | Readiness items still open at Submit to Review (`[{key, label, gate}]`). Qualification gates are soft (MSA pattern): only the required approvers block; Review shows these as "Submitted incomplete" | — | Atlas MLS |
 | x_review_gaps | JSONB | Readiness items still open at soft Move to Production (`advance_to_production`). Production shows "Review incomplete"; publishing stays hard-gated by `go_live_gate_missing` | — | Atlas MLS |
+| x_strategy | JSONB | Live sales + marketing strategy authored on the Qualification Strategy gate (asking price, channels, duties, …) | — | Atlas MLS |
+| x_strategy_submitted | JSONB | Frozen strategy snapshot written by `send_to_qualification` | — | Atlas MLS |
+| x_business_case | JSONB | Review framing `{ summary, justification, risks }` authored on Reviewers | — | Atlas MLS |
+| x_business_case_submitted | JSONB | Frozen business case written by `send_to_qualification` | — | Atlas MLS |
+| x_owner_source | Text | `msa` = listing broker follows MSA assigned broker; `manual` = hand reassignment in MLS (stop following) | — | Atlas MLS |
+
+Operational copy of Strategy duties/channels: App DB table `opportunity_resources` (phase production|marketing; status planned→approved→…; signed when the approval round completes). Spec: ADR-069 amendment 28 Nov 2026; MLS `docs/business-processes/seller-side-process.md`.
 
 ### Review roles (MLS App DB)
 
